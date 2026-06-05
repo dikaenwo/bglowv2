@@ -1,0 +1,582 @@
+/* ═══════════════════════════════════════════════
+   Skin Diary Styles
+   ═══════════════════════════════════════════════ */
+
+/* ─── Calendar ─── */
+.diary-calendar {
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-light);
+  margin-bottom: var(--space-lg);
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+
+.calendar-header .cal-month {
+  font-size: var(--font-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.calendar-header .cal-nav {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.calendar-header .cal-nav button {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-soft);
+  transition: all var(--duration-fast) var(--ease-smooth);
+}
+
+.calendar-header .cal-nav button svg {
+  width: 16px;
+  height: 16px;
+  stroke: var(--text-secondary);
+  fill: none;
+  stroke-width: 2;
+}
+
+.calendar-header .cal-nav button:hover {
+  background: var(--secondary-light);
+}
+
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: var(--space-sm);
+}
+
+.cal-weekdays span {
+  text-align: center;
+  font-size: var(--font-xs);
+  color: var(--text-tertiary);
+  font-weight: 500;
+  padding: 4px 0;
+}
+
+.cal-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-smooth);
+  position: relative;
+  gap: 2px;
+}
+
+.cal-day:hover {
+  background: var(--bg-soft);
+}
+
+.cal-day.today {
+  background: var(--primary);
+  color: white;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+}
+
+.cal-day.selected {
+  background: var(--bg-overlay);
+  border: 1.5px solid var(--primary);
+  border-radius: var(--radius-full);
+}
+
+.cal-day.other-month {
+  color: var(--text-tertiary);
+  opacity: 0.4;
+}
+
+.cal-day .day-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.cal-day.today .day-dot {
+  background: white;
+}
+
+/* ─── FAB ─── */
+.diary-fab {
+  position: fixed;
+  bottom: calc(var(--nav-height) + 20px);
+  right: calc(50% - var(--max-width) / 2 + 20px);
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  z-index: 90;
+  transition: all var(--duration-fast) var(--ease-spring);
+  animation: bounceIn 0.5s var(--ease-spring) both;
+  animation-delay: 500ms;
+}
+
+.diary-fab svg {
+  width: 24px;
+  height: 24px;
+  stroke: white;
+  fill: none;
+  stroke-width: 2.5;
+}
+
+.diary-fab:hover {
+  transform: scale(1.08);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5);
+}
+
+.diary-fab:active {
+  transform: scale(0.92);
+}
+
+/* ─── Diary Entries ─── */
+.diary-entries {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.diary-entry-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-light);
+  opacity: 0;
+  animation: fadeInUp var(--duration-slow) var(--ease-out) forwards;
+}
+
+.diary-entry-card:nth-child(1) { animation-delay: 100ms; }
+.diary-entry-card:nth-child(2) { animation-delay: 200ms; }
+.diary-entry-card:nth-child(3) { animation-delay: 300ms; }
+
+.de-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+
+.de-date {
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.de-mood {
+  font-size: 1.25rem;
+}
+
+.de-condition {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-md);
+}
+
+.de-tag {
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-xs);
+  font-weight: 500;
+}
+
+.de-tag.good { background: #ECFDF5; color: #059669; }
+.de-tag.warn { background: #FFFBEB; color: #D97706; }
+.de-tag.bad { background: #FEF2F2; color: #DC2626; }
+
+.de-products {
+  font-size: var(--font-xs);
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-sm);
+}
+
+.de-products strong {
+  color: var(--text-secondary);
+}
+
+.de-notes {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--border-light);
+}
+
+/* ─── Progress Charts ─── */
+.progress-section {
+  margin-top: var(--space-lg);
+}
+
+.chart-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-light);
+  margin-bottom: var(--space-md);
+}
+
+.chart-title {
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-md);
+}
+
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-sm);
+  height: 120px;
+  padding-bottom: 24px;
+  position: relative;
+}
+
+.bar-chart::after {
+  content: '';
+  position: absolute;
+  bottom: 24px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--border-light);
+}
+
+.bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.bar-fill {
+  width: 100%;
+  max-width: 28px;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  transform-origin: bottom;
+  animation: growUp 0.8s var(--ease-out) forwards;
+  transform: scaleY(0);
+}
+
+.bar-col:nth-child(1) .bar-fill { animation-delay: 100ms; }
+.bar-col:nth-child(2) .bar-fill { animation-delay: 200ms; }
+.bar-col:nth-child(3) .bar-fill { animation-delay: 300ms; }
+.bar-col:nth-child(4) .bar-fill { animation-delay: 400ms; }
+.bar-col:nth-child(5) .bar-fill { animation-delay: 500ms; }
+.bar-col:nth-child(6) .bar-fill { animation-delay: 600ms; }
+.bar-col:nth-child(7) .bar-fill { animation-delay: 700ms; }
+
+.bar-label {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+/* Mini line chart using dots */
+.line-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 80px;
+  padding: 0 var(--space-sm);
+}
+
+.line-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  flex-shrink: 0;
+  position: relative;
+  animation: bounceIn 0.4s var(--ease-spring) forwards;
+  transform: scale(0);
+}
+
+.line-dot:nth-child(1) { animation-delay: 200ms; }
+.line-dot:nth-child(2) { animation-delay: 300ms; }
+.line-dot:nth-child(3) { animation-delay: 400ms; }
+.line-dot:nth-child(4) { animation-delay: 500ms; }
+.line-dot:nth-child(5) { animation-delay: 600ms; }
+.line-dot:nth-child(6) { animation-delay: 700ms; }
+.line-dot:nth-child(7) { animation-delay: 800ms; }
+
+/* ─── New Entry Modal ─── */
+.diary-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 150;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: fadeIn var(--duration-fast) var(--ease-out);
+}
+
+.diary-modal {
+  background: var(--bg);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  width: 100%;
+  max-width: var(--max-width);
+  padding: var(--space-xl);
+  animation: slideUp var(--duration-slow) var(--ease-spring);
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-handle {
+  width: 40px;
+  height: 4px;
+  background: var(--border);
+  border-radius: var(--radius-full);
+  margin: 0 auto var(--space-lg);
+}
+
+.modal-title {
+  font-size: var(--font-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-lg);
+}
+
+.modal-field {
+  margin-bottom: var(--space-lg);
+}
+
+.modal-field label {
+  display: block;
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+}
+
+.condition-options {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.condition-chip {
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--border);
+  background: var(--bg);
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-smooth);
+}
+
+.condition-chip:hover {
+  border-color: var(--primary);
+}
+
+.condition-chip.selected {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: white;
+}
+
+.modal-textarea {
+  width: 100%;
+  min-height: 80px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  resize: vertical;
+  outline: none;
+  transition: border-color var(--duration-fast);
+  background: var(--bg-soft);
+  color: var(--text-primary);
+}
+
+.modal-textarea:focus {
+  border-color: var(--primary);
+}
+
+.modal-actions {
+  display: flex;
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+}
+
+.modal-actions .btn {
+  flex: 1;
+}
+
+/* ─── Tab switcher ─── */
+.diary-tabs {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+  background: var(--bg-soft);
+  border-radius: var(--radius-lg);
+  padding: 4px;
+}
+
+.diary-tab {
+  flex: 1;
+  padding: 10px;
+  border-radius: var(--radius-md);
+  text-align: center;
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--text-tertiary);
+  transition: all var(--duration-fast) var(--ease-smooth);
+  cursor: pointer;
+}
+
+.diary-tab.active {
+  background: var(--bg);
+  color: var(--primary);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ─── Entry Image Thumbnails ─── */
+.diary-entry-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  cursor: pointer;
+  transition: transform var(--duration-fast), box-shadow var(--duration-fast);
+}
+
+.diary-entry-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.de-img-thumb {
+  width: 100%;
+  height: 160px;
+  border-radius: var(--radius-md);
+  background-size: cover;
+  background-position: center;
+  border: 1px solid var(--border-light);
+}
+
+.de-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+/* ─── Image Upload Input ─── */
+.image-upload-wrapper {
+  margin-top: 4px;
+}
+
+.image-upload-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  border: 1.5px dashed var(--primary);
+  background: rgba(59, 130, 246, 0.05);
+  color: var(--primary);
+  font-weight: 600;
+  font-size: var(--font-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  transition: all var(--duration-fast);
+}
+
+.image-upload-btn:hover {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.image-upload-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+/* ─── Detail Modal ─── */
+.detail-modal {
+  padding-bottom: 30px; 
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: var(--space-sm);
+}
+
+.detail-header .dh-date {
+  font-size: var(--font-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.detail-header .dh-mood {
+  font-size: 2rem;
+}
+
+.detail-image {
+  width: 100%;
+  height: 250px;
+  border-radius: var(--radius-lg);
+  background-size: cover;
+  background-position: center;
+  margin-bottom: var(--space-lg);
+  border: 1px solid var(--border-light);
+}
+
+.detail-section {
+  margin-bottom: var(--space-md);
+}
+
+.detail-section h4 {
+  font-size: var(--font-sm);
+  color: var(--text-tertiary);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-section p {
+  font-size: var(--font-sm);
+  color: var(--text-primary);
+  line-height: 1.5;
+}
