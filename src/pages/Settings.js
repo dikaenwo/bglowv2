@@ -1,0 +1,60 @@
+import { icons } from '../components/BottomNav.js';
+import { clearUserData } from '../utils/store.js';
+
+export function renderSettings() {
+  const page = document.createElement('div');
+  page.className = 'page';
+
+  page.innerHTML = `
+    <div class="page-header">
+      <h1>Pengaturan</h1>
+    </div>
+    <div class="profile-menu">
+      <div class="menu-section">
+        <div class="menu-section-title">Aplikasi</div>
+        <div class="menu-item anim-fade-in-up anim-delay-3">
+          <div class="mi-icon blue">${icons.settings}</div>
+          <span class="mi-text">Umum</span>
+          <span class="mi-arrow">${icons.chevronRight}</span>
+        </div>
+        <div class="menu-item anim-fade-in-up anim-delay-4">
+          <div class="mi-icon green">${icons.shield}</div>
+          <span class="mi-text">Privasi & Keamanan</span>
+          <span class="mi-arrow">${icons.chevronRight}</span>
+        </div>
+        <div class="menu-item anim-fade-in-up anim-delay-5">
+          <div class="mi-icon blue">${icons.droplet}</div>
+          <span class="mi-text">Profil Kulit</span>
+          <span class="mi-arrow">${icons.chevronRight}</span>
+        </div>
+      </div>
+
+      <div class="menu-section">
+        <div class="menu-section-title">Dukungan</div>
+        <div class="menu-item anim-fade-in-up anim-delay-5">
+          <div class="mi-icon amber">${icons.star}</div>
+          <span class="mi-text">Nilai B-Glow</span>
+          <span class="mi-arrow">${icons.chevronRight}</span>
+        </div>
+        <div class="menu-item anim-fade-in-up anim-delay-6">
+          <div class="mi-icon red">${icons.alert}</div>
+          <span class="mi-text">Bantuan & Dukungan</span>
+          <span class="mi-arrow">${icons.chevronRight}</span>
+        </div>
+        <div class="menu-item anim-fade-in-up anim-delay-7" id="logout-btn" style="cursor:pointer;">
+          <div class="mi-icon red">${icons.chevronLeft}</div>
+          <span class="mi-text" style="color:var(--danger);">Keluar</span>
+          <span class="mi-arrow"></span>
+        </div>
+      </div>
+    </div>
+    <div class="profile-version">B-Glow v1.0.0</div>
+  `;
+
+  page.querySelector('#logout-btn').addEventListener('click', () => {
+    clearUserData();
+    window.location.hash = '#/login';
+  });
+
+  return page;
+}
