@@ -1,5 +1,8 @@
 import { icons } from '../components/BottomNav.js';
+<<<<<<< HEAD
 import { getUserId } from '../utils/store.js';
+=======
+>>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
 
 export function renderSkinScan() {
   const page = document.createElement('div');
@@ -241,11 +244,14 @@ export function renderSkinScan() {
     });
 
     page.querySelector('#get-reco-btn').addEventListener('click', () => {
+<<<<<<< HEAD
       localStorage.setItem('bglow_has_scanned_' + getUserId(), '1');
       // Increment scan count
       const countKey = 'bglow_scan_count_' + getUserId();
       const current = parseInt(localStorage.getItem(countKey) || '0');
       localStorage.setItem(countKey, String(current + 1));
+=======
+>>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
       window.location.hash = '#/recommendations';
     });
   }

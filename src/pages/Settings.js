@@ -1,5 +1,8 @@
 import { icons } from '../components/BottomNav.js';
+<<<<<<< HEAD
 import { clearUserData } from '../utils/store.js';
+=======
+>>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
 
 export function renderSettings() {
   const page = document.createElement('div');
@@ -11,6 +14,23 @@ export function renderSettings() {
     </div>
     <div class="profile-menu">
       <div class="menu-section">
+<<<<<<< HEAD
+=======
+        <div class="menu-section-title">Notifikasi</div>
+        <div class="menu-item anim-fade-in-up anim-delay-1">
+          <div class="mi-icon blue">${icons.bell}</div>
+          <span class="mi-text">Notifikasi Push</span>
+          <span class="mi-arrow">${icons.chevronRight}</span>
+        </div>
+        <div class="menu-item anim-fade-in-up anim-delay-2">
+          <div class="mi-icon amber">${icons.sun}</div>
+          <span class="mi-text">Pengingat Sunscreen</span>
+          <span class="mi-arrow">${icons.chevronRight}</span>
+        </div>
+      </div>
+
+      <div class="menu-section">
+>>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
         <div class="menu-section-title">Aplikasi</div>
         <div class="menu-item anim-fade-in-up anim-delay-3">
           <div class="mi-icon blue">${icons.settings}</div>
@@ -52,7 +72,12 @@ export function renderSettings() {
   `;
 
   page.querySelector('#logout-btn').addEventListener('click', () => {
+<<<<<<< HEAD
     clearUserData();
+=======
+    localStorage.removeItem('bglow_auth');
+    localStorage.removeItem('bglow_user');
+>>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
     window.location.hash = '#/login';
   });
 

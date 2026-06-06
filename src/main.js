@@ -41,11 +41,19 @@ const tabMap = {
   'scan': 'scan',
   'routine': 'routine',
   'profile': 'profile',
+<<<<<<< HEAD
   'settings': 'profile',
   'bpom': 'profile',
   'alarm': 'profile',
   'diary': 'profile',
   'recommendations': 'recommendations',
+=======
+  'settings': 'settings',
+  'bpom': 'profile',
+  'alarm': 'profile',
+  'diary': 'profile',
+  'recommendations': 'scan',
+>>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
 };
 
 function handleRoute() {
