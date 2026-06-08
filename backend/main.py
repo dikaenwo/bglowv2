@@ -91,7 +91,11 @@ def login_user():
                 "skin_score": db_user.get('skin_score', 0),
                 "sunscreen_interval": db_user.get('sunscreen_interval', 2),
                 "favorites": db_user.get('favorites'),
-                "diary_entries": db_user.get('diary_entries')
+                "diary_entries": db_user.get('diary_entries'),
+                "routine": db_user.get('routine'),
+                "special_schedule": db_user.get('special_schedule'),
+                "streak": db_user.get('streak'),
+                "routine_progress": db_user.get('routine_progress')
             }
         }), 200
         
@@ -110,7 +114,7 @@ def get_user_profile(user_id):
     try:
         cursor = conn.cursor(dictionary=True)
         cursor.execute(
-            "SELECT id, name, email, profile_photo, skin_type, acne_level, oil_level, pore_condition, skin_score, sunscreen_interval, favorites, diary_entries FROM users WHERE id = %s", 
+            "SELECT id, name, email, profile_photo, skin_type, acne_level, oil_level, pore_condition, skin_score, sunscreen_interval, favorites, diary_entries, routine, special_schedule, streak, routine_progress FROM users WHERE id = %s", 
             (user_id,)
         )
         user_data = cursor.fetchone()
@@ -150,7 +154,8 @@ def update_user_profile(user_id):
         allowed_fields = [
             'name', 'email', 'profile_photo', 'skin_type', 
             'acne_level', 'oil_level', 'pore_condition', 'skin_score',
-            'sunscreen_interval', 'favorites', 'diary_entries'
+            'sunscreen_interval', 'favorites', 'diary_entries',
+            'routine', 'special_schedule', 'streak', 'routine_progress'
         ]
         for field in allowed_fields:
             if field in data:
@@ -167,7 +172,7 @@ def update_user_profile(user_id):
         
         # Ambil user terbaru
         cursor.execute(
-            "SELECT id, name, email, profile_photo, skin_type, acne_level, oil_level, pore_condition, skin_score, sunscreen_interval, favorites, diary_entries FROM users WHERE id = %s", 
+            "SELECT id, name, email, profile_photo, skin_type, acne_level, oil_level, pore_condition, skin_score, sunscreen_interval, favorites, diary_entries, routine, special_schedule, streak, routine_progress FROM users WHERE id = %s", 
             (user_id,)
         )
         updated_user = cursor.fetchone()

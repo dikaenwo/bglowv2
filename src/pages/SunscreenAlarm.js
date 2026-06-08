@@ -1,5 +1,6 @@
 import { icons } from '../components/BottomNav.js';
 import { fetchWeather } from '../utils/weather.js';
+import { getUserId, syncUserData } from '../utils/store.js';
 
 export function renderSunscreenAlarm() {
   const page = document.createElement('div');
@@ -7,7 +8,8 @@ export function renderSunscreenAlarm() {
 
   const now = new Date();
 
-  let currentInterval = 2;
+  const userId = getUserId();
+  let currentInterval = parseInt(localStorage.getItem('bglow_sunscreen_interval_' + userId)) || 2;
 
   // Helper to calculate schedules dynamically
   function getSchedulesForInterval(intervalHrs) {
@@ -106,9 +108,11 @@ export function renderSunscreenAlarm() {
       <div class="reminder-section anim-fade-in-up anim-delay-2">
         <div class="reminder-title">Interval Pengingat</div>
         <div class="reminder-options">
-          <button class="reminder-chip active" data-interval="2">2 jam</button>
-          <button class="reminder-chip" data-interval="3">3 jam</button>
-          <button class="reminder-chip" data-interval="custom">Kustom</button>
+          <button class="reminder-chip ${currentInterval === 2 ? 'active' : ''}" data-interval="2">2 jam</button>
+          <button class="reminder-chip ${currentInterval === 3 ? 'active' : ''}" data-interval="3">3 jam</button>
+          <button class="reminder-chip ${currentInterval !== 2 && currentInterval !== 3 ? 'active' : ''}" data-interval="custom">
+            ${currentInterval !== 2 && currentInterval !== 3 ? `${currentInterval} jam` : 'Kustom'}
+          </button>
         </div>
       </div>
 
@@ -275,6 +279,10 @@ export function renderSunscreenAlarm() {
         });
         chip.classList.add('active');
       }
+
+      // Save locally and sync to database
+      localStorage.setItem('bglow_sunscreen_interval_' + userId, currentInterval);
+      syncUserData({ sunscreen_interval: currentInterval });
 
       renderTimeline();
       const next = getNextSchedule();

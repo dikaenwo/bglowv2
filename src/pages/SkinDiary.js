@@ -1,5 +1,5 @@
 import { icons } from '../components/BottomNav.js';
-import { getRoutine, getProgress, getUserId } from '../utils/store.js';
+import { getRoutine, getProgress, getUserId, syncUserData } from '../utils/store.js';
 
 const defaultEntries = [
   {
@@ -43,6 +43,7 @@ function getDiaryEntries() {
 
 function saveDiaryEntries(entries) {
   localStorage.setItem('bglow_diary_entries_' + getUserId(), JSON.stringify(entries));
+  syncUserData({ diary_entries: JSON.stringify(entries) });
 }
 
 const acneData = [3, 5, 4, 2, 3, 1, 2]; // week data

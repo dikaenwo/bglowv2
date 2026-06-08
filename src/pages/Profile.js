@@ -260,6 +260,27 @@ export function renderProfile() {
               localStorage.setItem('bglow_pore_condition_' + userId, user.pore_condition);
               localStorage.setItem('bglow_skin_score_' + userId, user.skin_score);
             }
+            if (user.sunscreen_interval) {
+              localStorage.setItem('bglow_sunscreen_interval_' + userId, user.sunscreen_interval);
+            }
+            if (user.favorites) {
+              localStorage.setItem('bglow_favorites_' + userId, user.favorites);
+            }
+            if (user.diary_entries) {
+              localStorage.setItem('bglow_diary_entries_' + userId, user.diary_entries);
+            }
+            if (user.routine) {
+              localStorage.setItem('bglow_routine_' + userId, user.routine);
+            }
+            if (user.special_schedule) {
+              localStorage.setItem('bglow_special_schedule_' + userId, user.special_schedule);
+            }
+            if (user.streak) {
+              localStorage.setItem('bglow_streak_' + userId, user.streak);
+            }
+            if (user.routine_progress) {
+              localStorage.setItem('bglow_routine_progress_' + userId, user.routine_progress);
+            }
 
             // Update DOM dynamically
             const nameEl = page.querySelector('.profile-name');

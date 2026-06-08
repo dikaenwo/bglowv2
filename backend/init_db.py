@@ -54,7 +54,11 @@ def init_database():
                 'skin_score': 'INT DEFAULT 0',
                 'sunscreen_interval': 'INT DEFAULT 2',
                 'favorites': 'LONGTEXT',
-                'diary_entries': 'LONGTEXT'
+                'diary_entries': 'LONGTEXT',
+                'routine': 'LONGTEXT',
+                'special_schedule': 'LONGTEXT',
+                'streak': 'LONGTEXT',
+                'routine_progress': 'LONGTEXT'
             }
             
             for col_name, col_type in new_columns.items():

@@ -88,6 +88,18 @@ export function renderLogin() {
         if (data.user.diary_entries) {
           localStorage.setItem('bglow_diary_entries_' + data.user.id, data.user.diary_entries);
         }
+        if (data.user.routine) {
+          localStorage.setItem('bglow_routine_' + data.user.id, data.user.routine);
+        }
+        if (data.user.special_schedule) {
+          localStorage.setItem('bglow_special_schedule_' + data.user.id, data.user.special_schedule);
+        }
+        if (data.user.streak) {
+          localStorage.setItem('bglow_streak_' + data.user.id, data.user.streak);
+        }
+        if (data.user.routine_progress) {
+          localStorage.setItem('bglow_routine_progress_' + data.user.id, data.user.routine_progress);
+        }
         window.location.hash = '#/';
       } else {
         alert(data.detail || "Login gagal");

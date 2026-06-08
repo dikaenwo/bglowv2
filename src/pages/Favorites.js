@@ -1,5 +1,5 @@
 import { icons } from '../components/BottomNav.js';
-import { getUserId } from '../utils/store.js';
+import { getUserId, syncUserData } from '../utils/store.js';
 
 export function renderFavorites() {
   const page = document.createElement('div');
@@ -21,6 +21,7 @@ export function renderFavorites() {
     const list = getFavorites();
     list.splice(index, 1);
     localStorage.setItem(favKey, JSON.stringify(list));
+    syncUserData({ favorites: JSON.stringify(list) });
   }
 
   function render() {
