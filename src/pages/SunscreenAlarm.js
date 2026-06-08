@@ -48,14 +48,49 @@ async function fetchOpenUV(lat, lng) {
   return res.json();
 }
 
-// ─── Get geolocation ──────────────────────────────────────
+// ─── Reverse geocode city name ────────────────────────────
+async function reverseGeocode(lat, lng) {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+      { headers: { 'Accept-Language': 'id', 'User-Agent': 'BGlowApp/1.0' } }
+    );
+    const data = await res.json();
+    const addr = data.address || {};
+    // Prioritas: village/suburb > city_district > city > town > county
+    return addr.village || addr.suburb || addr.city_district
+        || addr.city || addr.town || addr.county
+        || addr.state || 'Lokasi Anda';
+  } catch {
+    return 'Lokasi Anda';
+  }
+}
+
+// ─── Get geolocation dengan permission eksplisit ──────────
 function getLocation() {
   return new Promise((resolve) => {
-    if (!navigator.geolocation) return resolve({ lat: -6.2088, lng: 106.8456, city: 'Jakarta' });
+    const fallback = { lat: -6.2088, lng: 106.8456, city: 'Jakarta (default)' };
+
+    if (!navigator.geolocation) {
+      return resolve(fallback);
+    }
+
     navigator.geolocation.getCurrentPosition(
-      pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, city: 'Lokasi Anda' }),
-      ()  => resolve({ lat: -6.2088, lng: 106.8456, city: 'Jakarta (default)' }),
-      { timeout: 6000 }
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const city = await reverseGeocode(lat, lng);
+        resolve({ lat, lng, city });
+      },
+      (err) => {
+        console.warn('Geolocation error:', err.message);
+        resolve(fallback);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000,   // cache 1 menit
+      }
     );
   });
 }
