@@ -1,4 +1,45 @@
 import { icons } from '../components/BottomNav.js';
+import { Geolocation } from '@capacitor/geolocation';
+
+// ─── Get geolocation via Capacitor plugin (native Android GPS) ─
+async function getLocation() {
+  const fallback = { lat: -6.2088, lng: 106.8456, city: 'Jakarta (default)' };
+  try {
+    // Minta izin lokasi dari Android secara native
+    const perm = await Geolocation.requestPermissions();
+    if (perm.location !== 'granted' && perm.coarseLocation !== 'granted') {
+      console.warn('Location permission denied');
+      return fallback;
+    }
+
+    const pos = await Geolocation.getCurrentPosition({
+      enableHighAccuracy: true,
+      timeout: 10000,
+    });
+
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
+    const city = await reverseGeocode(lat, lng);
+    return { lat, lng, city };
+  } catch (err) {
+    console.warn('Capacitor Geolocation error:', err.message);
+    // Fallback ke navigator.geolocation jika Capacitor gagal (e.g. browser dev)
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) return resolve(fallback);
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          const city = await reverseGeocode(lat, lng);
+          resolve({ lat, lng, city });
+        },
+        () => resolve(fallback),
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    });
+  }
+}
+
 
 // ⚙️ OpenUV API Key
 const OPENUV_API_KEY = 'openuv-1wrnvrmfurl4n7-io';
@@ -30,26 +71,6 @@ async function reverseGeocode(lat, lng) {
   }
 }
 
-// ─── Get geolocation dengan permission eksplisit ──────────
-function getLocation() {
-  return new Promise((resolve) => {
-    const fallback = { lat: -6.2088, lng: 106.8456, city: 'Jakarta (default)' };
-    if (!navigator.geolocation) return resolve(fallback);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        const city = await reverseGeocode(lat, lng);
-        resolve({ lat, lng, city });
-      },
-      (err) => {
-        console.warn('Geolocation error:', err.message);
-        resolve(fallback);
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-    );
-  });
-}
 
 export function renderSunscreenAlarm() {
   const page = document.createElement('div');
