@@ -1,5 +1,4 @@
 import { icons } from '../components/BottomNav.js';
-<<<<<<< HEAD
 import { getStreak, getUserId } from '../utils/store.js';
 
 function getProfilePhoto() {
@@ -44,14 +43,11 @@ function getSkinScore() {
     return 0;
   }
 }
-=======
->>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
 
 export function renderProfile() {
   const page = document.createElement('div');
   page.className = 'page';
 
-<<<<<<< HEAD
   let userName = 'Pengguna B-Glow';
   let userEmail = 'user@bglow.app';
   let userInitial = 'B';
@@ -110,25 +106,6 @@ export function renderProfile() {
         </div>
         <div class="profile-stat anim-fade-in-up anim-delay-3">
           <div class="ps-value">${streakCount}</div>
-=======
-  page.innerHTML = `
-    <!-- Profile Header -->
-    <div class="profile-header-card anim-fade-in">
-      <div class="profile-avatar">B</div>
-      <div class="profile-name">Pengguna B-Glow</div>
-      <div class="profile-email">user@bglow.app</div>
-      <div class="profile-stats-row">
-        <div class="profile-stat anim-fade-in-up anim-delay-1">
-          <div class="ps-value">78</div>
-          <div class="ps-label">Skor Kulit</div>
-        </div>
-        <div class="profile-stat anim-fade-in-up anim-delay-2">
-          <div class="ps-value">12</div>
-          <div class="ps-label">Scans</div>
-        </div>
-        <div class="profile-stat anim-fade-in-up anim-delay-3">
-          <div class="ps-value">7</div>
->>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
           <div class="ps-label">Beruntun</div>
         </div>
       </div>
@@ -167,34 +144,9 @@ export function renderProfile() {
           <span class="mi-text">Produk Favorit</span>
           <span class="mi-arrow">${icons.chevronRight || '>'}</span>
         </div>
-<<<<<<< HEAD
         <div class="menu-item anim-fade-in-up anim-delay-6" id="menu-settings">
           <div class="mi-icon gray">${icons.settings || '⚙️'}</div>
           <span class="mi-text">Pengaturan Akun</span>
-=======
-        <div class="menu-item anim-fade-in-up anim-delay-6">
-          <div class="mi-icon amber">${icons.star || '⭐'}</div>
-          <span class="mi-text">Target Kulit</span>
-          <span class="mi-arrow">${icons.chevronRight || '>'}</span>
-        </div>
-      </div>
-
-      <div class="menu-section">
-        <div class="menu-section-title">Pengaturan</div>
-        <div class="menu-item anim-fade-in-up anim-delay-6">
-          <div class="mi-icon blue">${icons.bell || '🔔'}</div>
-          <span class="mi-text">Notifikasi</span>
-          <span class="mi-arrow">${icons.chevronRight || '>'}</span>
-        </div>
-        <div class="menu-item anim-fade-in-up anim-delay-7">
-          <div class="mi-icon blue">${icons.settings || '⚙️'}</div>
-          <span class="mi-text">Pengaturan Aplikasi</span>
-          <span class="mi-arrow">${icons.chevronRight || '>'}</span>
-        </div>
-        <div class="menu-item anim-fade-in-up anim-delay-8">
-          <div class="mi-icon red">${icons.alert || '⚠️'}</div>
-          <span class="mi-text">Bantuan & Dukungan</span>
->>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
           <span class="mi-arrow">${icons.chevronRight || '>'}</span>
         </div>
       </div>
@@ -203,23 +155,15 @@ export function renderProfile() {
     <div class="profile-version">B-Glow v1.0.0</div>
   `;
 
-<<<<<<< HEAD
-=======
-  // Attach navigation events
->>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
   setTimeout(() => {
     const bpom = page.querySelector('#menu-bpom');
     const alarm = page.querySelector('#menu-alarm');
     const diary = page.querySelector('#menu-diary');
-<<<<<<< HEAD
     const settings = page.querySelector('#menu-settings');
-=======
->>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
 
     if (bpom) bpom.addEventListener('click', () => window.location.hash = '#/bpom');
     if (alarm) alarm.addEventListener('click', () => window.location.hash = '#/alarm');
     if (diary) diary.addEventListener('click', () => window.location.hash = '#/diary');
-<<<<<<< HEAD
     if (settings) settings.addEventListener('click', () => window.location.hash = '#/settings');
 
     // Profile photo edit
@@ -274,8 +218,6 @@ export function renderProfile() {
         reader.readAsDataURL(file);
       });
     }
-=======
->>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
   }, 0);
 
   return page;

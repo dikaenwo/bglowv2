@@ -1,8 +1,5 @@
 import { icons } from '../components/BottomNav.js';
-<<<<<<< HEAD
 import { getUserId } from '../utils/store.js';
-=======
->>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
 
 const categories = [
   { id: 'cleanser', label: 'Pembersih', emoji: '🧴' },
@@ -48,7 +45,6 @@ const productData = {
 export function renderRecommendations() {
   const page = document.createElement('div');
   page.className = 'page';
-<<<<<<< HEAD
   
   const hasScanned = localStorage.getItem('bglow_has_scanned_' + getUserId());
   if (!hasScanned) {
@@ -75,8 +71,6 @@ export function renderRecommendations() {
     return page;
   }
 
-=======
->>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
   let currentCat = 'cleanser';
   let filterMin = null;
   let filterMax = null;
@@ -92,14 +86,8 @@ export function renderRecommendations() {
     }
 
     page.innerHTML = `
-<<<<<<< HEAD
       <div class="page-header" style="margin-bottom: 8px; justify-content: center;">
         <h1 style="text-align: center; width: 100%;">Rekomendasi ${categories.find(c => c.id === currentCat)?.label || ''}</h1>
-=======
-      <div class="page-header" style="margin-bottom: 8px;">
-        <button class="back-btn" id="back-btn">${icons.chevronLeft}</button>
-        <h1>Rekomendasi ${categories.find(c => c.id === currentCat)?.label || ''}</h1>
->>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
       </div>
 
       <!-- Price Filter -->
@@ -139,11 +127,7 @@ export function renderRecommendations() {
                 <span class="rating-num">(${p.rating})</span>
               </div>
               <div class="product-price">Rp${p.price.toLocaleString()}</div>
-<<<<<<< HEAD
               <button class="product-cta btn-detail" data-idx="${i}">Lihat Detail</button>
-=======
-              <button class="product-cta">Lihat Detail</button>
->>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
             </div>
           </div>
         `).join('')}
@@ -170,7 +154,6 @@ export function renderRecommendations() {
       render();
     });
 
-<<<<<<< HEAD
 
 
     // Product detail
@@ -178,17 +161,6 @@ export function renderRecommendations() {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const idx = parseInt(btn.dataset.idx);
-=======
-    // Back button
-    page.querySelector('#back-btn').addEventListener('click', () => {
-      window.location.hash = '#/scan';
-    });
-
-    // Product cards → detail page
-    page.querySelectorAll('.product-card').forEach(card => {
-      card.addEventListener('click', () => {
-        const idx = parseInt(card.dataset.idx);
->>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
         const product = products[idx];
         sessionStorage.setItem('bglow_selected_product', JSON.stringify(product));
         window.location.hash = '#/product-detail';
@@ -196,7 +168,6 @@ export function renderRecommendations() {
     });
   }
 
-<<<<<<< HEAD
   function showAddToRoutineModal(product) {
     const overlay = document.createElement('div');
     overlay.className = 'diary-modal-overlay';
@@ -246,8 +217,6 @@ export function renderRecommendations() {
     overlay.querySelector('#btn-cancel-add').addEventListener('click', () => overlay.remove());
     document.body.appendChild(overlay);
   }
-=======
->>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
 
   render();
   return page;

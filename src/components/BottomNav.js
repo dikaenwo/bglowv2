@@ -44,24 +44,14 @@ export function createBottomNav(activeTab = 'home') {
       <div class="scan-icon-wrap">${icons.brain}</div>
       <span>Scan AI</span>
     </button>
-<<<<<<< HEAD
     <button class="nav-item ${activeTab === 'recommendations' ? 'active' : ''}" data-page="recommendations">
       ${icons.star}
       <span>Rekomendasi</span>
     </button>
-=======
->>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
     <button class="nav-item ${activeTab === 'profile' ? 'active' : ''}" data-page="profile">
       ${icons.profile}
       <span>Profil</span>
     </button>
-<<<<<<< HEAD
-=======
-    <button class="nav-item ${activeTab === 'settings' ? 'active' : ''}" data-page="settings">
-      ${icons.settings}
-      <span>Pengaturan</span>
-    </button>
->>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
   `;
 
   nav.querySelectorAll('.nav-item').forEach(item => {

@@ -1,12 +1,7 @@
 import { icons } from '../components/BottomNav.js';
-<<<<<<< HEAD
 import { getRoutine, getProgress, getUserId } from '../utils/store.js';
 
 const defaultEntries = [
-=======
-
-const mockEntries = [
->>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
   {
     date: '13 Mar 2026',
     mood: '😊',
@@ -40,7 +35,6 @@ const mockEntries = [
   },
 ];
 
-<<<<<<< HEAD
 function getDiaryEntries() {
   const data = localStorage.getItem('bglow_diary_entries_' + getUserId());
   if (data) return JSON.parse(data);
@@ -51,8 +45,6 @@ function saveDiaryEntries(entries) {
   localStorage.setItem('bglow_diary_entries_' + getUserId(), JSON.stringify(entries));
 }
 
-=======
->>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
 const acneData = [3, 5, 4, 2, 3, 1, 2]; // week data
 const oilData = [6, 7, 5, 6, 4, 5, 3];
 const conditionData = [60, 55, 65, 70, 68, 75, 80]; // percentage
@@ -167,7 +159,6 @@ export function renderSkinDiary() {
     page.querySelector('#diary-fab').addEventListener('click', () => {
       showNewEntryModal();
     });
-<<<<<<< HEAD
     
     // Auto trigger
     if (window.location.hash.includes('?new=true')) {
@@ -180,13 +171,6 @@ export function renderSkinDiary() {
     const entries = getDiaryEntries();
     let html = '<div class="diary-entries">';
     entries.forEach((entry, idx) => {
-=======
-  }
-
-  function renderEntries(container) {
-    let html = '<div class="diary-entries">';
-    mockEntries.forEach((entry, idx) => {
->>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
       html += `
         <div class="diary-entry-card" data-idx="${idx}">
           ${entry.image ? `<div class="de-img-thumb" style="background-image: url('${entry.image}')"></div>` : ''}
@@ -211,11 +195,7 @@ export function renderSkinDiary() {
     container.querySelectorAll('.diary-entry-card').forEach(card => {
       card.addEventListener('click', () => {
         const idx = parseInt(card.dataset.idx);
-<<<<<<< HEAD
         showEntryDetailModal(entries[idx]);
-=======
-        showEntryDetailModal(mockEntries[idx]);
->>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
       });
     });
   }
@@ -370,7 +350,6 @@ export function renderSkinDiary() {
       </div>
     `;
 
-<<<<<<< HEAD
     // Pre-fill products if available
     const routine = getRoutine();
     const progress = getProgress();
@@ -386,8 +365,6 @@ export function renderSkinDiary() {
       overlay.querySelector('#entry-products').value = [...new Set(allDoneProducts)].join(', ');
     }
 
-=======
->>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
     // Image Upload Logic
     const uploadInput = overlay.querySelector('#diary-image-upload');
     const uploadBtn = overlay.querySelector('#upload-trigger-btn');
@@ -443,15 +420,10 @@ export function renderSkinDiary() {
         image: selectedImageURL
       };
 
-<<<<<<< HEAD
       // Add to beginning to show immediately
       const entries = getDiaryEntries();
       entries.unshift(newEntry);
       saveDiaryEntries(entries);
-=======
-      // Add to beginning of mockEntries to show immediately
-      mockEntries.unshift(newEntry);
->>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
       
       overlay.remove();
       render(); // re-render diary
@@ -465,7 +437,6 @@ export function renderSkinDiary() {
   }
 
   render();
-<<<<<<< HEAD
   
   // Auto-open modal if ?new=true
   if (window.location.hash.includes('?new=true')) {
@@ -474,7 +445,5 @@ export function renderSkinDiary() {
     window.history.replaceState(null, '', window.location.pathname + '#/diary');
   }
   
-=======
->>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
   return page;
 }

@@ -1,17 +1,19 @@
 import { icons } from '../components/BottomNav.js';
+import { Html5Qrcode } from 'html5-qrcode';
 
 // Mock BPOM data
 const bpomData = [
-  { name: 'Somethinc Niacinamide Serum', regNo: 'NA18210100123', manufacturer: 'PT Beautyhaul Indonesia', status: 'registered' },
-  { name: 'Wardah UV Shield Sunscreen', regNo: 'NA18200500456', manufacturer: 'PT Paragon Technology', status: 'registered' },
-  { name: 'Skintific 5X Ceramide Moisturizer', regNo: 'NA18220300789', manufacturer: 'PT Skintific Indonesia', status: 'registered' },
-  { name: 'MS Glow Whitening Cream', regNo: 'NA18190700321', manufacturer: 'PT Kosmetika Global', status: 'registered' },
-  { name: 'Unknown Beauty Cream X', regNo: '-', manufacturer: 'Unknown', status: 'not-registered' },
+  { name: 'Somethinc Niacinamide Serum', regNo: 'NA18210100123', manufacturer: 'PT Beautyhaul Indonesia', status: 'registered', barcode: '8991234567890' },
+  { name: 'Wardah UV Shield Sunscreen', regNo: 'NA18200500456', manufacturer: 'PT Paragon Technology', status: 'registered', barcode: '8990987654321' },
+  { name: 'Skintific 5X Ceramide Moisturizer', regNo: 'NA18220300789', manufacturer: 'PT Skintific Indonesia', status: 'registered', barcode: '8991122334455' },
+  { name: 'MS Glow Whitening Cream', regNo: 'NA18190700321', manufacturer: 'PT Kosmetika Global', status: 'registered', barcode: '8995544332211' },
+  { name: 'Unknown Beauty Cream X', regNo: '-', manufacturer: 'Unknown', status: 'not-registered', barcode: '0000000000000' },
 ];
 
 export function renderBpomCheck() {
   const page = document.createElement('div');
   page.className = 'page';
+  let html5QrCode;
 
   function renderMain() {
     page.innerHTML = `
@@ -20,25 +22,44 @@ export function renderBpomCheck() {
         <h1>Cek BPOM</h1>
       </div>
 
+      <!-- Scanner Styles -->
+      <style>
+        #reader video {
+          object-fit: cover !important;
+          width: 100% !important;
+          height: 100% !important;
+          border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+        }
+        #reader { border: none !important; }
+        #reader__scan_region { background: transparent !important; }
+        #reader__dashboard_section_csr { display: none !important; }
+      </style>
+
       <!-- Scanner -->
-      <div class="bpom-scanner">
-        <div class="scanner-feed">
-          <div class="barcode-frame">
+      <div class="bpom-scanner" style="display: block; position: relative;">
+        <div class="scanner-feed" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+          <div id="reader" style="width: 100%; height: 100%;"></div>
+          <div class="barcode-frame" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; pointer-events: none;">
             <div class="barcode-corner-tr"></div>
             <div class="barcode-corner-bl"></div>
-            <div class="laser-line"></div>
-            <div class="barcode-graphic" id="barcode-graphic"></div>
+            <div class="laser-line" id="laser-line" style="display: none;"></div>
           </div>
         </div>
-        <div class="scanner-label">Arahkan kamera ke barcode</div>
+        <div class="scanner-label" style="z-index: 20; background: rgba(0,0,0,0.5); padding: 4px 12px; border-radius: 12px; bottom: 12px; left: 50%; transform: translateX(-50%); width: max-content;">Arahkan kamera ke QR Code BPOM</div>
+      </div>
+      
+      <!-- Scanner Controls -->
+      <div style="padding: 0 var(--space-lg); margin-top: var(--space-md);">
+        <button id="start-scan-btn" class="bpom-search-btn" style="margin-top: 0;">Mulai Scan Kamera</button>
+        <button id="stop-scan-btn" class="bpom-search-btn" style="margin-top: 0; display: none; background: var(--danger); color: white;">Hentikan Scan</button>
       </div>
 
       <!-- Search -->
       <div class="bpom-search anim-fade-in-up">
-        <div class="search-divider">atau cari berdasarkan nama</div>
+        <div class="search-divider">atau cari berdasarkan nama / Nomor Registrasi</div>
         <div class="search-input-wrap">
           ${icons.search}
-          <input type="text" id="bpom-search-input" placeholder="Masukkan nama produk..." />
+          <input type="text" id="bpom-search-input" placeholder="Masukkan nama atau Nomor Registrasi (NA)..." />
         </div>
         <button class="bpom-search-btn" id="bpom-search-btn" style="margin-top:16px;">Cari Produk</button>
 
@@ -50,15 +71,7 @@ export function renderBpomCheck() {
       </div>
     `;
 
-    // Generate barcode bars
-    const barcodeGraphic = page.querySelector('#barcode-graphic');
-    for (let i = 0; i < 30; i++) {
-      const bar = document.createElement('div');
-      bar.className = 'barcode-bar';
-      bar.style.height = `${30 + Math.random() * 40}px`;
-      bar.style.width = `${Math.random() > 0.5 ? 2 : 3}px`;
-      barcodeGraphic.appendChild(bar);
-    }
+    // Removed static barcode bars generation
 
     // Recent checks
     const recentList = page.querySelector('#recent-list');
@@ -77,12 +90,14 @@ export function renderBpomCheck() {
     });
 
     page.querySelector('#back-btn').addEventListener('click', () => {
+      stopScanner();
       window.location.hash = '#/';
     });
 
     page.querySelector('#bpom-search-btn').addEventListener('click', () => {
       const query = page.querySelector('#bpom-search-input').value.trim();
       if (query.length > 0) {
+        stopScanner();
         startSearch(query);
       }
     });
@@ -90,9 +105,90 @@ export function renderBpomCheck() {
     page.querySelector('#bpom-search-input').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         const query = e.target.value.trim();
-        if (query.length > 0) startSearch(query);
+        if (query.length > 0) {
+          stopScanner();
+          startSearch(query);
+        }
       }
     });
+
+    const startBtn = page.querySelector('#start-scan-btn');
+    const stopBtn = page.querySelector('#stop-scan-btn');
+    
+    startBtn.addEventListener('click', () => {
+      startScanner();
+      startBtn.style.display = 'none';
+      stopBtn.style.display = 'block';
+    });
+    
+    stopBtn.addEventListener('click', () => {
+      stopScanner();
+      startBtn.style.display = 'block';
+      stopBtn.style.display = 'none';
+    });
+  }
+
+  function startScanner() {
+    html5QrCode = new Html5Qrcode("reader");
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+    
+    html5QrCode.start({ facingMode: "environment" }, config,
+      (decodedText, decodedResult) => {
+        stopScanner();
+        // Ekstrak nomor registrasi dari URL QR Code BPOM
+        let extractedQuery = decodedText.trim();
+        // Cek pola NA/NB/NC/ND/NE + 11 digit (format registrasi BPOM)
+        const nieMatch = extractedQuery.match(/(N[A-E])[\s\-]?(\d{11})/i);
+        if (nieMatch) {
+          extractedQuery = nieMatch[1].toUpperCase() + nieMatch[2];
+        } else if (extractedQuery.includes('cekbpom.pom.go.id') || extractedQuery.startsWith('http')) {
+          // Ambil segment terakhir dari URL
+          try {
+            const urlObj = new URL(extractedQuery);
+            // Cek query param
+            const q = urlObj.searchParams.get('query') || urlObj.searchParams.get('q') || urlObj.searchParams.get('id');
+            if (q) {
+              extractedQuery = q;
+            } else {
+              const segments = urlObj.pathname.split('/').filter(s => s.length > 0);
+              extractedQuery = segments[segments.length - 1] || extractedQuery;
+            }
+          } catch(e) {
+            const parts = extractedQuery.split('/');
+            extractedQuery = parts[parts.length - 1].split('?')[0] || extractedQuery;
+          }
+        }
+        startSearch(extractedQuery);
+      },
+      (errorMessage) => {
+        // Scanning...
+      }
+    ).then(() => {
+      const laser = page.querySelector('#laser-line');
+      if (laser) laser.style.display = 'block';
+    }).catch((err) => {
+      console.error("Camera failed to start:", err);
+      alert("Gagal mengakses kamera. Pastikan memberikan izin kamera.");
+      const startBtn = page.querySelector('#start-scan-btn');
+      const stopBtn = page.querySelector('#stop-scan-btn');
+      if (startBtn && stopBtn) {
+        startBtn.style.display = 'block';
+        stopBtn.style.display = 'none';
+      }
+    });
+  }
+
+  function stopScanner() {
+    const laser = page.querySelector('#laser-line');
+    if (laser) laser.style.display = 'none';
+    
+    if (html5QrCode && html5QrCode.isScanning) {
+      html5QrCode.stop().then(() => {
+        html5QrCode.clear();
+      }).catch(err => {
+        console.error("Failed to stop scanner", err);
+      });
+    }
   }
 
   function startSearch(query) {
@@ -134,13 +230,49 @@ export function renderBpomCheck() {
 
     page.querySelector('#back-btn').addEventListener('click', () => renderMain());
 
-    // Find match or show not found
-    setTimeout(() => {
-      const match = bpomData.find(d =>
-        d.name.toLowerCase().includes(query.toLowerCase())
-      );
-      showResult(match || { name: query, regNo: '-', manufacturer: 'Unknown', status: 'not-registered' });
-    }, 2000);
+    // Request to real BPOM backend with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 detik timeout
+
+    fetch(`http://10.12.12.87:7000/cekbpom?na=${encodeURIComponent(query)}`, { signal: controller.signal })
+      .then(response => {
+        clearTimeout(timeoutId);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      })
+      .then(data => {
+        if (data.results && data.results.length > 0) {
+          const res = data.results[0];
+          showResult({
+            name: res.nama_produk || query,
+            regNo: res.nomor_registrasi || '-',
+            manufacturer: res.pendaftar || res.merek || 'Unknown',
+            status: 'registered',
+            barcode: query
+          });
+        } else {
+          showResult({
+            name: query,
+            regNo: '-',
+            manufacturer: 'Tidak ditemukan di database BPOM',
+            status: 'not-registered',
+            barcode: query
+          });
+        }
+      })
+      .catch(err => {
+        clearTimeout(timeoutId);
+        const isTimeout = err.name === 'AbortError';
+        const errMsg = isTimeout ? 'Koneksi timeout (30s)' : err.message;
+        console.error('Fetch error:', errMsg);
+        showResult({
+          name: query,
+          regNo: '-',
+          manufacturer: `⚠️ Gagal: ${errMsg} — pastikan backend menyala & HP terhubung WiFi yang sama`,
+          status: 'not-registered',
+          barcode: query
+        });
+      });
   }
 
   function showResult(product) {

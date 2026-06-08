@@ -147,7 +147,6 @@ export function renderProductDetail() {
     window.history.back();
   });
 
-<<<<<<< HEAD
   page.querySelector('.pd-btn-routine').addEventListener('click', () => {
     showAddToRoutineModal(p);
   });
@@ -201,7 +200,5 @@ export function renderProductDetail() {
     document.body.appendChild(overlay);
   }
 
-=======
->>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
   return page;
 }

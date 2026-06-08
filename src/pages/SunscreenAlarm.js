@@ -1,8 +1,5 @@
 import { icons } from '../components/BottomNav.js';
-<<<<<<< HEAD
 import { fetchWeather } from '../utils/weather.js';
-=======
->>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
 
 export function renderSunscreenAlarm() {
   const page = document.createElement('div');
@@ -10,10 +7,6 @@ export function renderSunscreenAlarm() {
 
   const now = new Date();
   const hours = now.getHours();
-<<<<<<< HEAD
-=======
-  const uvIndex = 6;
->>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
 
   const timelineData = [
     { time: '07:00', label: 'Pemakaian Pagi', status: 'applied', state: 'done' },
@@ -48,13 +41,8 @@ export function renderSunscreenAlarm() {
             </div>
           </div>
           <div class="uv-info-right">
-<<<<<<< HEAD
             <div class="uv-level-text" id="uv-level-text">Memuat...</div>
             <div class="uv-level-desc" id="uv-level-desc">Mendeteksi tingkat UV saat ini...</div>
-=======
-            <div class="uv-level-text">Tinggi</div>
-            <div class="uv-level-desc">Perlindungan diperlukan. Gunakan sunscreen SPF 30+ setiap 2 jam.</div>
->>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
             <div class="sun-animated">${icons.sun}</div>
           </div>
         </div>
@@ -117,7 +105,6 @@ export function renderSunscreenAlarm() {
     chip.addEventListener('click', () => {
       page.querySelectorAll('.reminder-chip').forEach(c => c.classList.remove('active'));
       chip.classList.add('active');
-<<<<<<< HEAD
       
       const interval = chip.dataset.interval;
       if (interval === 'custom') {
@@ -169,29 +156,12 @@ export function renderSunscreenAlarm() {
 
       let current = 0;
       const step = (uvIndex || 1) / 20;
-=======
-    });
-  });
-
-  // UV gauge animation
-  setTimeout(() => {
-    const fill = page.querySelector('#uv-gauge-fill');
-    const num = page.querySelector('#uv-number');
-    if (fill) {
-      const percent = uvIndex / 11;
-      const offset = 251 - (251 * percent);
-      fill.style.strokeDashoffset = offset;
-
-      let current = 0;
-      const step = uvIndex / 20;
->>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
       const timer = setInterval(() => {
         current += step;
         if (current >= uvIndex) { current = uvIndex; clearInterval(timer); }
         num.textContent = Math.round(current);
       }, 40);
     }
-<<<<<<< HEAD
   }).catch(err => console.error('Gagal memuat UV:', err));
 
   // Countdown timer
@@ -248,31 +218,6 @@ export function renderSunscreenAlarm() {
     clearInterval(timerInterval);
     originalRemove.call(this);
   };
-=======
-  }, 500);
-
-  // Countdown timer
-  let seconds = 6150; // ~1:42:30
-  const countdownEl = page.querySelector('#countdown');
-  setInterval(() => {
-    seconds = Math.max(0, seconds - 1);
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    if (countdownEl) {
-      countdownEl.textContent = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    }
-  }, 1000);
-
-  // Show toast after 3 seconds for demo
-  setTimeout(() => {
-    const toast = page.querySelector('#toast');
-    if (toast) {
-      toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 4000);
-    }
-  }, 3000);
->>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
 
   return page;
 }

@@ -1,5 +1,9 @@
 {
   "appId": "com.bglow.app",
   "appName": "B-Glow",
-  "webDir": "dist"
+  "webDir": "dist",
+  "server": {
+    "cleartext": true,
+    "androidScheme": "http"
+  }
 }

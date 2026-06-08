@@ -14,7 +14,6 @@
   box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
 }
 
-<<<<<<< HEAD
 /* ─── Avatar Wrapper ─── */
 .profile-avatar-wrapper {
   position: relative;
@@ -27,18 +26,12 @@
 .profile-avatar {
   width: 88px;
   height: 88px;
-=======
-.profile-avatar {
-  width: 80px;
-  height: 80px;
->>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
   border-radius: var(--radius-full);
   background: rgba(255,255,255,0.2);
   backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: center;
-<<<<<<< HEAD
   font-size: 2rem;
   font-weight: 700;
   border: 3px solid rgba(255,255,255,0.3);
@@ -88,12 +81,6 @@
 .profile-avatar-edit svg {
   width: 14px;
   height: 14px;
-=======
-  margin: 0 auto var(--space-md);
-  font-size: 2rem;
-  font-weight: 700;
-  border: 3px solid rgba(255,255,255,0.3);
->>>>>>> 221ed206d3114e292a0efe6041cbc8b13e7fd229
 }
 
 .profile-name {
