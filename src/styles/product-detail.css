@@ -144,3 +144,36 @@
   background: #fef2f2;
   color: #b91c1c;
 }
+
+/* Favorite Button Styling */
+.pd-btn-fav {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  background: var(--bg-soft);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+  flex-shrink: 0;
+}
+
+.pd-btn-fav:hover {
+  background: var(--border-light);
+  transform: scale(1.05);
+}
+
+.pd-btn-fav.active {
+  border-color: #f43f5e;
+  background: rgba(244, 63, 94, 0.08);
+}
+
+.pd-btn-fav svg {
+  width: 22px;
+  height: 22px;
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+

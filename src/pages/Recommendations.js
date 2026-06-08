@@ -1,12 +1,75 @@
 import { icons } from '../components/BottomNav.js';
 import { getUserId } from '../utils/store.js';
 
+const cleanserIcon = `
+<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 32px; height: 32px;">
+  <path d="M12 12 H26 L23 48 H15 L12 12 Z" fill="#DBEAFE" stroke="#2563EB" stroke-width="2.5" stroke-linejoin="round" />
+  <path d="M14 20 H24" stroke="#2563EB" stroke-width="2" />
+  <rect x="16" y="28" width="6" height="8" fill="white" stroke="#2563EB" stroke-width="1.8" />
+  <rect x="17" y="48" width="4" height="6" fill="#93C5FD" stroke="#2563EB" stroke-width="1.8" />
+  <rect x="25" y="32" width="26" height="22" rx="4" fill="#DBEAFE" stroke="#2563EB" stroke-width="2.5" />
+  <rect x="28" y="26" width="20" height="6" rx="1.5" fill="#93C5FD" stroke="#2563EB" stroke-width="2.5" />
+  <path d="M30 26 C30 20, 36 18, 38 22 C40 18, 46 20, 46 26" fill="#93C5FD" stroke="#2563EB" stroke-width="2" stroke-linecap="round" />
+  <circle cx="38" cy="43" r="3" fill="white" stroke="#2563EB" stroke-width="1.8" />
+</svg>
+`;
+
+const moisturizerIcon = `
+<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 32px; height: 32px;">
+  <g transform="translate(38, 12) rotate(30)">
+    <rect x="-14" y="-3" width="28" height="6" rx="1.5" fill="#6EE7B7" stroke="#059669" stroke-width="2.5" />
+  </g>
+  <path d="M22 34 C18 24, 38 18, 44 24 C50 18, 56 24, 52 34 Z" fill="#D1FAE5" stroke="#059669" stroke-width="2.5" stroke-linejoin="round" />
+  <rect x="14" y="34" width="36" height="24" rx="5" fill="#D1FAE5" stroke="#059669" stroke-width="2.5" />
+  <rect x="18" y="28" width="28" height="6" rx="1" fill="#6EE7B7" stroke="#059669" stroke-width="2.5" />
+  <line x1="24" y1="46" x2="40" y2="46" stroke="#059669" stroke-width="2" stroke-linecap="round" />
+</svg>
+`;
+
+const serumIcon = `
+<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 32px; height: 32px;">
+  <rect x="25" y="16" width="14" height="8" rx="2" fill="#C4B5FD" stroke="#7C3AED" stroke-width="2.5" />
+  <path d="M29 16 L29 10 C29 7, 35 7, 35 10 L35 16" fill="#EDE9FE" stroke="#7C3AED" stroke-width="2.5" />
+  <path d="M19 28 C19 24, 45 24, 45 28 L45 56 C45 60, 19 60, 19 56 Z" fill="#EDE9FE" stroke="#7C3AED" stroke-width="2.5" stroke-linejoin="round" />
+  <rect x="22" y="24" width="20" height="4" fill="#C4B5FD" stroke="#7C3AED" stroke-width="2" />
+  <g transform="translate(36, 38)">
+    <path d="M8 8 Q18 0, 20 14 Q10 18, 8 8 Z" fill="#C4B5FD" stroke="#7C3AED" stroke-width="2" stroke-linejoin="round" />
+    <path d="M8 8 L16 12" stroke="#7C3AED" stroke-width="1.5" />
+    <path d="M0 18 Q12 12, 18 22 Q6 28, 0 18 Z" fill="#C4B5FD" stroke="#7C3AED" stroke-width="2" stroke-linejoin="round" />
+    <path d="M0 18 L12 22" stroke="#7C3AED" stroke-width="1.5" />
+  </g>
+</svg>
+`;
+
+const sunscreenIcon = `
+<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 32px; height: 32px;">
+  <rect x="20" y="14" width="24" height="7" rx="1.5" fill="#FCD34D" stroke="#D97706" stroke-width="2.5" />
+  <rect x="15" y="21" width="34" height="32" rx="6" fill="#FEF3C7" stroke="#D97706" stroke-width="2.5" />
+  <g transform="translate(32, 38)">
+    <path d="M-4 6 L4 -6" stroke="#D97706" stroke-width="2" stroke-linecap="round" />
+    <path d="M-3 0 Q-10 -4, -7 -10 Q-1 -7, -3 0 Z" fill="#FCD34D" stroke="#D97706" stroke-width="1.8" />
+    <path d="M1 -2 Q8 -6, 9 0 Q2 3, 1 -2 Z" fill="#FCD34D" stroke="#D97706" stroke-width="1.8" />
+  </g>
+</svg>
+`;
+
+const exfoliationIcon = `
+<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 32px; height: 32px;">
+  <path d="M12 18 L28 21 L22 56 L11 54 Z" fill="#F9A8D4" stroke="#DB2777" stroke-width="2.5" stroke-linejoin="round" />
+  <line x1="12" y1="26" x2="26" y2="29" stroke="#DB2777" stroke-width="2" />
+  <ellipse cx="44" cy="42" rx="17" ry="18" fill="#FCE7F3" stroke="#DB2777" stroke-width="2.5" />
+  <ellipse cx="37" cy="39" rx="3" ry="2" fill="white" stroke="#DB2777" stroke-width="1.8" />
+  <ellipse cx="51" cy="39" rx="3" ry="2" fill="white" stroke="#DB2777" stroke-width="1.8" />
+  <ellipse cx="44" cy="51" rx="3" ry="1.5" fill="white" stroke="#DB2777" stroke-width="1.8" />
+</svg>
+`;
+
 const categories = [
-  { id: 'cleanser', label: 'Pembersih', emoji: '🧴' },
-  { id: 'moisturizer', label: 'Pelembap', emoji: '💧' },
-  { id: 'serum', label: 'Serum', emoji: '✨' },
-  { id: 'sunscreen', label: 'Tabir Surya', emoji: '☀️' },
-  { id: 'toner', label: 'Toner', emoji: '🌿' },
+  { id: 'cleanser', label: 'Cleansers', icon: cleanserIcon, colorClass: 'cat-cleanser' },
+  { id: 'moisturizer', label: 'Pelembab', icon: moisturizerIcon, colorClass: 'cat-moisturizer' },
+  { id: 'serum', label: 'Serum', icon: serumIcon, colorClass: 'cat-serum' },
+  { id: 'sunscreen', label: 'Sunscreen', icon: sunscreenIcon, colorClass: 'cat-sunscreen' },
+  { id: 'toner', label: 'Eksfoliasi', icon: exfoliationIcon, colorClass: 'cat-exfoliation' },
 ];
 
 const productData = {
@@ -104,8 +167,8 @@ export function renderRecommendations() {
       <!-- Category Tabs -->
       <div class="reco-categories" id="cat-tabs">
         ${categories.map(c => `
-          <button class="reco-cat ${c.id === currentCat ? 'active' : ''}" data-cat="${c.id}">
-            <div class="cat-icon">${c.emoji}</div>
+          <button class="reco-cat ${c.colorClass} ${c.id === currentCat ? 'active' : ''}" data-cat="${c.id}">
+            <div class="cat-icon">${c.icon}</div>
             <span class="cat-label">${c.label}</span>
           </button>
         `).join('')}

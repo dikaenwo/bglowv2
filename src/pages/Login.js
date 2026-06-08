@@ -68,6 +68,26 @@ export function renderLogin() {
           name: data.user.name, 
           email: data.user.email 
         }));
+        if (data.user.profile_photo) {
+          localStorage.setItem('bglow_profile_photo_' + data.user.id, data.user.profile_photo);
+        }
+        if (data.user.skin_type) {
+          localStorage.setItem('bglow_has_scanned_' + data.user.id, '1');
+          localStorage.setItem('bglow_skin_type_' + data.user.id, data.user.skin_type);
+          localStorage.setItem('bglow_acne_level_' + data.user.id, data.user.acne_level);
+          localStorage.setItem('bglow_oil_level_' + data.user.id, data.user.oil_level);
+          localStorage.setItem('bglow_pore_condition_' + data.user.id, data.user.pore_condition);
+          localStorage.setItem('bglow_skin_score_' + data.user.id, data.user.skin_score);
+        }
+        if (data.user.sunscreen_interval) {
+          localStorage.setItem('bglow_sunscreen_interval_' + data.user.id, data.user.sunscreen_interval);
+        }
+        if (data.user.favorites) {
+          localStorage.setItem('bglow_favorites_' + data.user.id, data.user.favorites);
+        }
+        if (data.user.diary_entries) {
+          localStorage.setItem('bglow_diary_entries_' + data.user.id, data.user.diary_entries);
+        }
         window.location.hash = '#/';
       } else {
         alert(data.detail || "Login gagal");

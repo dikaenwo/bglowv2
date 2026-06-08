@@ -38,7 +38,7 @@ const defaultEntries = [
 function getDiaryEntries() {
   const data = localStorage.getItem('bglow_diary_entries_' + getUserId());
   if (data) return JSON.parse(data);
-  return [...defaultEntries];
+  return [];
 }
 
 function saveDiaryEntries(entries) {
@@ -55,8 +55,10 @@ export function renderSkinDiary() {
   page.className = 'page';
 
   const now = new Date();
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
+  let currentMonth = now.getMonth();
+  let currentYear = now.getFullYear();
+  let selectedDay = now.getDate();
+  let isFutureDate = false;
 
   function renderCalendar(year, month) {
     const firstDay = new Date(year, month, 1).getDay();
@@ -64,7 +66,38 @@ export function renderSkinDiary() {
     const prevDays = new Date(year, month, 0).getDate();
     const monthName = new Date(year, month).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
 
-    const entriedDays = [3, 5, 8, 10, 11, 12, 13, 15, 18, 20, 22, 25];
+    // Parse entriedDays from actual diary entries
+    const entries = getDiaryEntries();
+    const entriedDays = [];
+    entries.forEach(entry => {
+      try {
+        const parts = entry.date.split(' '); // e.g. ['8', 'Jun', '2026']
+        if (parts.length === 3) {
+          const day = parseInt(parts[0]);
+          const monthStr = parts[1].toLowerCase();
+          const entryYear = parseInt(parts[2]);
+          
+          const monthMap = {
+            'jan': 0, 'feb': 1, 'mar': 2, 'apr': 3, 'mei': 4, 'jun': 5,
+            'jul': 6, 'agu': 7, 'sep': 8, 'okt': 9, 'nov': 10, 'des': 11
+          };
+          
+          let mIdx = -1;
+          for (const key in monthMap) {
+            if (monthStr.startsWith(key)) {
+              mIdx = monthMap[key];
+              break;
+            }
+          }
+          
+          if (entryYear === year && mIdx === month) {
+            entriedDays.push(day);
+          }
+        }
+      } catch (e) {
+        console.error("Gagal parse tanggal diary:", e);
+      }
+    });
 
     let daysHTML = '';
     const startDay = firstDay === 0 ? 6 : firstDay - 1;
@@ -77,8 +110,15 @@ export function renderSkinDiary() {
     // Current month days
     for (let d = 1; d <= daysInMonth; d++) {
       const isToday = d === now.getDate() && month === now.getMonth() && year === now.getFullYear();
+      const isSelected = d === selectedDay;
       const hasEntry = entriedDays.includes(d);
-      daysHTML += `<div class="cal-day ${isToday ? 'today' : ''}" data-day="${d}">
+      
+      // Check if this day is in the future
+      const isFuture = (year > now.getFullYear()) || 
+                       (year === now.getFullYear() && month > now.getMonth()) ||
+                       (year === now.getFullYear() && month === now.getMonth() && d > now.getDate());
+
+      daysHTML += `<div class="cal-day ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${isFuture ? 'future-day' : ''}" data-day="${d}">
         ${d}
         ${hasEntry ? '<span class="day-dot"></span>' : ''}
       </div>`;
@@ -99,12 +139,16 @@ export function renderSkinDiary() {
   let activeTab = 'entries';
 
   function render() {
+    isFutureDate = (currentYear > now.getFullYear()) ||
+                   (currentYear === now.getFullYear() && currentMonth > now.getMonth()) ||
+                   (currentYear === now.getFullYear() && currentMonth === now.getMonth() && selectedDay > now.getDate());
+
     const { monthName, daysHTML } = renderCalendar(currentYear, currentMonth);
 
     page.innerHTML = `
       <div class="page-header">
         <button class="back-btn" id="back-btn">${icons.chevronLeft}</button>
-        <h1>Diary Kulit</h1>
+        <h1 style="width: 100%; text-align: center; margin-right: 40px;">Diary Kulit</h1>
       </div>
       <div class="page-content">
         <!-- Calendar -->
@@ -133,7 +177,7 @@ export function renderSkinDiary() {
       </div>
 
       <!-- FAB -->
-      <button class="diary-fab" id="diary-fab">${icons.plus}</button>
+      <button class="diary-fab" id="diary-fab" style="display: ${isFutureDate ? 'none' : 'flex'}">${icons.plus}</button>
     `;
 
     // Render tab content
@@ -156,6 +200,52 @@ export function renderSkinDiary() {
       });
     });
 
+    // Day selection events
+    page.querySelectorAll('.cal-days .cal-day').forEach(dayEl => {
+      dayEl.addEventListener('click', () => {
+        const day = parseInt(dayEl.dataset.day);
+        if (day) {
+          selectedDay = day;
+          render();
+        }
+      });
+    });
+
+    const prevBtn = page.querySelector('#cal-prev');
+    const nextBtn = page.querySelector('#cal-next');
+
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        currentMonth++;
+        if (currentMonth > 11) {
+          currentMonth = 0;
+          currentYear++;
+        }
+        if (currentMonth === now.getMonth() && currentYear === now.getFullYear()) {
+          selectedDay = now.getDate();
+        } else {
+          selectedDay = 1;
+        }
+        render();
+      });
+    }
+
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => {
+        currentMonth--;
+        if (currentMonth < 0) {
+          currentMonth = 11;
+          currentYear--;
+        }
+        if (currentMonth === now.getMonth() && currentYear === now.getFullYear()) {
+          selectedDay = now.getDate();
+        } else {
+          selectedDay = 1;
+        }
+        render();
+      });
+    }
+
     page.querySelector('#diary-fab').addEventListener('click', () => {
       showNewEntryModal();
     });
@@ -168,11 +258,38 @@ export function renderSkinDiary() {
   }
 
   function renderEntries(container) {
+    if (isFutureDate) {
+      container.innerHTML = `
+        <div class="empty-state anim-fade-in" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding: 40px 20px; text-align:center; background: var(--bg-card); border-radius: 16px; border: 1px dashed var(--border-light); margin: 16px 0;">
+          <div style="font-size:3.5rem; margin-bottom:16px;">🔒</div>
+          <h3 style="color:var(--text-secondary); font-size:0.95rem; font-weight:500; line-height: 1.5;">Belum dapat mengisi catatan dan perkembangan</h3>
+        </div>
+      `;
+      return;
+    }
+
     const entries = getDiaryEntries();
+    const dateStr = new Date(currentYear, currentMonth, selectedDay).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+    const filteredEntries = entries.filter(e => e.date === dateStr);
+
+    if (filteredEntries.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state anim-fade-in" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding: 40px 20px; text-align:center; background: var(--bg-card); border-radius: 16px; border: 1px dashed var(--border-light); margin: 16px 0;">
+          <div style="font-size:3.5rem; margin-bottom:16px;">📔</div>
+          <h3 style="margin-bottom:8px; color: var(--text-primary); font-size: 1.1rem; font-weight: 600;">Belum Ada Catatan</h3>
+          <p style="color:var(--text-secondary); margin-bottom:16px; line-height:1.5; font-size:0.85rem;">
+            Catat perkembangan kulit Anda pada tanggal <strong>${dateStr}</strong> dengan menekan tombol "+" di bawah.
+          </p>
+        </div>
+      `;
+      return;
+    }
+
     let html = '<div class="diary-entries">';
-    entries.forEach((entry, idx) => {
+    filteredEntries.forEach((entry, idx) => {
+      const originalIdx = entries.findIndex(e => e.date === entry.date && e.notes === entry.notes);
       html += `
-        <div class="diary-entry-card" data-idx="${idx}">
+        <div class="diary-entry-card" data-idx="${originalIdx}">
           ${entry.image ? `<div class="de-img-thumb" style="background-image: url('${entry.image}')"></div>` : ''}
           <div class="de-content">
             <div class="de-header">
@@ -242,6 +359,79 @@ export function renderSkinDiary() {
   }
 
   function renderProgress(container) {
+    if (isFutureDate) {
+      container.innerHTML = `
+        <div class="empty-state anim-fade-in" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding: 40px 20px; text-align:center; background: var(--bg-card); border-radius: 16px; border: 1px dashed var(--border-light); margin: 16px 0;">
+          <div style="font-size:3.5rem; margin-bottom:16px;">🔒</div>
+          <h3 style="color:var(--text-secondary); font-size:0.95rem; font-weight:500; line-height: 1.5;">Belum dapat mengisi catatan dan perkembangan</h3>
+        </div>
+      `;
+      return;
+    }
+
+    const entries = getDiaryEntries();
+    if (entries.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state anim-fade-in" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding: 40px 20px; text-align:center; background: var(--bg-card); border-radius: 16px; border: 1px dashed var(--border-light); margin: 16px 0;">
+          <div style="font-size:3.5rem; margin-bottom:16px;">📈</div>
+          <h3 style="margin-bottom:8px; color: var(--text-primary); font-size: 1.1rem; font-weight: 600;">Belum Ada Analisis</h3>
+          <p style="color:var(--text-secondary); line-height:1.5; font-size:0.85rem;">
+            Grafik perkembangan akan muncul setelah Anda mulai menyimpan catatan diary harian Anda.
+          </p>
+        </div>
+      `;
+      return;
+    }
+
+    // Get current week's dates (Monday to Sunday) relative to selectedDay
+    const selectedDateObj = new Date(currentYear, currentMonth, selectedDay);
+    const dayOfWeek = selectedDateObj.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    const distanceToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const monday = new Date(selectedDateObj);
+    monday.setDate(selectedDateObj.getDate() - distanceToMonday);
+
+    const weekEntries = []; // length 7, for Sen to Min
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      const dateStr = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+      
+      // Find entry for this date
+      const found = entries.find(e => e.date === dateStr);
+      weekEntries.push(found || null);
+    }
+
+    // Map weekEntries to acne level, oil level, and condition percentage
+    const acneData = weekEntries.map(entry => {
+      if (!entry) return 0;
+      let score = 1; // baseline if entered
+      const conds = entry.conditions || [];
+      if (conds.some(c => c.label === 'Berjerawat')) score += 3;
+      if (conds.some(c => c.label === 'Sensitif')) score += 1;
+      return Math.min(5, score);
+    });
+
+    const oilData = weekEntries.map(entry => {
+      if (!entry) return 0;
+      let score = 4; // baseline is balanced (4)
+      const conds = entry.conditions || [];
+      if (conds.some(c => c.label === 'Berminyak')) score = 6;
+      else if (conds.some(c => c.label === 'Kering')) score = 2;
+      return score;
+    });
+
+    const conditionData = weekEntries.map(entry => {
+      if (!entry) return null; // Use null for days without entries to skip drawing
+      let pct = 60; // base percentage
+      const conds = entry.conditions || [];
+      conds.forEach(c => {
+        if (c.type === 'good') pct += 20;
+        else if (c.type === 'warn') pct -= 10;
+        else if (c.type === 'bad') pct -= 20;
+      });
+      return Math.max(0, Math.min(100, pct));
+    });
+
     container.innerHTML = `
       <div class="progress-section">
         <!-- Acne Chart -->
@@ -293,7 +483,11 @@ export function renderSkinDiary() {
     conditionData.forEach((val) => {
       const dot = document.createElement('div');
       dot.className = 'line-dot';
-      dot.style.marginBottom = `${val * 0.7}px`;
+      if (val === null) {
+        dot.style.visibility = 'hidden';
+      } else {
+        dot.style.marginBottom = `${val * 0.7}px`;
+      }
       condChart.appendChild(dot);
     });
   }

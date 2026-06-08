@@ -29,6 +29,7 @@ import { renderRoutine } from './pages/Routine.js';
 import { renderSettings } from './pages/Settings.js';
 import { renderSubscription } from './pages/Subscription.js';
 import { renderProductDetail } from './pages/ProductDetail.js';
+import { renderFavorites } from './pages/Favorites.js';
 
 const app = document.querySelector('#app');
 
@@ -45,6 +46,7 @@ const tabMap = {
   'bpom': 'profile',
   'alarm': 'profile',
   'diary': 'profile',
+  'favorites': 'profile',
   'recommendations': 'recommendations',
 };
 
@@ -82,6 +84,7 @@ function handleRoute() {
     case 'settings': pageEl = renderSettings(); break;
     case 'subscription': pageEl = renderSubscription(); break;
     case 'product-detail': pageEl = renderProductDetail(); break;
+    case 'favorites': pageEl = renderFavorites(); break;
     default: pageEl = renderHome(); break;
   }
 

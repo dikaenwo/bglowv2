@@ -5,8 +5,20 @@ function getProfilePhoto() {
   return localStorage.getItem('bglow_profile_photo_' + getUserId()) || null;
 }
 
-function saveProfilePhoto(dataUrl) {
-  localStorage.setItem('bglow_profile_photo_' + getUserId(), dataUrl);
+async function saveProfilePhoto(dataUrl) {
+  const userId = getUserId();
+  localStorage.setItem('bglow_profile_photo_' + userId, dataUrl);
+  if (userId && userId !== 'guest') {
+    try {
+      await fetch(`http://localhost:8000/api/user/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profile_photo: dataUrl })
+      });
+    } catch (e) {
+      console.error("Gagal menyimpan foto profil ke database:", e);
+    }
+  }
 }
 
 function getScanCount() {
@@ -139,7 +151,7 @@ export function renderProfile() {
           <span class="mi-text">Riwayat Scan</span>
           <span class="mi-arrow">${icons.chevronRight || '>'}</span>
         </div>
-        <div class="menu-item anim-fade-in-up anim-delay-5">
+        <div class="menu-item anim-fade-in-up anim-delay-5" id="menu-favorites">
           <div class="mi-icon green">${icons.shield || '🛡️'}</div>
           <span class="mi-text">Produk Favorit</span>
           <span class="mi-arrow">${icons.chevronRight || '>'}</span>
@@ -160,11 +172,13 @@ export function renderProfile() {
     const alarm = page.querySelector('#menu-alarm');
     const diary = page.querySelector('#menu-diary');
     const settings = page.querySelector('#menu-settings');
+    const favorites = page.querySelector('#menu-favorites');
 
     if (bpom) bpom.addEventListener('click', () => window.location.hash = '#/bpom');
     if (alarm) alarm.addEventListener('click', () => window.location.hash = '#/alarm');
     if (diary) diary.addEventListener('click', () => window.location.hash = '#/diary');
     if (settings) settings.addEventListener('click', () => window.location.hash = '#/settings');
+    if (favorites) favorites.addEventListener('click', () => window.location.hash = '#/favorites');
 
     // Profile photo edit
     const editBtn = page.querySelector('#avatar-edit-btn');
@@ -218,6 +232,60 @@ export function renderProfile() {
         reader.readAsDataURL(file);
       });
     }
+
+    // Sync profile data from backend
+    (async () => {
+      const userId = getUserId();
+      if (userId && userId !== 'guest') {
+        try {
+          const res = await fetch(`http://localhost:8000/api/user/${userId}`);
+          if (res.ok) {
+            const user = await res.json();
+            
+            // Sync with local cache
+            localStorage.setItem('bglow_user', JSON.stringify({
+              id: user.id,
+              name: user.name,
+              email: user.email
+            }));
+            
+            if (user.profile_photo) {
+              localStorage.setItem('bglow_profile_photo_' + userId, user.profile_photo);
+            }
+            if (user.skin_type) {
+              localStorage.setItem('bglow_has_scanned_' + userId, '1');
+              localStorage.setItem('bglow_skin_type_' + userId, user.skin_type);
+              localStorage.setItem('bglow_acne_level_' + userId, user.acne_level);
+              localStorage.setItem('bglow_oil_level_' + userId, user.oil_level);
+              localStorage.setItem('bglow_pore_condition_' + userId, user.pore_condition);
+              localStorage.setItem('bglow_skin_score_' + userId, user.skin_score);
+            }
+
+            // Update DOM dynamically
+            const nameEl = page.querySelector('.profile-name');
+            const emailEl = page.querySelector('.profile-email');
+            const avatarEl = page.querySelector('.profile-avatar');
+            
+            if (nameEl && user.name) nameEl.textContent = user.name;
+            if (emailEl && user.email) emailEl.textContent = user.email;
+            
+            if (avatarEl && user.profile_photo) {
+              avatarEl.innerHTML = `<img src="${user.profile_photo}" alt="Profile" class="profile-avatar-img" />`;
+            } else if (avatarEl) {
+              const initial = user.name ? user.name.charAt(0).toUpperCase() : 'B';
+              avatarEl.innerHTML = `<span class="profile-avatar-initial">${initial}</span>`;
+            }
+
+            if (user.skin_score) {
+              const scoreEl = page.querySelector('.profile-stat:nth-child(1) .ps-value');
+              if (scoreEl) scoreEl.textContent = user.skin_score;
+            }
+          }
+        } catch (err) {
+          console.error("Gagal sinkronisasi profil dari server:", err);
+        }
+      }
+    })();
   }, 0);
 
   return page;

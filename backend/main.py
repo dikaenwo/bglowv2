@@ -82,10 +82,101 @@ def login_user():
             "user": {
                 "id": db_user['id'],
                 "name": db_user['name'],
-                "email": db_user['email']
+                "email": db_user['email'],
+                "profile_photo": db_user.get('profile_photo'),
+                "skin_type": db_user.get('skin_type'),
+                "acne_level": db_user.get('acne_level'),
+                "oil_level": db_user.get('oil_level'),
+                "pore_condition": db_user.get('pore_condition'),
+                "skin_score": db_user.get('skin_score', 0),
+                "sunscreen_interval": db_user.get('sunscreen_interval', 2),
+                "favorites": db_user.get('favorites'),
+                "diary_entries": db_user.get('diary_entries')
             }
         }), 200
         
+    except Exception as e:
+        return jsonify({"detail": str(e)}), 500
+    finally:
+        if conn.is_connected():
+            cursor.close()
+            conn.close()
+
+@app.route("/api/user/<int:user_id>", methods=["GET"])
+def get_user_profile(user_id):
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"detail": "Database connection failed"}), 500
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            "SELECT id, name, email, profile_photo, skin_type, acne_level, oil_level, pore_condition, skin_score, sunscreen_interval, favorites, diary_entries FROM users WHERE id = %s", 
+            (user_id,)
+        )
+        user_data = cursor.fetchone()
+        if not user_data:
+            return jsonify({"detail": "User tidak ditemukan"}), 404
+        return jsonify(user_data), 200
+    except Exception as e:
+        return jsonify({"detail": str(e)}), 500
+    finally:
+        if conn.is_connected():
+            cursor.close()
+            conn.close()
+
+@app.route("/api/user/<int:user_id>", methods=["PUT"])
+def update_user_profile(user_id):
+    data = request.get_json()
+    if not data:
+        return jsonify({"detail": "Data tidak boleh kosong"}), 400
+        
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"detail": "Database connection failed"}), 500
+        
+    try:
+        cursor = conn.cursor(dictionary=True)
+        # Cek apakah user ada
+        cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+        user_data = cursor.fetchone()
+        if not user_data:
+            return jsonify({"detail": "User tidak ditemukan"}), 404
+            
+        # Susun update secara dinamis
+        update_fields = []
+        params = []
+        
+        # Daftar kolom yang diizinkan untuk diedit
+        allowed_fields = [
+            'name', 'email', 'profile_photo', 'skin_type', 
+            'acne_level', 'oil_level', 'pore_condition', 'skin_score',
+            'sunscreen_interval', 'favorites', 'diary_entries'
+        ]
+        for field in allowed_fields:
+            if field in data:
+                update_fields.append(f"{field} = %s")
+                params.append(data[field])
+                
+        if not update_fields:
+            return jsonify({"detail": "Tidak ada data yang diubah"}), 400
+            
+        params.append(user_id)
+        update_query = f"UPDATE users SET {', '.join(update_fields)} WHERE id = %s"
+        cursor.execute(update_query, tuple(params))
+        conn.commit()
+        
+        # Ambil user terbaru
+        cursor.execute(
+            "SELECT id, name, email, profile_photo, skin_type, acne_level, oil_level, pore_condition, skin_score, sunscreen_interval, favorites, diary_entries FROM users WHERE id = %s", 
+            (user_id,)
+        )
+        updated_user = cursor.fetchone()
+        
+        return jsonify({
+            "message": "Profil berhasil diperbarui",
+            "status": "success",
+            "user": updated_user
+        }), 200
     except Exception as e:
         return jsonify({"detail": str(e)}), 500
     finally:

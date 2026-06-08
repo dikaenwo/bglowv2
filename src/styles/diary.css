@@ -111,6 +111,11 @@
   opacity: 0.4;
 }
 
+.cal-day.future-day {
+  color: var(--text-tertiary);
+  opacity: 0.55;
+}
+
 .cal-day .day-dot {
   width: 4px;
   height: 4px;

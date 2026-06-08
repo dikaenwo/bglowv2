@@ -1,76 +1,5 @@
 import { icons } from '../components/BottomNav.js';
-import { Geolocation } from '@capacitor/geolocation';
-
-// ─── Get geolocation via Capacitor plugin (native Android GPS) ─
-async function getLocation() {
-  const fallback = { lat: -6.2088, lng: 106.8456, city: 'Jakarta (default)' };
-  try {
-    // Minta izin lokasi dari Android secara native
-    const perm = await Geolocation.requestPermissions();
-    if (perm.location !== 'granted' && perm.coarseLocation !== 'granted') {
-      console.warn('Location permission denied');
-      return fallback;
-    }
-
-    const pos = await Geolocation.getCurrentPosition({
-      enableHighAccuracy: true,
-      timeout: 10000,
-    });
-
-    const lat = pos.coords.latitude;
-    const lng = pos.coords.longitude;
-    const city = await reverseGeocode(lat, lng);
-    return { lat, lng, city };
-  } catch (err) {
-    console.warn('Capacitor Geolocation error:', err.message);
-    // Fallback ke navigator.geolocation jika Capacitor gagal (e.g. browser dev)
-    return new Promise((resolve) => {
-      if (!navigator.geolocation) return resolve(fallback);
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
-          const city = await reverseGeocode(lat, lng);
-          resolve({ lat, lng, city });
-        },
-        () => resolve(fallback),
-        { enableHighAccuracy: true, timeout: 10000 }
-      );
-    });
-  }
-}
-
-
-// ⚙️ OpenUV API Key
-const OPENUV_API_KEY = 'openuv-1wrnvrmfurl4n7-io';
-const OPENUV_URL = 'https://api.openuv.io/api/v1/uv';
-
-// ─── Fetch UV dari OpenUV ─────────────────────────────────
-async function fetchOpenUV(lat, lng) {
-  const res = await fetch(`${OPENUV_URL}?lat=${lat}&lng=${lng}`, {
-    headers: { 'x-access-token': OPENUV_API_KEY }
-  });
-  if (!res.ok) throw new Error(`OpenUV API error ${res.status}`);
-  return res.json();
-}
-
-// ─── Reverse geocode nama kota ────────────────────────────
-async function reverseGeocode(lat, lng) {
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
-      { headers: { 'Accept-Language': 'id', 'User-Agent': 'BGlowApp/1.0' } }
-    );
-    const data = await res.json();
-    const addr = data.address || {};
-    return addr.village || addr.suburb || addr.city_district
-        || addr.city || addr.town || addr.county
-        || addr.state || 'Lokasi Anda';
-  } catch {
-    return 'Lokasi Anda';
-  }
-}
-
+import { fetchWeather } from '../utils/weather.js';
 
 export function renderSunscreenAlarm() {
   const page = document.createElement('div');
@@ -78,14 +7,69 @@ export function renderSunscreenAlarm() {
 
   const now = new Date();
 
-  const timelineData = [
-    { time: '07:00', label: 'Pemakaian Pagi', status: 'applied', state: 'done' },
-    { time: '09:00', label: 'Oles Ulang Pertama', status: 'applied', state: 'done' },
-    { time: '11:00', label: 'Oles Ulang Kedua', status: 'applied', state: 'done' },
-    { time: '13:00', label: 'Oles Ulang Siang', status: 'pending', state: 'current' },
-    { time: '15:00', label: 'Oles Ulang Berikutnya', status: 'upcoming', state: 'upcoming' },
-    { time: '17:00', label: 'Oles Ulang Sore', status: 'upcoming', state: 'upcoming' },
-  ];
+  let currentInterval = 2;
+
+  // Helper to calculate schedules dynamically
+  function getSchedulesForInterval(intervalHrs) {
+    const schedules = [];
+    const labels = [
+      'Pemakaian Pagi',
+      'Oles Ulang Pertama',
+      'Oles Ulang Kedua',
+      'Oles Ulang Ketiga',
+      'Oles Ulang Keempat',
+      'Oles Ulang Kelima',
+      'Oles Ulang Keenam',
+      'Oles Ulang Ketujuh',
+      'Oles Ulang Kedelapan',
+      'Oles Ulang Kesembilan',
+      'Oles Ulang Kesepuluh',
+      'Oles Ulang Kesebelas',
+      'Oles Ulang Kedua Belas'
+    ];
+    let currentHour = 7;
+    let labelIdx = 0;
+    while (currentHour <= 18) {
+      const hStr = String(currentHour).padStart(2, '0');
+      schedules.push({
+        timeStr: `${hStr}:00`,
+        label: labelIdx === 0 ? labels[0] : (labels[labelIdx] || 'Oles Ulang Berikutnya'),
+        mins: currentHour * 60
+      });
+      currentHour += intervalHrs;
+      labelIdx++;
+    }
+    return schedules;
+  }
+
+  // Helper to calculate the next schedule dynamically
+  function getNextSchedule() {
+    const d = new Date();
+    const currentMins = d.getHours() * 60 + d.getMinutes();
+    
+    const schedules = getSchedulesForInterval(currentInterval);
+    
+    let next = schedules.find(s => s.mins > currentMins);
+    if (!next) {
+      next = { ...schedules[0], isTomorrow: true };
+    }
+    return next;
+  }
+
+  // Helper to get seconds remaining to next schedule
+  function getSecondsRemaining(nextSchedule) {
+    const d = new Date();
+    const target = new Date();
+    const [h, m] = nextSchedule.timeStr.split(':').map(Number);
+    target.setHours(h, m, 0, 0);
+    if (nextSchedule.isTomorrow) {
+      target.setDate(target.getDate() + 1);
+    }
+    return Math.max(0, Math.floor((target.getTime() - d.getTime()) / 1000));
+  }
+
+  const initialSchedule = getNextSchedule();
+  let seconds = getSecondsRemaining(initialSchedule);
 
   page.innerHTML = `
     <div class="page-header">
@@ -97,7 +81,7 @@ export function renderSunscreenAlarm() {
       <div class="uv-dashboard anim-fade-in-up">
         <div class="uv-dash-header">
           <div class="uv-title">Indeks UV</div>
-          <div class="uv-date" id="uv-date-loc">${now.toLocaleDateString('id-ID', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
+          <div class="uv-date">${now.toLocaleDateString('id-ID', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
         </div>
         <div class="uv-gauge-wrap">
           <div class="uv-gauge">
@@ -140,8 +124,11 @@ export function renderSunscreenAlarm() {
           ${icons.bell}
           <span>Pengingat Berikutnya</span>
         </div>
-        <div class="alarm-countdown" id="countdown">02:00:00</div>
-        <div class="alarm-next-text">Oles ulang sunscreen pukul 15:00</div>
+        <div class="alarm-countdown" id="countdown">--:--:--</div>
+        <div class="alarm-next-text" id="alarm-next-text">Menghitung jadwal...</div>
+        <button class="btn btn-outline" id="btn-test-alarm" style="margin-top: 12px; width: 100%; border-color: rgba(255,255,255,0.4); color: white; padding: 8px; font-size: 0.85rem; border-radius: var(--radius-md); background: rgba(255,255,255,0.1); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          🔔 Tes Bunyi Alarm
+        </button>
       </div>
     </div>
 
@@ -154,66 +141,167 @@ export function renderSunscreenAlarm() {
 
   // Back button
   page.querySelector('#back-btn').addEventListener('click', () => {
-    clearInterval(timerInterval);
     window.location.hash = '#/';
   });
 
-  // Timeline
-  const container = page.querySelector('#timeline-container');
-  timelineData.forEach(item => {
-    const el = document.createElement('div');
-    el.className = `timeline-item ${item.state}`;
-    el.innerHTML = `
-      <div class="tl-time">${item.time}</div>
-      <div class="tl-label">${item.label}</div>
-      ${item.status !== 'upcoming' ? `<div class="tl-status ${item.status}">${item.status === 'applied' ? '✓ Sudah' : '⏳ Menunggu'}</div>` : ''}
-    `;
-    container.appendChild(el);
+  // Render timeline dynamically based on current time
+  function renderTimeline() {
+    const container = page.querySelector('#timeline-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const d = new Date();
+    const currentMins = d.getHours() * 60 + d.getMinutes();
+    
+    const schedules = getSchedulesForInterval(currentInterval);
+
+    let foundCurrent = false;
+    schedules.forEach(item => {
+      let status, state;
+      if (item.mins <= currentMins) {
+        status = 'applied';
+        state = 'done';
+      } else if (!foundCurrent) {
+        status = 'pending';
+        state = 'current';
+        foundCurrent = true;
+      } else {
+        status = 'upcoming';
+        state = 'upcoming';
+      }
+
+      const el = document.createElement('div');
+      el.className = `timeline-item ${state}`;
+      el.innerHTML = `
+        <div class="tl-time">${item.timeStr}</div>
+        <div class="tl-label">${item.label}</div>
+        ${status !== 'upcoming' ? `<div class="tl-status ${status}">${status === 'applied' ? '✓ Sudah' : '⏳ Menunggu'}</div>` : ''}
+      `;
+      container.appendChild(el);
+    });
+  }
+
+  // Initial timeline render
+  renderTimeline();
+
+  // Web Audio API Alarm sound synthesizer (Retro Digital Alarm Sound)
+  function playAlarmSound() {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      let count = 0;
+      
+      const interval = setInterval(() => {
+        if (count >= 5) { // Beep 5 times
+          clearInterval(interval);
+          setTimeout(() => audioCtx.close(), 1000);
+          return;
+        }
+        
+        // Dual beep helper
+        const playBeep = (delay) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880.00, audioCtx.currentTime + delay); // A5 note
+          
+          gain.gain.setValueAtTime(0, audioCtx.currentTime + delay);
+          gain.gain.linearRampToValueAtTime(0.25, audioCtx.currentTime + delay + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + delay + 0.15);
+          
+          osc.start(audioCtx.currentTime + delay);
+          osc.stop(audioCtx.currentTime + delay + 0.18);
+        };
+        
+        playBeep(0);
+        playBeep(0.18);
+        
+        count++;
+      }, 800);
+    } catch (e) {
+      console.error("Gagal memutar suara alarm:", e);
+    }
+  }
+
+  // Test alarm button listener
+  page.querySelector('#btn-test-alarm').addEventListener('click', (e) => {
+    e.stopPropagation();
+    playAlarmSound();
+    
+    // Show toast for testing
+    const toast = page.querySelector('#toast');
+    if (toast) {
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
   });
 
   // Reminder chips
-  let seconds = 7200;
   page.querySelectorAll('.reminder-chip').forEach(chip => {
     chip.addEventListener('click', () => {
-      page.querySelectorAll('.reminder-chip').forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
+      const nextTextEl = page.querySelector('#alarm-next-text');
       const interval = chip.dataset.interval;
+      
       if (interval === 'custom') {
-        const mins = prompt('Berapa menit interval pengingat?');
-        if (mins && !isNaN(mins)) seconds = parseInt(mins) * 60;
+        const hrsInput = prompt("Berapa jam interval pengingat?");
+        const hrs = parseInt(hrsInput);
+        if (hrs && !isNaN(hrs) && hrs > 0) {
+          currentInterval = hrs;
+          page.querySelectorAll('.reminder-chip').forEach(c => {
+            c.classList.remove('active');
+            if (c.dataset.interval === 'custom') {
+              c.textContent = `${hrs} jam`;
+            } else {
+              const baseInt = c.dataset.interval;
+              c.textContent = `${baseInt} jam`;
+            }
+          });
+          chip.classList.add('active');
+        } else {
+          return;
+        }
       } else {
-        seconds = parseInt(interval) * 3600;
+        currentInterval = parseInt(interval);
+        page.querySelectorAll('.reminder-chip').forEach(c => {
+          c.classList.remove('active');
+          if (c.dataset.interval === 'custom') {
+            c.textContent = 'Kustom';
+          } else {
+            const baseInt = c.dataset.interval;
+            c.textContent = `${baseInt} jam`;
+          }
+        });
+        chip.classList.add('active');
+      }
+
+      renderTimeline();
+      const next = getNextSchedule();
+      seconds = getSecondsRemaining(next);
+      if (nextTextEl) {
+        nextTextEl.textContent = `Oles ulang sunscreen pukul ${next.timeStr}${next.isTomorrow ? ' (Besok)' : ''}`;
       }
     });
   });
 
-  // Fetch real UV dari OpenUV API + lokasi GPS
-  getLocation().then(({ lat, lng, city }) => {
-    // Update tanggal + lokasi di header UV
-    const dateEl = page.querySelector('#uv-date-loc');
-    if (dateEl) {
-      dateEl.textContent = `${now.toLocaleDateString('id-ID', { weekday: 'short', month: 'short', day: 'numeric' })} · 📍 ${city}`;
-    }
-
-    return fetchOpenUV(lat, lng);
-  }).then(data => {
-    const uvIndex = data.result.uv;
+  // Fetch real weather and animate gauge
+  fetchWeather().then(w => {
+    if (!w) return;
+    const uvIndex = w.uvIndex;
     const isHighUv = uvIndex >= 6;
-
+    
     const levelText = page.querySelector('#uv-level-text');
     const levelDesc = page.querySelector('#uv-level-desc');
-
+    
     if (levelText) {
-      levelText.textContent = uvIndex >= 11 ? 'Ekstrem'
-        : uvIndex >= 8 ? 'Sangat Tinggi'
-        : isHighUv ? 'Tinggi'
-        : uvIndex >= 3 ? 'Sedang' : 'Rendah';
+      levelText.textContent = isHighUv ? 'Tinggi' : (uvIndex >= 3 ? 'Sedang' : 'Rendah');
       levelText.style.color = isHighUv ? '#EF4444' : (uvIndex >= 3 ? '#F59E0B' : '#10B981');
     }
-
+    
     if (levelDesc) {
-      levelDesc.textContent = isHighUv
-        ? 'Perlindungan diperlukan. Gunakan sunscreen SPF 30+ setiap 2 jam.'
+      levelDesc.textContent = isHighUv 
+        ? 'Perlindungan diperlukan. Gunakan sunscreen SPF 30+ setiap 2 jam.' 
         : (uvIndex >= 3 ? 'Gunakan sunscreen jika beraktivitas di luar.' : 'Indeks UV aman. Perlindungan ringan cukup.');
     }
 
@@ -223,7 +311,14 @@ export function renderSunscreenAlarm() {
       const percent = Math.min(uvIndex / 11, 1);
       const offset = 251 - (251 * percent);
       fill.style.strokeDashoffset = offset;
-      fill.style.stroke = isHighUv ? '#EF4444' : (uvIndex >= 3 ? '#F59E0B' : '#10B981');
+      
+      if (isHighUv) {
+        fill.style.stroke = '#EF4444';
+      } else if (uvIndex >= 3) {
+        fill.style.stroke = '#F59E0B';
+      } else {
+        fill.style.stroke = '#10B981';
+      }
 
       let current = 0;
       const step = (uvIndex || 1) / 20;
@@ -233,17 +328,17 @@ export function renderSunscreenAlarm() {
         num.textContent = Math.round(current);
       }, 40);
     }
-  }).catch(err => {
-    console.error('Gagal memuat UV:', err);
-    const levelText = page.querySelector('#uv-level-text');
-    const levelDesc = page.querySelector('#uv-level-desc');
-    if (levelText) levelText.textContent = 'Gagal memuat';
-    if (levelDesc) levelDesc.textContent = 'Periksa koneksi internet.';
-  });
+  }).catch(err => console.error('Gagal memuat UV:', err));
+
+  // Initialize countdown labels
+  const nextTextEl = page.querySelector('#alarm-next-text');
+  if (nextTextEl) {
+    nextTextEl.textContent = `Oles ulang sunscreen pukul ${initialSchedule.timeStr}${initialSchedule.isTomorrow ? ' (Besok)' : ''}`;
+  }
 
   // Countdown timer
   const countdownEl = page.querySelector('#countdown');
-
+  
   const timerInterval = setInterval(() => {
     if (seconds > 0) {
       seconds--;
@@ -254,35 +349,53 @@ export function renderSunscreenAlarm() {
         countdownEl.textContent = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
       }
     } else {
-      clearInterval(timerInterval);
+      // Time is up!
+      playAlarmSound();
       showAlarmPopup();
+      
+      // Update timeline status dynamically since a slot just passed
+      renderTimeline();
+      
+      // Recalculate next schedule
+      const next = getNextSchedule();
+      seconds = getSecondsRemaining(next);
+      if (nextTextEl) {
+        nextTextEl.textContent = `Oles ulang sunscreen pukul ${next.timeStr}${next.isTomorrow ? ' (Besok)' : ''}`;
+      }
     }
   }, 1000);
 
   function showAlarmPopup() {
+    // Prevent duplicate overlays
+    const existing = document.querySelector('.alarm-popup-overlay');
+    if (existing) existing.remove();
+
     const overlay = document.createElement('div');
-    overlay.className = 'diary-modal-overlay';
+    overlay.className = 'diary-modal-overlay alarm-popup-overlay';
     overlay.innerHTML = `
       <div class="diary-modal" style="text-align:center;">
         <div class="modal-handle"></div>
-        <div style="font-size: 3rem; margin-bottom: 10px;">☀️</div>
+        <div style="font-size: 3.5rem; margin-bottom: 15px; animation: pulse 1s infinite alternate;">☀️</div>
         <h2 style="margin-bottom: 10px; color: #F43F5E;">Waktunya Re-apply!</h2>
-        <p style="color: var(--text-secondary); margin-bottom: 20px;">Indeks UV sedang tinggi. Segera oleskan ulang sunscreen-mu untuk perlindungan maksimal.</p>
-        <button class="btn btn-primary" id="btn-done-reapply" style="width: 100%; margin-bottom: 10px; background: #F43F5E;">Sudah Re-apply</button>
-        <button class="btn btn-outline" id="btn-snooze" style="width: 100%;">Ingatkan 10 menit lagi</button>
+        <p style="color: var(--text-secondary); margin-bottom: 20px; line-height: 1.5;">Indeks UV saat ini memerlukan perlindungan aktif. Segera oleskan ulang sunscreen-mu untuk menjaga kulit dari sinar matahari.</p>
+        <button class="btn btn-primary" id="btn-done-reapply" style="width: 100%; margin-bottom: 10px; background: #F43F5E; border: none; padding: 12px; font-weight: 600; border-radius: var(--radius-md); color: white; cursor: pointer;">Sudah Re-apply</button>
+        <button class="btn btn-outline" id="btn-snooze" style="width: 100%; padding: 12px; font-weight: 600; border-radius: var(--radius-md); cursor: pointer;">Ingatkan 10 menit lagi</button>
       </div>
     `;
-
+    
     overlay.querySelector('#btn-done-reapply').addEventListener('click', () => {
       overlay.remove();
-      seconds = 7200;
+      // Recalculate and reset
+      const next = getNextSchedule();
+      seconds = getSecondsRemaining(next);
+      renderTimeline();
     });
-
+    
     overlay.querySelector('#btn-snooze').addEventListener('click', () => {
       overlay.remove();
-      seconds = 600;
+      seconds = 600; // snooze for 10 minutes
     });
-
+    
     document.body.appendChild(overlay);
   }
 

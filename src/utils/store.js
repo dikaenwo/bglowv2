@@ -62,3 +62,18 @@ export function saveStreak(streak) {
 export function clearUserData() {
   // Obsolete: Data is now scoped per-user. We don't delete it.
 }
+
+export async function syncUserData(fields) {
+  const userId = getUserId();
+  if (userId && userId !== 'guest') {
+    try {
+      await fetch(`http://localhost:8000/api/user/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(fields)
+      });
+    } catch (e) {
+      console.error("Gagal sinkronisasi data ke server:", e);
+    }
+  }
+}

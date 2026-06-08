@@ -19,50 +19,58 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 12px 16px;
-  border-radius: var(--radius-lg);
-  background: var(--bg-soft);
-  border: 1.5px solid transparent;
-  min-width: 76px;
+  gap: var(--space-xs);
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  min-width: 68px;
   flex-shrink: 0;
   transition: all var(--duration-fast) var(--ease-smooth);
   cursor: pointer;
+  opacity: 0.55; /* Faded/inactive by default */
+  color: #64748B; /* Inactive label color */
+}
+
+/* Tema warna label aktif untuk setiap kategori */
+.reco-cat.cat-cleanser { --cat-theme-color: #2563EB; }
+.reco-cat.cat-moisturizer { --cat-theme-color: #059669; }
+.reco-cat.cat-serum { --cat-theme-color: #7C3AED; }
+.reco-cat.cat-sunscreen { --cat-theme-color: #D97706; }
+.reco-cat.cat-exfoliation { --cat-theme-color: #DB2777; }
+
+/* Status aktif (terang & warna-warni) */
+.reco-cat.active {
+  opacity: 1;
+  color: var(--cat-theme-color);
 }
 
 .reco-cat .cat-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-md);
+  width: 52px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.3rem;
-  background: var(--bg);
+  background: transparent;
   transition: all var(--duration-fast) var(--ease-smooth);
 }
 
+.reco-cat .cat-icon svg {
+  width: 100%;
+  height: 100%;
+  transition: transform var(--duration-fast) var(--ease-spring);
+}
+
+.reco-cat:hover .cat-icon svg {
+  transform: translateY(-2px) scale(1.05);
+}
+
 .reco-cat .cat-label {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
-  color: var(--text-tertiary);
+  color: inherit;
   text-align: center;
   white-space: nowrap;
-}
-
-.reco-cat.active {
-  background: var(--bg-overlay);
-  border-color: var(--primary);
-}
-
-.reco-cat.active .cat-icon {
-  background: var(--primary);
-  color: white;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-
-.reco-cat.active .cat-label {
-  color: var(--primary);
+  transition: color var(--duration-fast);
 }
 
 /* ─── Price Filter Bar ─── */

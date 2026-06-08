@@ -4,18 +4,174 @@ import { getRoutine, saveRoutine, getSpecialSchedule, saveSpecialSchedule, getPr
 const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 const dayShort = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
 
+const cleanserIcon = `
+<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M12 12 H26 L23 48 H15 L12 12 Z" fill="#DBEAFE" stroke="#2563EB" stroke-width="2.5" stroke-linejoin="round" />
+  <path d="M14 20 H24" stroke="#2563EB" stroke-width="2" />
+  <rect x="16" y="28" width="6" height="8" fill="white" stroke="#2563EB" stroke-width="1.8" />
+  <rect x="17" y="48" width="4" height="6" fill="#93C5FD" stroke="#2563EB" stroke-width="1.8" />
+  <rect x="25" y="32" width="26" height="22" rx="4" fill="#DBEAFE" stroke="#2563EB" stroke-width="2.5" />
+  <rect x="28" y="26" width="20" height="6" rx="1.5" fill="#93C5FD" stroke="#2563EB" stroke-width="2.5" />
+  <path d="M30 26 C30 20, 36 18, 38 22 C40 18, 46 20, 46 26" fill="#93C5FD" stroke="#2563EB" stroke-width="2" stroke-linecap="round" />
+  <circle cx="38" cy="43" r="3" fill="white" stroke="#2563EB" stroke-width="1.8" />
+</svg>
+`;
+
+const moisturizerIcon = `
+<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g transform="translate(38, 12) rotate(30)">
+    <rect x="-14" y="-3" width="28" height="6" rx="1.5" fill="#6EE7B7" stroke="#059669" stroke-width="2.5" />
+  </g>
+  <path d="M22 34 C18 24, 38 18, 44 24 C50 18, 56 24, 52 34 Z" fill="#D1FAE5" stroke="#059669" stroke-width="2.5" stroke-linejoin="round" />
+  <rect x="14" y="34" width="36" height="24" rx="5" fill="#D1FAE5" stroke="#059669" stroke-width="2.5" />
+  <rect x="18" y="28" width="28" height="6" rx="1" fill="#6EE7B7" stroke="#059669" stroke-width="2.5" />
+  <line x1="24" y1="46" x2="40" y2="46" stroke="#059669" stroke-width="2" stroke-linecap="round" />
+</svg>
+`;
+
+const serumIcon = `
+<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="25" y="16" width="14" height="8" rx="2" fill="#C4B5FD" stroke="#7C3AED" stroke-width="2.5" />
+  <path d="M29 16 L29 10 C29 7, 35 7, 35 10 L35 16" fill="#EDE9FE" stroke="#7C3AED" stroke-width="2.5" />
+  <path d="M19 28 C19 24, 45 24, 45 28 L45 56 C45 60, 19 60, 19 56 Z" fill="#EDE9FE" stroke="#7C3AED" stroke-width="2.5" stroke-linejoin="round" />
+  <rect x="22" y="24" width="20" height="4" fill="#C4B5FD" stroke="#7C3AED" stroke-width="2" />
+  <g transform="translate(36, 38)">
+    <path d="M8 8 Q18 0, 20 14 Q10 18, 8 8 Z" fill="#C4B5FD" stroke="#7C3AED" stroke-width="2" stroke-linejoin="round" />
+    <path d="M8 8 L16 12" stroke="#7C3AED" stroke-width="1.5" />
+    <path d="M0 18 Q12 12, 18 22 Q6 28, 0 18 Z" fill="#C4B5FD" stroke="#7C3AED" stroke-width="2" stroke-linejoin="round" />
+    <path d="M0 18 L12 22" stroke="#7C3AED" stroke-width="1.5" />
+  </g>
+</svg>
+`;
+
+const sunscreenIcon = `
+<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="20" y="14" width="24" height="7" rx="1.5" fill="#FCD34D" stroke="#D97706" stroke-width="2.5" />
+  <rect x="15" y="21" width="34" height="32" rx="6" fill="#FEF3C7" stroke="#D97706" stroke-width="2.5" />
+  <g transform="translate(32, 38)">
+    <path d="M-4 6 L4 -6" stroke="#D97706" stroke-width="2" stroke-linecap="round" />
+    <path d="M-3 0 Q-10 -4, -7 -10 Q-1 -7, -3 0 Z" fill="#FCD34D" stroke="#D97706" stroke-width="1.8" />
+    <path d="M1 -2 Q8 -6, 9 0 Q2 3, 1 -2 Z" fill="#FCD34D" stroke="#D97706" stroke-width="1.8" />
+  </g>
+</svg>
+`;
+
+const exfoliationIcon = `
+<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M12 18 L28 21 L22 56 L11 54 Z" fill="#F9A8D4" stroke="#DB2777" stroke-width="2.5" stroke-linejoin="round" />
+  <line x1="12" y1="26" x2="26" y2="29" stroke="#DB2777" stroke-width="2" />
+  <ellipse cx="44" cy="42" rx="17" ry="18" fill="#FCE7F3" stroke="#DB2777" stroke-width="2.5" />
+  <ellipse cx="37" cy="39" rx="3" ry="2" fill="white" stroke="#DB2777" stroke-width="1.8" />
+  <ellipse cx="51" cy="39" rx="3" ry="2" fill="white" stroke="#DB2777" stroke-width="1.8" />
+  <ellipse cx="44" cy="51" rx="3" ry="1.5" fill="white" stroke="#DB2777" stroke-width="1.8" />
+</svg>
+`;
+
+const tonerIcon = `
+<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="24" y="20" width="16" height="36" rx="3" fill="#D1FAE5" stroke="#059669" stroke-width="2.5" />
+  <rect x="29" y="12" width="6" height="8" fill="#6EE7B7" stroke="#059669" stroke-width="2.5" />
+  <path d="M32 30 C35 34, 35 40, 32 44 C29 40, 29 34, 32 30 Z" fill="#6EE7B7" stroke="#059669" stroke-width="1.8" />
+  <path d="M32 34 L32 42" stroke="#059669" stroke-width="1.5" />
+</svg>
+`;
+
+const maskerIcon = `
+<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="32" cy="32" r="22" fill="#EDE9FE" stroke="#8B5CF6" stroke-width="2.5" />
+  <ellipse cx="24" cy="28" rx="4" ry="3" fill="white" stroke="#8B5CF6" stroke-width="2" />
+  <ellipse cx="40" cy="28" rx="4" ry="3" fill="white" stroke="#8B5CF6" stroke-width="2" />
+  <path d="M26 42 Q32 46, 38 42" stroke="#8B5CF6" stroke-width="2.5" stroke-linecap="round" />
+  <path d="M44 44 L54 34" stroke="#8B5CF6" stroke-width="2.5" stroke-linecap="round" />
+  <circle cx="54" cy="34" r="2.5" fill="#C4B5FD" stroke="#8B5CF6" stroke-width="2" />
+</svg>
+`;
+
+const retinolIcon = `
+<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="22" y="22" width="20" height="34" rx="4" fill="#E0E7FF" stroke="#4F46E5" stroke-width="2.5" />
+  <rect x="26" y="14" width="12" height="8" rx="1.5" fill="#C7D2FE" stroke="#4F46E5" stroke-width="2.5" />
+  <path d="M30 30 C34 30, 36 34, 34 38 C31 38, 30 35, 30 32 Z" fill="#FCD34D" stroke="#4F46E5" stroke-width="1.8" />
+  <path d="M14 24 L16 26 L14 28 L12 26 Z" fill="#FCD34D" />
+  <path d="M48 44 L50 46 L48 48 L46 46 Z" fill="#FCD34D" />
+</svg>
+`;
+
+const eyeCreamIcon = `
+<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g transform="translate(10, 48) rotate(-45)">
+    <path d="M0 0 L10 -36 L26 -36 L36 0 Z" fill="#ECFEFF" stroke="#0891B2" stroke-width="2.5" stroke-linejoin="round" />
+    <rect x="10" y="-42" width="16" height="6" fill="#67E8F9" stroke="#0891B2" stroke-width="2.5" />
+  </g>
+  <path d="M36 24 C40 18, 52 18, 56 24 C52 30, 40 30, 36 24 Z" fill="white" stroke="#0891B2" stroke-width="2" />
+  <circle cx="46" cy="24" r="3" fill="#67E8F9" stroke="#0891B2" stroke-width="1.8" />
+</svg>
+`;
+
+const lainnyaIcon = `
+<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="18" y="28" width="28" height="24" rx="4" fill="#F1F5F9" stroke="#475569" stroke-width="2.5" />
+  <rect x="22" y="20" width="20" height="8" rx="1.5" fill="#CBD5E1" stroke="#475569" stroke-width="2.5" />
+  <path d="M12 16 L14 18 L12 20 L10 18 Z" fill="#475569" />
+  <path d="M50 20 L52 22 L50 24 L48 22 Z" fill="#475569" />
+  <path d="M46 12 L48 14 L46 16 L44 14 Z" fill="#475569" />
+</svg>
+`;
+
 const stepTypes = [
-  { label: 'Pembersih', emoji: '🧴', bg: '#E3F2FD' },
-  { label: 'Toner', emoji: '🌿', bg: '#E8F5E9' },
-  { label: 'Serum', emoji: '✨', bg: '#FFF3E0' },
-  { label: 'Pelembap', emoji: '💧', bg: '#E1F5FE' },
-  { label: 'Tabir Surya', emoji: '☀️', bg: '#FFF9C4' },
-  { label: 'Masker', emoji: '🎭', bg: '#F3E5F5' },
-  { label: 'Exfoliator', emoji: '🌟', bg: '#FBE9E7' },
-  { label: 'Retinol', emoji: '🌙', bg: '#EDE7F6' },
-  { label: 'Eye Cream', emoji: '👁️', bg: '#E0F7FA' },
-  { label: 'Lainnya', emoji: '✨', bg: '#F5F5F5' },
+  { label: 'Pembersih', icon: cleanserIcon, emoji: '🧴', bg: '#E3F2FD' },
+  { label: 'Toner', icon: tonerIcon, emoji: '🌿', bg: '#E8F5E9' },
+  { label: 'Serum', icon: serumIcon, emoji: '✨', bg: '#FFF3E0' },
+  { label: 'Pelembap', icon: moisturizerIcon, emoji: '💧', bg: '#E1F5FE' },
+  { label: 'Tabir Surya', icon: sunscreenIcon, emoji: '☀️', bg: '#FFF9C4' },
+  { label: 'Masker', icon: maskerIcon, emoji: '🎭', bg: '#F3E5F5' },
+  { label: 'Exfoliator', icon: exfoliationIcon, emoji: '🌟', bg: '#FBE9E7' },
+  { label: 'Retinol', icon: retinolIcon, emoji: '🌙', bg: '#EDE7F6' },
+  { label: 'Eye Cream', icon: eyeCreamIcon, emoji: '👁️', bg: '#E0F7FA' },
+  { label: 'Lainnya', icon: lainnyaIcon, emoji: '✨', bg: '#F5F5F5' },
 ];
+
+function getStepIcon(label, fallbackEmoji, productName = '') {
+  let matchedLabel = label;
+
+  const labelLower = (label || '').toLowerCase();
+  const nameLower = (productName || '').toLowerCase();
+
+  if (labelLower === 'produk baru' || labelLower === 'produk' || labelLower === 'new product') {
+    if (nameLower.includes('cleanser') || nameLower.includes('cleanse') || fallbackEmoji === '🧴' || fallbackEmoji === '🫧') {
+      matchedLabel = 'Pembersih';
+    } else if (nameLower.includes('moisture') || nameLower.includes('pelembab') || nameLower.includes('cream') || nameLower.includes('gel') || fallbackEmoji === '🪴' || fallbackEmoji === '💧' || fallbackEmoji === '🐌') {
+      matchedLabel = 'Pelembap';
+    } else if (nameLower.includes('serum') || nameLower.includes('ampoule') || fallbackEmoji === '✨' || fallbackEmoji === '⚗️') {
+      matchedLabel = 'Serum';
+    } else if (nameLower.includes('sun') || nameLower.includes('spf') || nameLower.includes('uv') || fallbackEmoji === '☀️' || fallbackEmoji === '🌊' || fallbackEmoji === '🛡️' || fallbackEmoji === '🪞') {
+      matchedLabel = 'Tabir Surya';
+    } else if (nameLower.includes('toner') || nameLower.includes('essence') || fallbackEmoji === '🌿' || fallbackEmoji === '🍃' || fallbackEmoji === '🌱' || fallbackEmoji === '🍚') {
+      matchedLabel = 'Toner';
+    } else if (nameLower.includes('mask') || fallbackEmoji === '🎭') {
+      matchedLabel = 'Masker';
+    } else if (nameLower.includes('exfoliat') || nameLower.includes('aha') || nameLower.includes('bha') || fallbackEmoji === '🌟') {
+      matchedLabel = 'Exfoliator';
+    } else if (nameLower.includes('retinol') || fallbackEmoji === '🌙') {
+      matchedLabel = 'Retinol';
+    } else if (nameLower.includes('eye') || fallbackEmoji === '👁️') {
+      matchedLabel = 'Eye Cream';
+    }
+  } else {
+    if (labelLower === 'cleansers' || labelLower === 'pembersih') {
+      matchedLabel = 'Pembersih';
+    } else if (labelLower === 'pelembab' || labelLower === 'pelembap' || labelLower === 'moisturizer') {
+      matchedLabel = 'Pelembap';
+    } else if (labelLower === 'tabir surya' || labelLower === 'sunscreen') {
+      matchedLabel = 'Tabir Surya';
+    } else if (labelLower === 'eksfoliasi' || labelLower === 'exfoliator') {
+      matchedLabel = 'Exfoliator';
+    }
+  }
+
+  const type = stepTypes.find(t => t.label === matchedLabel);
+  return type ? type.icon : fallbackEmoji;
+}
 
 export function renderRoutine() {
   const page = document.createElement('div');
@@ -23,7 +179,6 @@ export function renderRoutine() {
 
   const today = new Date();
   let selectedDay = today.getDay();
-  let currentTime = today.getHours() < 15 ? 'morning' : 'night';
 
   function getStepsForDay(dayIdx, time) {
     const routine = getRoutine();
@@ -44,6 +199,15 @@ export function renderRoutine() {
       });
     }
     return base;
+  }
+
+  const morningSteps = getStepsForDay(today.getDay(), 'morning');
+  const progressData = getProgress();
+  const morningDone = morningSteps.length === 0 || (progressData.morning && progressData.morning.length === morningSteps.length);
+
+  let currentTime = today.getHours() < 15 ? 'morning' : 'night';
+  if (currentTime === 'night' && !morningDone) {
+    currentTime = 'morning';
   }
 
   function getSteps() {
@@ -73,6 +237,36 @@ export function renderRoutine() {
     return progress[currentTime] || [];
   }
 
+  function checkStreakStatus() {
+    const progress = getProgress();
+    const morningSteps = getStepsForDay(today.getDay(), 'morning');
+    const nightSteps = getStepsForDay(today.getDay(), 'night');
+    
+    const morningDone = morningSteps.length === 0 || (progress.morning && progress.morning.length === morningSteps.length);
+    const nightDone = nightSteps.length === 0 || (progress.night && progress.night.length === nightSteps.length);
+    const hasAnySteps = morningSteps.length > 0 || nightSteps.length > 0;
+    
+    const isBothDone = morningDone && nightDone && hasAnySteps;
+    
+    const streak = getStreak();
+    const todayIdx = today.getDay();
+    const wasStreakDone = streak.completedDays[todayIdx];
+    
+    if (isBothDone && !wasStreakDone) {
+      streak.completedDays[todayIdx] = true;
+      streak.current += 1;
+      if (streak.current > streak.best) streak.best = streak.current;
+      saveStreak(streak);
+      setTimeout(() => {
+        showCompletionPopup();
+      }, 500);
+    } else if (!isBothDone && wasStreakDone) {
+      streak.completedDays[todayIdx] = false;
+      streak.current = Math.max(0, streak.current - 1);
+      saveStreak(streak);
+    }
+  }
+
   function toggleStep(idx) {
     const progress = getProgress();
     if (!progress[currentTime]) progress[currentTime] = [];
@@ -85,22 +279,7 @@ export function renderRoutine() {
     }
     saveProgress(progress);
     
-    // Check if 100%
-    const steps = getSteps();
-    if (progress[currentTime].length === steps.length && steps.length > 0 && !wasDone) {
-      const streak = getStreak();
-      const todayIdx = today.getDay();
-      if (!streak.completedDays[todayIdx]) {
-        streak.completedDays[todayIdx] = true;
-        streak.current += 1;
-        if (streak.current > streak.best) streak.best = streak.current;
-        saveStreak(streak);
-      }
-      setTimeout(() => {
-        showCompletionPopup();
-      }, 500);
-    }
-    
+    checkStreakStatus();
     render();
   }
 
@@ -167,6 +346,7 @@ export function renderRoutine() {
     progress[currentTime] = [];
     saveProgress(progress);
     
+    checkStreakStatus();
     render();
   }
 
@@ -222,7 +402,7 @@ export function renderRoutine() {
           <div class="step-type-grid">
             ${stepTypes.map((t, i) => `
               <button class="step-type-chip" data-idx="${i}">
-                <span class="stc-emoji">${t.emoji}</span>
+                <div class="stc-icon">${t.icon}</div>
                 <span class="stc-label">${t.label}</span>
               </button>
             `).join('')}
@@ -389,12 +569,15 @@ export function renderRoutine() {
 
         <!-- Weekly Day Selector -->
         <div class="week-selector anim-fade-in-up anim-delay-1">
-          ${dayShort.map((d, i) => `
-            <button class="week-day ${i === selectedDay ? 'active' : ''} ${i === today.getDay() ? 'is-today' : ''}" data-day="${i}">
-              <span class="wd-name">${d}</span>
-              ${hasSpecial(i) ? '<span class="wd-special-dot"></span>' : ''}
-            </button>
-          `).join('')}
+          ${dayShort.map((d, i) => {
+            const isFuture = i > today.getDay();
+            return `
+              <button class="week-day ${i === selectedDay ? 'active' : ''} ${i === today.getDay() ? 'is-today' : ''} ${isFuture ? 'disabled' : ''}" data-day="${i}" ${isFuture ? 'disabled' : ''}>
+                <span class="wd-name">${d}</span>
+                ${hasSpecial(i) ? '<span class="wd-special-dot"></span>' : ''}
+              </button>
+            `;
+          }).join('')}
         </div>
 
         <!-- Day Info -->
@@ -442,7 +625,7 @@ export function renderRoutine() {
             const isSpecial = s._source === 'special';
             return `
             <div class="routine-step ${isDone ? 'done' : ''} ${isSpecial ? 'special-step' : ''}" data-idx="${i}">
-              <div class="rs-icon" style="background:${s.bg || '#E3F2FD'}">${s.emoji || '🧴'}</div>
+              <div class="rs-icon" style="background:${s.bg || '#E3F2FD'}">${getStepIcon(s.label, s.emoji || '🧴', s.product)}</div>
               <div class="rs-info">
                 <div class="rs-step-label">
                   Langkah ${i + 1} — ${s.label}
@@ -476,11 +659,32 @@ export function renderRoutine() {
     `;
 
     page.querySelectorAll('.week-day').forEach(btn => {
-      btn.addEventListener('click', () => { selectedDay = parseInt(btn.dataset.day); render(); });
+      btn.addEventListener('click', () => {
+        const day = parseInt(btn.dataset.day);
+        if (day > today.getDay()) {
+          alert("Anda tidak dapat membuka rutinitas untuk hari berikutnya!");
+          return;
+        }
+        selectedDay = day;
+        render();
+      });
     });
 
     page.querySelectorAll('.routine-toggle-btn').forEach(btn => {
-      btn.addEventListener('click', () => { currentTime = btn.dataset.time; render(); });
+      btn.addEventListener('click', () => {
+        const targetTime = btn.dataset.time;
+        if (targetTime === 'night') {
+          const morningSteps = getStepsForDay(today.getDay(), 'morning');
+          const progress = getProgress();
+          const morningDone = morningSteps.length === 0 || (progress.morning && progress.morning.length === morningSteps.length);
+          if (!morningDone) {
+            alert("Rutinitas pagi belum diselesaikan semua! Selesaikan semua langkah pagi terlebih dahulu sebelum mengakses rutinitas malam.");
+            return;
+          }
+        }
+        currentTime = targetTime;
+        render();
+      });
     });
 
     const btnScan = page.querySelector('#btn-scan-empty');

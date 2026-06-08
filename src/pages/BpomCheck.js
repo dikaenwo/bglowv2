@@ -1,8 +1,5 @@
 import { icons } from '../components/BottomNav.js';
-import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
-
-// ⚙️ Ganti IP ini sesuai IP komputer/server backend kamu di WiFi lokal
-const BACKEND_URL = 'http://10.12.11.96:7000';
+import { Html5Qrcode } from 'html5-qrcode';
 
 // Mock BPOM data
 const bpomData = [
@@ -131,111 +128,40 @@ export function renderBpomCheck() {
     });
   }
 
-  function extractQueryFromScan(rawText) {
-    let text = rawText.trim();
-
-    // 1. Pola nomor registrasi BPOM langsung: NA/NB/NC/ND/NE + 11 digit
-    const nieMatch = text.match(/(N[A-E])[\s\-]?(\d{11})/i);
-    if (nieMatch) {
-      return nieMatch[1].toUpperCase() + nieMatch[2];
-    }
-
-    // 2. URL cekbpom.pom.go.id dengan berbagai format
-    if (text.includes('cekbpom.pom.go.id') || text.includes('pom.go.id')) {
-      try {
-        const urlObj = new URL(text);
-        // Cek query params: query, q, id, no_reg, nomorReg
-        const q = urlObj.searchParams.get('query')
-                || urlObj.searchParams.get('q')
-                || urlObj.searchParams.get('id')
-                || urlObj.searchParams.get('no_reg')
-                || urlObj.searchParams.get('nomorReg')
-                || urlObj.searchParams.get('nomor');
-        if (q) return q.trim();
-
-        // Cek path segments — ambil segment yang cocok NIE pattern atau yang paling belakang
-        const segments = urlObj.pathname.split('/').filter(s => s.length > 0);
-        for (const seg of segments) {
-          const m = seg.match(/(N[A-E])[\s\-]?(\d{11})/i);
-          if (m) return m[1].toUpperCase() + m[2];
-        }
-        // Fallback: segment terakhir
-        if (segments.length > 0) return segments[segments.length - 1];
-      } catch(e) {
-        const parts = text.split('/');
-        return parts[parts.length - 1].split('?')[0] || text;
-      }
-    }
-
-    // 3. URL umum lainnya — coba parse
-    if (text.startsWith('http')) {
-      try {
-        const urlObj = new URL(text);
-        const q = urlObj.searchParams.get('query')
-                || urlObj.searchParams.get('q')
-                || urlObj.searchParams.get('id');
-        if (q) return q.trim();
-        const segments = urlObj.pathname.split('/').filter(s => s.length > 0);
-        if (segments.length > 0) return segments[segments.length - 1];
-      } catch(e) {}
-    }
-
-    // 4. Barcode numerik murni (EAN-13, EAN-8, UPC, CODE-128, dll) — kirim langsung ke BPOM
-    return text;
-  }
-
-  function showScanToast(text) {
-    let toast = page.querySelector('#scan-toast');
-    if (!toast) {
-      toast = document.createElement('div');
-      toast.id = 'scan-toast';
-      toast.style.cssText = `
-        position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
-        background: rgba(30,30,40,0.92); color: #fff;
-        padding: 10px 20px; border-radius: 20px; font-size: 13px;
-        z-index: 9999; max-width: 80%; text-align: center;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.4); backdrop-filter: blur(8px);
-        border: 1px solid rgba(255,255,255,0.15);
-        animation: fadeInUp 0.3s ease;
-      `;
-      page.appendChild(toast);
-    }
-    toast.textContent = `✅ Terdeteksi: ${text.length > 40 ? text.slice(0,37)+'...' : text}`;
-    clearTimeout(toast._timeout);
-    toast._timeout = setTimeout(() => toast.remove(), 3000);
-  }
-
   function startScanner() {
-    const readerEl = page.querySelector('#reader');
-    const readerW = readerEl ? readerEl.offsetWidth : 300;
-    const boxSize = Math.min(Math.floor(readerW * 0.7), 280);
-
-    html5QrCode = new Html5Qrcode("reader", {
-      formatsToSupport: [
-        Html5QrcodeSupportedFormats.QR_CODE,
-        Html5QrcodeSupportedFormats.DATA_MATRIX,
-      ],
-      verbose: false,
-    });
-
-    const config = {
-      fps: 15,
-      qrbox: { width: boxSize, height: boxSize },
-      aspectRatio: 1.0,
-      disableFlip: false,
-    };
+    html5QrCode = new Html5Qrcode("reader");
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
     
-    html5QrCode.start(
-      { facingMode: "environment" },
-      config,
+    html5QrCode.start({ facingMode: "environment" }, config,
       (decodedText, decodedResult) => {
-        const extractedQuery = extractQueryFromScan(decodedText);
-        showScanToast(decodedText);
         stopScanner();
-        setTimeout(() => startSearch(extractedQuery), 500);
+        // Ekstrak nomor registrasi dari URL QR Code BPOM
+        let extractedQuery = decodedText.trim();
+        // Cek pola NA/NB/NC/ND/NE + 11 digit (format registrasi BPOM)
+        const nieMatch = extractedQuery.match(/(N[A-E])[\s\-]?(\d{11})/i);
+        if (nieMatch) {
+          extractedQuery = nieMatch[1].toUpperCase() + nieMatch[2];
+        } else if (extractedQuery.includes('cekbpom.pom.go.id') || extractedQuery.startsWith('http')) {
+          // Ambil segment terakhir dari URL
+          try {
+            const urlObj = new URL(extractedQuery);
+            // Cek query param
+            const q = urlObj.searchParams.get('query') || urlObj.searchParams.get('q') || urlObj.searchParams.get('id');
+            if (q) {
+              extractedQuery = q;
+            } else {
+              const segments = urlObj.pathname.split('/').filter(s => s.length > 0);
+              extractedQuery = segments[segments.length - 1] || extractedQuery;
+            }
+          } catch(e) {
+            const parts = extractedQuery.split('/');
+            extractedQuery = parts[parts.length - 1].split('?')[0] || extractedQuery;
+          }
+        }
+        startSearch(extractedQuery);
       },
       (errorMessage) => {
-        // Scanning in progress — ignore per-frame errors
+        // Scanning...
       }
     ).then(() => {
       const laser = page.querySelector('#laser-line');
@@ -308,7 +234,7 @@ export function renderBpomCheck() {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 detik timeout
 
-    fetch(`${BACKEND_URL}/cekbpom?na=${encodeURIComponent(query)}`, { signal: controller.signal })
+    fetch(`http://10.12.12.87:7000/cekbpom?na=${encodeURIComponent(query)}`, { signal: controller.signal })
       .then(response => {
         clearTimeout(timeoutId);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);

@@ -240,12 +240,41 @@ export function renderSkinScan() {
       renderCamera();
     });
 
-    page.querySelector('#get-reco-btn').addEventListener('click', () => {
-      localStorage.setItem('bglow_has_scanned_' + getUserId(), '1');
+    page.querySelector('#get-reco-btn').addEventListener('click', async () => {
+      const userId = getUserId();
+      localStorage.setItem('bglow_has_scanned_' + userId, '1');
+      
+      // Simpan kondisi lokal
+      localStorage.setItem('bglow_skin_type_' + userId, 'Kombinasi');
+      localStorage.setItem('bglow_acne_level_' + userId, 'Ringan — Grade 1');
+      localStorage.setItem('bglow_oil_level_' + userId, 'Sedang — T-Zone');
+      localStorage.setItem('bglow_pore_condition_' + userId, 'Baik — Minimal');
+      localStorage.setItem('bglow_skin_score_' + userId, '65');
+
       // Increment scan count
-      const countKey = 'bglow_scan_count_' + getUserId();
+      const countKey = 'bglow_scan_count_' + userId;
       const current = parseInt(localStorage.getItem(countKey) || '0');
       localStorage.setItem(countKey, String(current + 1));
+
+      // Kirim hasil scan ke database
+      if (userId && userId !== 'guest') {
+        try {
+          await fetch(`http://localhost:8000/api/user/${userId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              skin_type: 'Kombinasi',
+              acne_level: 'Ringan — Grade 1',
+              oil_level: 'Sedang — T-Zone',
+              pore_condition: 'Baik — Minimal',
+              skin_score: 65
+            })
+          });
+        } catch (e) {
+          console.error("Gagal menyimpan data kulit ke server:", e);
+        }
+      }
+
       window.location.hash = '#/recommendations';
     });
   }

@@ -173,6 +173,10 @@
 .menu-item .mi-icon.amber svg { stroke: #F59E0B; }
 .menu-item .mi-icon.red { background: #FEF2F2; }
 .menu-item .mi-icon.red svg { stroke: #EF4444; }
+.menu-item .mi-icon.purple { background: #F5F3FF; }
+.menu-item .mi-icon.purple svg { stroke: #8B5CF6; }
+.menu-item .mi-icon.gray { background: #F3F4F6; }
+.menu-item .mi-icon.gray svg { stroke: #6B7280; }
 
 .menu-item .mi-text {
   flex: 1;

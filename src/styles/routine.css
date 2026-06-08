@@ -143,6 +143,12 @@
   position: relative;
 }
 
+.week-day.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .week-day .wd-name {
   font-weight: 600;
 }
@@ -409,6 +415,11 @@
   flex-shrink: 0;
 }
 
+.rs-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
 .rs-info {
   flex: 1;
 }
@@ -540,8 +551,17 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
 }
 
-.step-type-chip .stc-emoji {
-  font-size: 1.5rem;
+.step-type-chip .stc-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--duration-fast) var(--ease-spring);
+}
+
+.step-type-chip:hover .stc-icon {
+  transform: translateY(-1px) scale(1.05);
 }
 
 .step-type-chip .stc-label {

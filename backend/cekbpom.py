@@ -7,7 +7,7 @@ import re
 from urllib.parse import unquote
 
 app = Flask(__name__)
-CORS(app, origins="*", supports_credentials=False)
+CORS(app)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

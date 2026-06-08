@@ -15,7 +15,6 @@
     "@capacitor/android": "^8.2.0",
     "@capacitor/cli": "^8.2.0",
     "@capacitor/core": "^8.2.0",
-    "@capacitor/geolocation": "^8.2.0",
     "html5-qrcode": "^2.3.8"
   }
 }
