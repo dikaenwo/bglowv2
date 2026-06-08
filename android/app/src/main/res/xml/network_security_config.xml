@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!--
+        PENTING: Tag <domain> hanya untuk hostname/domain, BUKAN IP address.
+        Untuk mengizinkan HTTP ke IP lokal (10.x.x.x, 192.168.x.x, dll),
+        gunakan <base-config cleartextTrafficPermitted="true"> di bawah.
+    -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
