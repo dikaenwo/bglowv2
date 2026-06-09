@@ -55,129 +55,220 @@ export function randInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+// Inject Premium Popup Styles once at module level
+if (typeof document !== 'undefined' && !document.getElementById('custom-popup-styles')) {
+  const style = document.createElement('style');
+  style.id = 'custom-popup-styles';
+  style.textContent = `
+    @keyframes popupZoom {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .custom-popup-overlay {
+      position: fixed !important;
+      inset: 0 !important;
+      background: rgba(6, 12, 8, 0.82) !important; /* Premium dark forest green translucent overlay */
+      z-index: 99999 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      backdrop-filter: blur(8px);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      padding: 24px !important;
+    }
+    .custom-popup-modal {
+      width: 100% !important;
+      max-width: 360px !important;
+      padding: 36px 28px !important;
+      text-align: center !important;
+      border-radius: 28px !important;
+      background: linear-gradient(145deg, #0e1711, #060a07) !important; /* Premium deep emerald-dark gradient */
+      border: 1px solid rgba(255, 255, 255, 0.08) !important;
+      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.75), inset 0 1px 1px rgba(255, 255, 255, 0.06) !important;
+      color: #ffffff !important;
+      animation: popupZoom 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) both !important;
+      box-sizing: border-box !important;
+    }
+    .custom-popup-modal * {
+      box-sizing: border-box !important;
+    }
+    
+    /* Glowing borders and shadows based on alert type */
+    .custom-popup-modal.success {
+      border-color: rgba(16, 185, 129, 0.3) !important;
+      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.75), 0 0 24px rgba(16, 185, 129, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.06) !important;
+    }
+    .custom-popup-modal.warning {
+      border-color: rgba(245, 158, 11, 0.3) !important;
+      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.75), 0 0 24px rgba(245, 158, 11, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.06) !important;
+    }
+    .custom-popup-modal.info {
+      border-color: rgba(59, 130, 246, 0.3) !important;
+      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.75), 0 0 24px rgba(59, 130, 246, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.06) !important;
+    }
+
+    .custom-popup-icon-wrapper {
+      width: 64px !important;
+      height: 64px !important;
+      border-radius: 50% !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      margin: 0 auto 20px auto !important;
+      font-size: 1.8rem !important;
+    }
+    .custom-popup-icon-wrapper.success {
+      background: rgba(16, 185, 129, 0.12) !important;
+      border: 1px solid rgba(16, 185, 129, 0.3) !important;
+      color: #10b981 !important;
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.25) !important;
+    }
+    .custom-popup-icon-wrapper.warning {
+      background: rgba(245, 158, 11, 0.12) !important;
+      border: 1px solid rgba(245, 158, 11, 0.3) !important;
+      color: #f59e0b !important;
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.25) !important;
+    }
+    .custom-popup-icon-wrapper.info {
+      background: rgba(59, 130, 246, 0.12) !important;
+      border: 1px solid rgba(59, 130, 246, 0.3) !important;
+      color: #3b82f6 !important;
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.25) !important;
+    }
+    
+    .custom-popup-title {
+      margin: 0 0 12px 0 !important;
+      font-size: 1.25rem !important;
+      font-weight: 700 !important;
+      color: #ffffff !important;
+      letter-spacing: -0.3px !important;
+      line-height: 1.3 !important;
+    }
+    .custom-popup-message {
+      color: #cbd5e1 !important;
+      font-size: 0.95rem !important;
+      line-height: 1.6 !important;
+      margin: 0 0 28px 0 !important;
+      white-space: pre-line !important;
+      word-break: break-word !important;
+    }
+    .custom-popup-actions {
+      display: flex !important;
+      gap: 12px !important;
+      width: 100% !important;
+      justify-content: center !important;
+    }
+    
+    .custom-btn-ok {
+      flex: 1 !important;
+      border: none !important;
+      border-radius: 9999px !important;
+      padding: 12px 24px !important;
+      font-size: 0.95rem !important;
+      font-weight: 700 !important;
+      cursor: pointer !important;
+      transition: all 0.2s ease !important;
+      text-transform: none !important;
+      margin: 0 !important;
+    }
+    
+    /* Type specific button coloring */
+    .success .custom-btn-ok {
+      background: #9ee3b4 !important; /* Pastel light green */
+      color: #0c1a10 !important;
+      box-shadow: 0 4px 12px rgba(158, 227, 180, 0.25) !important;
+    }
+    .success .custom-btn-ok:hover {
+      background: #b6f0cb !important;
+      box-shadow: 0 6px 16px rgba(158, 227, 180, 0.4) !important;
+      transform: translateY(-1px) !important;
+    }
+    
+    .warning .custom-btn-ok {
+      background: #fde68a !important; /* Pastel yellow */
+      color: #3b2005 !important;
+      box-shadow: 0 4px 12px rgba(253, 230, 138, 0.25) !important;
+    }
+    .warning .custom-btn-ok:hover {
+      background: #fef08a !important;
+      box-shadow: 0 6px 16px rgba(253, 230, 138, 0.4) !important;
+      transform: translateY(-1px) !important;
+    }
+    
+    .info .custom-btn-ok {
+      background: #bfdbfe !important; /* Pastel blue */
+      color: #08204e !important;
+      box-shadow: 0 4px 12px rgba(191, 219, 254, 0.25) !important;
+    }
+    .info .custom-btn-ok:hover {
+      background: #dbeafe !important;
+      box-shadow: 0 6px 16px rgba(191, 219, 254, 0.4) !important;
+      transform: translateY(-1px) !important;
+    }
+    
+    .custom-btn-ok:active {
+      transform: translateY(1px) !important;
+    }
+    
+    .custom-btn-cancel {
+      flex: 1 !important;
+      background: rgba(255, 255, 255, 0.05) !important;
+      color: #cbd5e1 !important;
+      border: 1px solid rgba(255, 255, 255, 0.12) !important;
+      border-radius: 9999px !important;
+      padding: 12px 24px !important;
+      font-size: 0.95rem !important;
+      font-weight: 600 !important;
+      cursor: pointer !important;
+      transition: all 0.2s ease !important;
+      text-transform: none !important;
+      margin: 0 !important;
+    }
+    .custom-btn-cancel:hover {
+      background: rgba(255, 255, 255, 0.1) !important;
+      color: #ffffff !important;
+      transform: translateY(-1px) !important;
+    }
+    .custom-btn-cancel:active {
+      transform: translateY(1px) !important;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 // ─── Custom Alert Modal ───
 export function showCustomAlert(message, title = 'B-Glow', callback = null) {
   const existing = document.querySelector('.custom-alert-overlay');
   if (existing) existing.remove();
 
-  // Ensure styles are added to head
-  if (!document.getElementById('custom-popup-styles')) {
-    const style = document.createElement('style');
-    style.id = 'custom-popup-styles';
-    style.textContent = `
-      @keyframes popupZoom {
-        from { transform: scale(0.9); opacity: 0; }
-        to { transform: scale(1); opacity: 1; }
-      }
-      .custom-popup-overlay {
-        position: fixed !important;
-        inset: 0 !important;
-        background: rgba(0, 0, 0, 0.6) !important;
-        z-index: 99999 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        backdrop-filter: blur(1px);
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-      }
-      .custom-popup-modal {
-        width: 90% !important;
-        max-width: 440px !important;
-        padding: 32px 32px !important;
-        text-align: left !important;
-        border-radius: 24px !important;
-        background: #0f1811 !important; /* Extra dark green background */
-        border: 1px solid rgba(255, 255, 255, 0.03) !important;
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6) !important;
-        color: #ffffff !important;
-        animation: popupZoom 0.22s cubic-bezier(0.16, 1, 0.3, 1) both !important;
-        overflow: visible !important;
-        box-sizing: border-box !important;
-      }
-      .custom-popup-modal * {
-        box-sizing: border-box !important;
-      }
-      .custom-popup-title {
-        margin: 0 0 28px 0 !important;
-        font-size: 1.15rem !important;
-        font-weight: 700 !important;
-        color: #ffffff !important;
-        letter-spacing: -0.2px !important;
-        line-height: 1.3 !important;
-      }
-      .custom-popup-message {
-        color: #cbd5e1 !important;
-        font-size: 0.95rem !important;
-        line-height: 1.6 !important;
-        margin: 0 0 32px 0 !important;
-        white-space: pre-line !important;
-        word-break: break-word !important;
-      }
-      .custom-popup-actions {
-        display: flex !important;
-        justify-content: flex-end !important;
-        width: 100% !important;
-        gap: 12px !important;
-      }
-      .custom-btn-ok {
-        background: #9ee3b4 !important; /* Pastel light green */
-        color: #0f1810 !important;
-        border: 2px solid #0f1811 !important;
-        outline: 2px solid #9ee3b4 !important;
-        outline-offset: 2px !important;
-        border-radius: 9999px !important;
-        padding: 10px 28px !important;
-        font-size: 0.95rem !important;
-        font-weight: 700 !important;
-        cursor: pointer !important;
-        transition: all 0.15s ease !important;
-        margin-right: 6px !important;
-        margin-bottom: 6px !important;
-        text-transform: none !important;
-      }
-      .custom-btn-ok:hover {
-        background: #b2ebd4 !important;
-        outline-color: #b2ebd4 !important;
-        transform: translateY(-1px) !important;
-      }
-      .custom-btn-ok:active {
-        transform: translateY(1px) !important;
-      }
-      .custom-btn-cancel {
-        background: transparent !important;
-        color: #ffffff !important;
-        border: 2px solid rgba(255, 255, 255, 0.25) !important;
-        border-radius: 9999px !important;
-        padding: 10px 24px !important;
-        font-size: 0.95rem !important;
-        font-weight: 600 !important;
-        cursor: pointer !important;
-        transition: all 0.15s ease !important;
-        text-transform: none !important;
-      }
-      .custom-btn-cancel:hover {
-        border-color: #ffffff !important;
-        background: rgba(255, 255, 255, 0.08) !important;
-        transform: translateY(-1px) !important;
-      }
-      .custom-btn-cancel:active {
-        transform: translateY(1px) !important;
-      }
-    `;
-    document.head.appendChild(style);
+  // Determine icon type based on title/message
+  const title_lower = (title || '').toLowerCase();
+  const msg_lower = (message || '').toLowerCase();
+  
+  let icon_type = 'info';
+  let icon_char = '🔔';
+  
+  if (title_lower.includes('sukses') || title_lower.includes('berhasil') || title_lower.includes('diperbarui') || title_lower.includes('pendaftaran') || msg_lower.includes('berhasil') || msg_lower.includes('sukses')) {
+    icon_type = 'success';
+    icon_char = '✨';
+  } else if (title_lower.includes('gagal') || title_lower.includes('salah') || title_lower.includes('kosong') || title_lower.includes('masalah') || title_lower.includes('kunci') || title_lower.includes('belum') || title_lower.includes('terkunci') || title_lower.includes('batal') || title_lower.includes('peringatan') || msg_lower.includes('gagal') || msg_lower.includes('belum')) {
+    icon_type = 'warning';
+    icon_char = (title_lower.includes('kunci') || title_lower.includes('belum') || title_lower.includes('terkunci') || msg_lower.includes('belum')) ? '🔒' : '⚠️';
   }
-
-  const hostTitle = `${window.location.host || 'localhost'} says`;
 
   const overlay = document.createElement('div');
   overlay.className = 'custom-popup-overlay custom-alert-overlay';
+  
+  // Use subheader if custom title, otherwise default title
+  const displayTitle = title && title !== 'B-Glow' ? title : 'Info';
+
   overlay.innerHTML = `
-    <div class="custom-popup-modal">
-      <h3 class="custom-popup-title">${hostTitle}</h3>
-      <div class="custom-popup-message">
-        ${title && title !== 'B-Glow' ? `<strong style="display: block; font-size: 1.05rem; margin-bottom: 8px; color: #ffffff;">${title}</strong>` : ''}
-        ${message}
+    <div class="custom-popup-modal ${icon_type}">
+      <div class="custom-popup-icon-wrapper ${icon_type}">
+        <span>${icon_char}</span>
       </div>
+      <h3 class="custom-popup-title">${displayTitle}</h3>
+      <div class="custom-popup-message">${message}</div>
       <div class="custom-popup-actions">
         <button class="custom-btn-ok" id="btn-alert-ok">OK</button>
       </div>
@@ -202,22 +293,27 @@ export function showCustomConfirm(message, callback, title = 'Konfirmasi') {
   const existing = document.querySelector('.custom-confirm-overlay');
   if (existing) existing.remove();
 
-  // Make sure style tag exists
-  showCustomAlert('', 'B-Glow');
-  const tempAlert = document.querySelector('.custom-alert-overlay');
-  if (tempAlert) tempAlert.remove();
-
-  const hostTitle = `${window.location.host || 'localhost'} says`;
+  // Determine icon type based on title/message
+  const title_lower = (title || '').toLowerCase();
+  const msg_lower = (message || '').toLowerCase();
+  
+  let icon_type = 'info';
+  let icon_char = '❓';
+  
+  if (title_lower.includes('hapus') || msg_lower.includes('hapus') || title_lower.includes('yakin') || msg_lower.includes('yakin')) {
+    icon_type = 'warning';
+    icon_char = '⚠️';
+  }
 
   const overlay = document.createElement('div');
   overlay.className = 'custom-popup-overlay custom-confirm-overlay';
   overlay.innerHTML = `
-    <div class="custom-popup-modal">
-      <h3 class="custom-popup-title">${hostTitle}</h3>
-      <div class="custom-popup-message">
-        ${title && title !== 'Konfirmasi' && title !== 'B-Glow' ? `<strong style="display: block; font-size: 1.05rem; margin-bottom: 8px; color: #ffffff;">${title}</strong>` : ''}
-        ${message}
+    <div class="custom-popup-modal ${icon_type}">
+      <div class="custom-popup-icon-wrapper ${icon_type}">
+        <span>${icon_char}</span>
       </div>
+      <h3 class="custom-popup-title">${title}</h3>
+      <div class="custom-popup-message">${message}</div>
       <div class="custom-popup-actions">
         <button class="custom-btn-cancel" id="btn-confirm-cancel">Batal</button>
         <button class="custom-btn-ok" id="btn-confirm-ok">OK</button>
