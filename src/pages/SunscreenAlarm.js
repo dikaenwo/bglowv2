@@ -242,6 +242,62 @@ export function renderSunscreenAlarm() {
     }
   });
 
+  // Helper to show a custom interval popup modal instead of browser prompt
+  function showCustomIntervalModal(callback) {
+    const existing = document.querySelector('.custom-interval-overlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'diary-modal-overlay custom-interval-overlay';
+    overlay.innerHTML = `
+      <div class="diary-modal custom-interval-modal anim-fade-in-up" style="max-width: 320px; padding: 24px; text-align: center; border-radius: var(--radius-lg); background: white;">
+        <div class="modal-handle" style="width: 40px; height: 4px; background: var(--border-light); border-radius: var(--radius-full); margin: 0 auto 16px auto;"></div>
+        <div style="font-size: 2.5rem; margin-bottom: 12px; animation: bounce 2s infinite;">⏱️</div>
+        <h3 style="margin-bottom: 8px; font-weight: 700; color: var(--text-primary); font-size: 1.2rem;">Interval Kustom</h3>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 16px; line-height: 1.4;">
+          Berapa jam interval pengingat sunscreen yang Anda inginkan?
+        </p>
+        
+        <input type="number" id="custom-hrs-input" class="auth-input" min="1" max="24" value="${currentInterval !== 2 && currentInterval !== 3 ? currentInterval : 4}" style="text-align: center; font-size: 1.3rem; font-weight: 700; margin-bottom: 20px; padding: 12px; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); width: 100%; box-sizing: border-box; color: var(--primary);" />
+        
+        <div style="display: flex; gap: 12px; width: 100%;">
+          <button class="btn btn-outline" id="btn-custom-cancel" style="flex: 1; padding: 12px; font-size: 0.9rem; font-weight: 600; border-radius: var(--radius-md); cursor: pointer;">Batal</button>
+          <button class="btn btn-primary" id="btn-custom-save" style="flex: 1; padding: 12px; font-size: 0.9rem; font-weight: 600; border-radius: var(--radius-md); cursor: pointer; background: var(--primary); color: white; border: none;">Simpan</button>
+        </div>
+      </div>
+    `;
+
+    overlay.querySelector('#btn-custom-cancel').addEventListener('click', () => {
+      overlay.remove();
+    });
+
+    overlay.querySelector('#btn-custom-save').addEventListener('click', () => {
+      const inputVal = overlay.querySelector('#custom-hrs-input').value;
+      const hrs = parseInt(inputVal);
+      if (hrs && !isNaN(hrs) && hrs > 0) {
+        callback(hrs);
+        overlay.remove();
+      } else {
+        alert("Mohon masukkan angka jam yang valid (minimal 1 jam)!");
+      }
+    });
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) overlay.remove();
+    });
+
+    document.body.appendChild(overlay);
+    
+    // Auto focus and select input
+    setTimeout(() => {
+      const input = overlay.querySelector('#custom-hrs-input');
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    }, 100);
+  }
+
   // Reminder chips
   page.querySelectorAll('.reminder-chip').forEach(chip => {
     chip.addEventListener('click', () => {
@@ -249,23 +305,32 @@ export function renderSunscreenAlarm() {
       const interval = chip.dataset.interval;
       
       if (interval === 'custom') {
-        const hrsInput = prompt("Berapa jam interval pengingat?");
-        const hrs = parseInt(hrsInput);
-        if (hrs && !isNaN(hrs) && hrs > 0) {
-          currentInterval = hrs;
-          page.querySelectorAll('.reminder-chip').forEach(c => {
-            c.classList.remove('active');
-            if (c.dataset.interval === 'custom') {
-              c.textContent = `${hrs} jam`;
-            } else {
-              const baseInt = c.dataset.interval;
-              c.textContent = `${baseInt} jam`;
+        showCustomIntervalModal((hrs) => {
+          if (hrs && !isNaN(hrs) && hrs > 0) {
+            currentInterval = hrs;
+            page.querySelectorAll('.reminder-chip').forEach(c => {
+              c.classList.remove('active');
+              if (c.dataset.interval === 'custom') {
+                c.textContent = `${hrs} jam`;
+              } else {
+                const baseInt = c.dataset.interval;
+                c.textContent = `${baseInt} jam`;
+              }
+            });
+            chip.classList.add('active');
+
+            // Save locally and sync to database
+            localStorage.setItem('bglow_sunscreen_interval_' + userId, currentInterval);
+            syncUserData({ sunscreen_interval: currentInterval });
+
+            renderTimeline();
+            const next = getNextSchedule();
+            seconds = getSecondsRemaining(next);
+            if (nextTextEl) {
+              nextTextEl.textContent = `Oles ulang sunscreen pukul ${next.timeStr}${next.isTomorrow ? ' (Besok)' : ''}`;
             }
-          });
-          chip.classList.add('active');
-        } else {
-          return;
-        }
+          }
+        });
       } else {
         currentInterval = parseInt(interval);
         page.querySelectorAll('.reminder-chip').forEach(c => {
@@ -278,17 +343,17 @@ export function renderSunscreenAlarm() {
           }
         });
         chip.classList.add('active');
-      }
 
-      // Save locally and sync to database
-      localStorage.setItem('bglow_sunscreen_interval_' + userId, currentInterval);
-      syncUserData({ sunscreen_interval: currentInterval });
+        // Save locally and sync to database
+        localStorage.setItem('bglow_sunscreen_interval_' + userId, currentInterval);
+        syncUserData({ sunscreen_interval: currentInterval });
 
-      renderTimeline();
-      const next = getNextSchedule();
-      seconds = getSecondsRemaining(next);
-      if (nextTextEl) {
-        nextTextEl.textContent = `Oles ulang sunscreen pukul ${next.timeStr}${next.isTomorrow ? ' (Besok)' : ''}`;
+        renderTimeline();
+        const next = getNextSchedule();
+        seconds = getSecondsRemaining(next);
+        if (nextTextEl) {
+          nextTextEl.textContent = `Oles ulang sunscreen pukul ${next.timeStr}${next.isTomorrow ? ' (Besok)' : ''}`;
+        }
       }
     });
   });
