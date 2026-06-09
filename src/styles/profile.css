@@ -17,24 +17,24 @@
 /* ─── Avatar Wrapper ─── */
 .profile-avatar-wrapper {
   position: relative;
-  width: 88px;
-  height: 88px;
+  width: 112px;
+  height: 112px;
   margin: 0 auto var(--space-md);
   cursor: pointer;
 }
 
 .profile-avatar {
-  width: 88px;
-  height: 88px;
+  width: 112px;
+  height: 112px;
   border-radius: var(--radius-full);
   background: rgba(255,255,255,0.2);
   backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2rem;
+  font-size: 2.5rem;
   font-weight: 700;
-  border: 3px solid rgba(255,255,255,0.3);
+  border: 4px solid rgba(255,255,255,0.35);
   overflow: hidden;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -57,10 +57,10 @@
 
 .profile-avatar-edit {
   position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 28px;
-  height: 28px;
+  bottom: 2px;
+  right: 2px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: linear-gradient(135deg, #6366F1, #4338CA);
   display: flex;
@@ -79,26 +79,27 @@
 }
 
 .profile-avatar-edit svg {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
 }
 
 .profile-name {
-  font-size: var(--font-xl);
-  font-weight: 700;
+  font-size: 1.65rem;
+  font-weight: 800;
+  letter-spacing: -0.3px;
 }
 
 .profile-email {
-  font-size: var(--font-sm);
-  opacity: 0.8;
-  margin-top: 4px;
+  font-size: 0.95rem;
+  opacity: 0.85;
+  margin-top: 6px;
 }
 
 .profile-stats-row {
   display: flex;
   justify-content: center;
-  gap: var(--space-xl);
-  margin-top: var(--space-lg);
+  gap: 36px;
+  margin-top: var(--space-xl);
 }
 
 .profile-stat {
@@ -106,13 +107,15 @@
 }
 
 .profile-stat .ps-value {
-  font-size: var(--font-xl);
-  font-weight: 700;
+  font-size: 1.7rem;
+  font-weight: 800;
 }
 
 .profile-stat .ps-label {
-  font-size: var(--font-xs);
-  opacity: 0.7;
+  font-size: 0.8rem;
+  opacity: 0.85;
+  margin-top: 4px;
+  font-weight: 500;
 }
 
 /* ─── Menu List ─── */
