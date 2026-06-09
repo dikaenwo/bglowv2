@@ -1,5 +1,6 @@
 import { icons } from '../components/BottomNav.js';
 import { getRoutine, saveRoutine, getSpecialSchedule, saveSpecialSchedule, getProgress, saveProgress, getStreak, saveStreak } from '../utils/store.js';
+import { showCustomAlert, showCustomConfirm } from '../utils/helpers.js';
 
 const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 const dayShort = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
@@ -662,7 +663,7 @@ export function renderRoutine() {
       btn.addEventListener('click', () => {
         const day = parseInt(btn.dataset.day);
         if (day > today.getDay()) {
-          alert("Anda tidak dapat membuka rutinitas untuk hari berikutnya!");
+          showCustomAlert("Anda tidak dapat membuka rutinitas untuk hari berikutnya!", "Rutinitas Terkunci");
           return;
         }
         selectedDay = day;
@@ -678,7 +679,7 @@ export function renderRoutine() {
           const progress = getProgress();
           const morningDone = morningSteps.length === 0 || (progress.morning && progress.morning.length === morningSteps.length);
           if (!morningDone) {
-            alert("Rutinitas pagi belum diselesaikan semua! Selesaikan semua langkah pagi terlebih dahulu sebelum mengakses rutinitas malam.");
+            showCustomAlert("Rutinitas pagi belum diselesaikan semua! Selesaikan semua langkah pagi terlebih dahulu sebelum mengakses rutinitas malam.", "Rutinitas Pagi Belum Selesai");
             return;
           }
         }
@@ -704,11 +705,11 @@ export function renderRoutine() {
     page.querySelectorAll('.rs-delete').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        if(confirm("Yakin ingin menghapus langkah ini?")) {
+        showCustomConfirm("Yakin ingin menghapus langkah ini?", () => {
           const idx = parseInt(btn.dataset.idx);
           const step = steps[idx];
           deleteStep(idx, step._source, step);
-        }
+        }, "Hapus Langkah");
       });
     });
 

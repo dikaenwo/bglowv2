@@ -1,6 +1,7 @@
 import { icons } from '../components/BottomNav.js';
 import { fetchWeather } from '../utils/weather.js';
 import { getUserId, syncUserData } from '../utils/store.js';
+import { showCustomAlert } from '../utils/helpers.js';
 
 export function renderSunscreenAlarm() {
   const page = document.createElement('div');
@@ -278,7 +279,7 @@ export function renderSunscreenAlarm() {
         callback(hrs);
         overlay.remove();
       } else {
-        alert("Mohon masukkan angka jam yang valid (minimal 1 jam)!");
+        showCustomAlert("Mohon masukkan angka jam yang valid (minimal 1 jam)!", "Validasi Gagal");
       }
     });
 

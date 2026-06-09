@@ -1,5 +1,6 @@
 import { icons } from '../components/BottomNav.js';
 import { getUserId, syncUserData } from '../utils/store.js';
+import { showCustomAlert } from '../utils/helpers.js';
 
 export function renderProductDetail() {
   const page = document.createElement('div');
@@ -272,7 +273,7 @@ export function renderProductDetail() {
         saveRoutine(routine);
         overlay.remove();
         
-        alert("Berhasil ditambahkan ke Rutinitas!");
+        showCustomAlert("Berhasil ditambahkan ke Rutinitas!", "Rutinitas Diperbarui");
       });
     });
 

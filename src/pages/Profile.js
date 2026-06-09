@@ -1,5 +1,6 @@
 import { icons } from '../components/BottomNav.js';
 import { getStreak, getUserId } from '../utils/store.js';
+import { showCustomAlert } from '../utils/helpers.js';
 
 function getProfilePhoto() {
   return localStorage.getItem('bglow_profile_photo_' + getUserId()) || null;
@@ -196,7 +197,7 @@ export function renderProfile() {
 
         // Validate file size (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
-          alert('Ukuran foto terlalu besar. Maksimal 5MB.');
+          showCustomAlert('Ukuran foto terlalu besar. Maksimal 5MB.', 'Validasi Foto');
           return;
         }
 

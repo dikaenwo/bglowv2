@@ -1,5 +1,6 @@
 import { icons } from '../components/BottomNav.js';
 import { clearUserData } from '../utils/store.js';
+import { showCustomAlert } from '../utils/helpers.js';
 
 export function renderLogin() {
   const page = document.createElement('div');
@@ -47,7 +48,7 @@ export function renderLogin() {
     const password = page.querySelector('#login-password').value;
     
     if (!email || !password) {
-      alert("Mohon isi email dan kata sandi!");
+      showCustomAlert("Mohon isi email dan kata sandi!", "Validasi Gagal");
       return;
     }
 
@@ -102,11 +103,11 @@ export function renderLogin() {
         }
         window.location.hash = '#/';
       } else {
-        alert(data.detail || "Login gagal");
+        showCustomAlert(data.detail || "Login gagal", "Login Gagal");
       }
     } catch (error) {
       console.error('Error:', error);
-      alert("Gagal terhubung ke server. Pastikan backend Python menyala.");
+      showCustomAlert("Gagal terhubung ke server. Pastikan backend Python menyala.", "Koneksi Bermasalah");
     }
   });
 

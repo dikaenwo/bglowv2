@@ -1,5 +1,6 @@
 import { icons } from '../components/BottomNav.js';
 import { clearUserData, getUserId } from '../utils/store.js';
+import { showCustomAlert } from '../utils/helpers.js';
 
 export function renderSettings() {
   const page = document.createElement('div');
@@ -124,7 +125,7 @@ export function renderSettings() {
       const newEmail = overlay.querySelector('#edit-email').value.trim();
       
       if (!newName || !newEmail) {
-        alert("Nama dan email tidak boleh kosong!");
+        showCustomAlert("Nama dan email tidak boleh kosong!", "Validasi Gagal");
         return;
       }
       
@@ -146,26 +147,28 @@ export function renderSettings() {
               name: result.user.name,
               email: result.user.email
             }));
-            alert("Profil berhasil diperbarui!");
-            overlay.remove();
-            // Go back to profile to see the changes
-            window.location.hash = '#/profile';
+            showCustomAlert("Profil berhasil diperbarui!", "Profil Diperbarui", () => {
+              overlay.remove();
+              window.location.hash = '#/profile';
+            });
           } else {
             const data = await res.json();
-            alert(data.detail || "Gagal memperbarui profil");
+            showCustomAlert(data.detail || "Gagal memperbarui profil", "Gagal Memperbarui");
             overlay.querySelector('#btn-save-edit').textContent = 'Simpan';
             overlay.querySelector('#btn-save-edit').disabled = false;
           }
         } catch (err) {
           console.error(err);
-          alert("Gagal terhubung ke server.");
+          showCustomAlert("Gagal terhubung ke server. Pastikan backend menyala.", "Koneksi Bermasalah");
           overlay.querySelector('#btn-save-edit').textContent = 'Simpan';
           overlay.querySelector('#btn-save-edit').disabled = false;
         }
       } else {
         localStorage.setItem('bglow_user', JSON.stringify({ id: 'guest', name: newName, email: newEmail }));
-        alert("Profil (Guest) diperbarui!");
-        overlay.remove();
+        showCustomAlert("Profil (Guest) diperbarui!", "Profil Diperbarui", () => {
+          overlay.remove();
+          window.location.hash = '#/profile';
+        });
       }
     });
     
@@ -280,17 +283,18 @@ export function renderSettings() {
             localStorage.setItem('bglow_pore_condition_' + userId, selectedPoreCond);
             localStorage.setItem('bglow_skin_score_' + userId, String(selectedSkinScore));
             
-            alert("Profil kulit berhasil diperbarui!");
-            overlay.remove();
+            showCustomAlert("Profil kulit berhasil diperbarui!", "Profil Kulit Diperbarui", () => {
+              overlay.remove();
+            });
           } else {
             const data = await res.json();
-            alert(data.detail || "Gagal memperbarui profil kulit");
+            showCustomAlert(data.detail || "Gagal memperbarui profil kulit", "Gagal Memperbarui");
             overlay.querySelector('#btn-save-skin').textContent = 'Simpan';
             overlay.querySelector('#btn-save-skin').disabled = false;
           }
         } catch (err) {
           console.error(err);
-          alert("Gagal terhubung ke server.");
+          showCustomAlert("Gagal terhubung ke server. Pastikan backend menyala.", "Koneksi Bermasalah");
           overlay.querySelector('#btn-save-skin').textContent = 'Simpan';
           overlay.querySelector('#btn-save-skin').disabled = false;
         }
@@ -301,8 +305,9 @@ export function renderSettings() {
         localStorage.setItem('bglow_oil_level_' + userId, selectedOilLevel);
         localStorage.setItem('bglow_pore_condition_' + userId, selectedPoreCond);
         localStorage.setItem('bglow_skin_score_' + userId, String(selectedSkinScore));
-        alert("Profil kulit (Guest) diperbarui!");
-        overlay.remove();
+        showCustomAlert("Profil kulit (Guest) diperbarui!", "Profil Kulit Diperbarui", () => {
+          overlay.remove();
+        });
       }
     });
     

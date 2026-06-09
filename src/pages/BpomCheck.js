@@ -168,7 +168,10 @@ export function renderBpomCheck() {
       if (laser) laser.style.display = 'block';
     }).catch((err) => {
       console.error("Camera failed to start:", err);
-      alert("Gagal mengakses kamera. Pastikan memberikan izin kamera.");
+      // Import showCustomAlert dynamically to avoid cyclical dependency if any, or just import at the top
+      import('../utils/helpers.js').then(({ showCustomAlert }) => {
+        showCustomAlert("Gagal mengakses kamera. Pastikan memberikan izin kamera.", "Akses Kamera Gagal");
+      });
       const startBtn = page.querySelector('#start-scan-btn');
       const stopBtn = page.querySelector('#stop-scan-btn');
       if (startBtn && stopBtn) {

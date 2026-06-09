@@ -1,4 +1,5 @@
 import { icons } from '../components/BottomNav.js';
+import { showCustomAlert } from '../utils/helpers.js';
 
 export function renderRegister() {
   const page = document.createElement('div');
@@ -52,7 +53,7 @@ export function renderRegister() {
     const password = page.querySelector('#reg-password').value;
     
     if (!name || !email || !password) {
-      alert("Mohon isi semua data!");
+      showCustomAlert("Mohon isi semua data!", "Validasi Gagal");
       return;
     }
 
@@ -66,14 +67,15 @@ export function renderRegister() {
       const data = await response.json();
       
       if (response.ok) {
-        alert("Pendaftaran berhasil! Silakan masuk.");
-        window.location.hash = '#/login';
+        showCustomAlert("Pendaftaran berhasil! Silakan masuk.", "Pendaftaran Sukses", () => {
+          window.location.hash = '#/login';
+        });
       } else {
-        alert(data.detail || "Pendaftaran gagal");
+        showCustomAlert(data.detail || "Pendaftaran gagal", "Pendaftaran Gagal");
       }
     } catch (error) {
       console.error('Error:', error);
-      alert("Gagal terhubung ke server. Pastikan backend Python menyala.");
+      showCustomAlert("Gagal terhubung ke server. Pastikan backend Python menyala.", "Koneksi Bermasalah");
     }
   });
 

@@ -1,5 +1,6 @@
 import { icons } from '../components/BottomNav.js';
 import { getUserId } from '../utils/store.js';
+import { showCustomAlert } from '../utils/helpers.js';
 
 const cleanserIcon = `
 <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 32px; height: 32px;">
@@ -273,7 +274,7 @@ export function renderRecommendations() {
         saveRoutine(routine);
         overlay.remove();
         
-        alert("Berhasil ditambahkan ke Rutinitas!");
+        showCustomAlert("Berhasil ditambahkan ke Rutinitas!", "Rutinitas Diperbarui");
       });
     });
 
