@@ -22,7 +22,7 @@ def init_database():
             # Gunakan database tersebut
             cursor.execute("USE bglow_db")
             
-            # Buat tabel users jika belum ada
+            # 1. Buat tabel users jika belum ada (hanya memuat data core profile)
             create_users_table = """
             CREATE TABLE IF NOT EXISTS users (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -35,45 +35,119 @@ def init_database():
                 oil_level VARCHAR(255),
                 pore_condition VARCHAR(255),
                 skin_score INT DEFAULT 0,
+                sunscreen_interval INT DEFAULT 2,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
             """
             cursor.execute(create_users_table)
             print("Table 'users' checked/created.")
             
-            # Cek jika kolom baru sudah ada, jika belum tambahkan (migrasi)
+            # Cek jika kolom lama ada di tabel users, jika ada drop untuk membersihkan tabel users (normalisasi)
             cursor.execute("SHOW COLUMNS FROM users")
             existing_columns = [col[0] for col in cursor.fetchall()]
             
-            new_columns = {
-                'profile_photo': 'LONGTEXT',
-                'skin_type': 'VARCHAR(255)',
-                'acne_level': 'VARCHAR(255)',
-                'oil_level': 'VARCHAR(255)',
-                'pore_condition': 'VARCHAR(255)',
-                'skin_score': 'INT DEFAULT 0',
-                'sunscreen_interval': 'INT DEFAULT 2',
-                'favorites': 'LONGTEXT',
-                'diary_entries': 'LONGTEXT',
-                'routine': 'LONGTEXT',
-                'special_schedule': 'LONGTEXT',
-                'streak': 'LONGTEXT',
-                'routine_progress': 'LONGTEXT'
-            }
+            old_columns = ['favorites', 'diary_entries', 'routine', 'special_schedule', 'streak', 'routine_progress']
+            for col in old_columns:
+                if col in existing_columns:
+                    cursor.execute(f"ALTER TABLE users DROP COLUMN {col}")
+                    print(f"Dropped old column '{col}' from 'users' table to separate data.")
             
-            for col_name, col_type in new_columns.items():
-                if col_name not in existing_columns:
-                    alter_query = f"ALTER TABLE users ADD COLUMN {col_name} {col_type}"
-                    cursor.execute(alter_query)
-                    print(f"Added column '{col_name}' to 'users' table.")
+            # Pastikan kolom sunscreen_interval terdaftar
+            cursor.execute("SHOW COLUMNS FROM users")
+            refreshed_cols = [col[0] for col in cursor.fetchall()]
+            if 'sunscreen_interval' not in refreshed_cols:
+                cursor.execute("ALTER TABLE users ADD COLUMN sunscreen_interval INT DEFAULT 2")
+                print("Added column 'sunscreen_interval' to 'users' table.")
+            
+            # 2. Buat tabel user_favorites jika belum ada (Pemisahan data produk favorit)
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS user_favorites (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                product_id VARCHAR(255),
+                product_name VARCHAR(255),
+                product_brand VARCHAR(255),
+                product_price INT,
+                product_emoji VARCHAR(50),
+                product_bg_color VARCHAR(50),
+                product_rating DECIMAL(3, 1),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+            """)
+            print("Table 'user_favorites' checked/created.")
+
+            # 3. Buat tabel user_diary jika belum ada (Pemisahan data diary harian)
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS user_diary (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                entry_date VARCHAR(100) NOT NULL,
+                mood VARCHAR(50) NOT NULL,
+                conditions_json TEXT NOT NULL,
+                products TEXT,
+                notes TEXT,
+                image_url LONGTEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+            """)
+            print("Table 'user_diary' checked/created.")
+
+            # 4. Buat tabel user_routines jika belum ada (Pemisahan data rutinitas)
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS user_routines (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL UNIQUE,
+                routine_data TEXT NOT NULL,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+            """)
+            print("Table 'user_routines' checked/created.")
+
+            # 5. Buat tabel user_routine_progress jika belum ada (Pemisahan data progres)
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS user_routine_progress (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL UNIQUE,
+                progress_data TEXT NOT NULL,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+            """)
+            print("Table 'user_routine_progress' checked/created.")
+
+            # 6. Buat tabel user_streaks jika belum ada (Pemisahan data streak)
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS user_streaks (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL UNIQUE,
+                streak_data TEXT NOT NULL,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+            """)
+            print("Table 'user_streaks' checked/created.")
+
+            # 7. Buat tabel user_special_schedules jika belum ada (Pemisahan data jadwal khusus)
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS user_special_schedules (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL UNIQUE,
+                schedule_data TEXT NOT NULL,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+            """)
+            print("Table 'user_special_schedules' checked/created.")
             
             conn.commit()
             cursor.close()
             conn.close()
-            print("Database initialization successful!")
+            print("Database initialization and separation successful!")
     except Error as e:
         print(f"Error during database initialization: {e}")
 
 if __name__ == "__main__":
     init_database()
-
