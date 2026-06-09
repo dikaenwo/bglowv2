@@ -104,6 +104,8 @@
   background: var(--bg-overlay);
   border: 1.5px solid var(--primary);
   border-radius: var(--radius-full);
+  color: var(--primary) !important;
+  font-weight: 700 !important;
 }
 
 .cal-day.other-month {

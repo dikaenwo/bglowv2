@@ -606,8 +606,9 @@ export function renderSkinDiary() {
       const products = overlay.querySelector('#entry-products').value;
       const notes = overlay.querySelector('#entry-notes').value;
 
+      const dateStr = new Date(currentYear, currentMonth, selectedDay).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
       const newEntry = {
-        date: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
+        date: dateStr,
         mood: selectedConditions.length > 0 && selectedConditions.some(c => c.type === 'bad') ? '😟' : '😊',
         conditions: selectedConditions,
         products: products || '-',
