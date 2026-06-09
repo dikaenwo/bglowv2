@@ -262,3 +262,18 @@
   fill: none;
   stroke-width: 2;
 }
+
+/* ─── Validation Error States ─── */
+.auth-input.error {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+}
+
+.auth-error-text {
+  color: #ef4444 !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  margin-top: 6px !important;
+  display: block !important;
+  animation: pageEnter 0.2s ease-out !important;
+}

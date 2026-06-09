@@ -140,13 +140,13 @@ def login_user():
         db_user = cursor.fetchone()
         
         if not db_user:
-            return jsonify({"detail": "Email atau kata sandi salah"}), 400
+            return jsonify({"detail": "Email tidak ditemukan"}), 400
             
         # Verifikasi password
         is_password_valid = check_password_hash(db_user['password_hash'], password)
         
         if not is_password_valid:
-            return jsonify({"detail": "Email atau kata sandi salah"}), 400
+            return jsonify({"detail": "Kata sandi salah"}), 400
             
         # Fetch extra separated user data
         extra = fetch_extra_user_data(cursor, db_user['id'])
@@ -154,6 +154,72 @@ def login_user():
         # Login sukses, kirim kembali info user (tanpa password)
         return jsonify({
             "message": "Login berhasil",
+            "status": "success",
+            "user": {
+                "id": db_user['id'],
+                "name": db_user['name'],
+                "email": db_user['email'],
+                "profile_photo": db_user.get('profile_photo'),
+                "skin_type": db_user.get('skin_type'),
+                "acne_level": db_user.get('acne_level'),
+                "oil_level": db_user.get('oil_level'),
+                "pore_condition": db_user.get('pore_condition'),
+                "skin_score": db_user.get('skin_score', 0),
+                "sunscreen_interval": db_user.get('sunscreen_interval', 2),
+                "favorites": extra["favorites"],
+                "diary_entries": extra["diary_entries"],
+                "routine": extra["routine"],
+                "special_schedule": extra["special_schedule"],
+                "streak": extra["streak"],
+                "routine_progress": extra["routine_progress"]
+            }
+        }), 200
+        
+    except Exception as e:
+        return jsonify({"detail": str(e)}), 500
+    finally:
+        if conn.is_connected():
+            cursor.close()
+            conn.close()
+
+@app.route("/api/social-login", methods=["POST"])
+def social_login():
+    data = request.get_json()
+    if not data or 'email' not in data or 'name' not in data or 'provider' not in data:
+        return jsonify({"detail": "Data tidak lengkap"}), 400
+        
+    email = data['email']
+    name = data['name']
+    provider = data['provider']
+    
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"detail": "Database connection failed"}), 500
+        
+    try:
+        cursor = conn.cursor(dictionary=True)
+        # Cari user berdasarkan email
+        cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+        db_user = cursor.fetchone()
+        
+        if not db_user:
+            # Jika user belum ada, buat user baru dengan dummy password
+            dummy_hash = generate_password_hash(f"social_{provider}_dummy_pass_98765")
+            cursor.execute(
+                "INSERT INTO users (name, email, password_hash) VALUES (%s, %s, %s)",
+                (name, email, dummy_hash)
+            )
+            conn.commit()
+            
+            # Ambil data user yang baru dibuat
+            cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+            db_user = cursor.fetchone()
+            
+        # Fetch data relasional lainnya
+        extra = fetch_extra_user_data(cursor, db_user['id'])
+        
+        return jsonify({
+            "message": f"Login dengan {provider} berhasil",
             "status": "success",
             "user": {
                 "id": db_user['id'],
