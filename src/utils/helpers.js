@@ -83,11 +83,11 @@ export function showCustomAlert(message, title = 'B-Glow', callback = null) {
       .custom-popup-modal {
         width: 90% !important;
         max-width: 440px !important;
-        padding: 24px 28px !important;
+        padding: 32px 32px !important;
         text-align: left !important;
-        border-radius: 20px !important;
-        background: #141f15 !important; /* Dark green background */
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 24px !important;
+        background: #0f1811 !important; /* Extra dark green background */
+        border: 1px solid rgba(255, 255, 255, 0.03) !important;
         box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6) !important;
         color: #ffffff !important;
         animation: popupZoom 0.22s cubic-bezier(0.16, 1, 0.3, 1) both !important;
@@ -98,7 +98,7 @@ export function showCustomAlert(message, title = 'B-Glow', callback = null) {
         box-sizing: border-box !important;
       }
       .custom-popup-title {
-        margin: 0 0 16px 0 !important;
+        margin: 0 0 28px 0 !important;
         font-size: 1.15rem !important;
         font-weight: 700 !important;
         color: #ffffff !important;
@@ -109,7 +109,7 @@ export function showCustomAlert(message, title = 'B-Glow', callback = null) {
         color: #cbd5e1 !important;
         font-size: 0.95rem !important;
         line-height: 1.6 !important;
-        margin: 0 0 24px 0 !important;
+        margin: 0 0 32px 0 !important;
         white-space: pre-line !important;
         word-break: break-word !important;
       }
@@ -122,17 +122,17 @@ export function showCustomAlert(message, title = 'B-Glow', callback = null) {
       .custom-btn-ok {
         background: #9ee3b4 !important; /* Pastel light green */
         color: #0f1810 !important;
-        border: 2px solid #0f1810 !important;
+        border: 2px solid #0f1811 !important;
         outline: 2px solid #9ee3b4 !important;
         outline-offset: 2px !important;
         border-radius: 9999px !important;
-        padding: 8px 24px !important;
+        padding: 10px 28px !important;
         font-size: 0.95rem !important;
         font-weight: 700 !important;
         cursor: pointer !important;
         transition: all 0.15s ease !important;
-        margin-right: 4px !important;
-        margin-bottom: 4px !important;
+        margin-right: 6px !important;
+        margin-bottom: 6px !important;
         text-transform: none !important;
       }
       .custom-btn-ok:hover {
@@ -148,7 +148,7 @@ export function showCustomAlert(message, title = 'B-Glow', callback = null) {
         color: #ffffff !important;
         border: 2px solid rgba(255, 255, 255, 0.25) !important;
         border-radius: 9999px !important;
-        padding: 8px 20px !important;
+        padding: 10px 24px !important;
         font-size: 0.95rem !important;
         font-weight: 600 !important;
         cursor: pointer !important;
