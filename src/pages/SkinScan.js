@@ -6,7 +6,8 @@ export function renderSkinScan() {
   page.className = 'page';
   let phase = 'camera'; // camera → processing → results
   let stream = null;
-  let capturedImage = null;
+  const userId = getUserId();
+  let capturedImage = localStorage.getItem('bglow_captured_image_' + userId) || null;
 
   function stopCamera() {
     if (stream) {
@@ -88,6 +89,7 @@ export function renderSkinScan() {
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
           
           capturedImage = canvas.toDataURL('image/jpeg');
+          localStorage.setItem('bglow_captured_image_' + userId, capturedImage);
         } catch (err) {
           console.error("Gagal menangkap gambar dari video feed:", err);
         }
@@ -121,6 +123,33 @@ export function renderSkinScan() {
 
     setTimeout(() => {
       stopCamera();
+
+      // Save default scan results and captured image immediately
+      localStorage.setItem('bglow_has_scanned_' + userId, '1');
+      if (capturedImage) {
+        localStorage.setItem('bglow_captured_image_' + userId, capturedImage);
+      }
+      localStorage.setItem('bglow_skin_type_' + userId, 'Kombinasi');
+      localStorage.setItem('bglow_acne_level_' + userId, 'Ringan — Grade 1');
+      localStorage.setItem('bglow_oil_level_' + userId, 'Sedang — T-Zone');
+      localStorage.setItem('bglow_pore_condition_' + userId, 'Baik — Minimal');
+      localStorage.setItem('bglow_skin_score_' + userId, '65');
+
+      // Sync to database if not guest
+      if (userId && userId !== 'guest') {
+        fetch(`http://localhost:8000/api/user/${userId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            skin_type: 'Kombinasi',
+            acne_level: 'Ringan — Grade 1',
+            oil_level: 'Sedang — T-Zone',
+            pore_condition: 'Baik — Minimal',
+            skin_score: 65
+          })
+        }).catch(e => console.error("Gagal sinkronisasi otomatis hasil scan:", e));
+      }
+
       renderProcessing();
     }, 3000);
   }
@@ -180,6 +209,17 @@ export function renderSkinScan() {
   }
 
   function renderResults() {
+    const skinType = localStorage.getItem('bglow_skin_type_' + userId) || 'Kombinasi';
+    const acneLevel = localStorage.getItem('bglow_acne_level_' + userId) || 'Ringan — Grade 1';
+    const oilLevel = localStorage.getItem('bglow_oil_level_' + userId) || 'Sedang — T-Zone';
+    const poreCondition = localStorage.getItem('bglow_pore_condition_' + userId) || 'Baik — Minimal';
+    const skinScore = parseInt(localStorage.getItem('bglow_skin_score_' + userId) || '65');
+
+    // Descriptions based on values
+    const typeDesc = skinType === 'Kombinasi'
+      ? 'Kulit kombinasi memiliki karakteristik berminyak di area T-zone (dahi, hidung, dagu) namun cenderung normal atau kering di area pipi. Membutuhkan perawatan yang menyeimbangkan kedua kondisi ini.'
+      : `Kulit bertipe ${skinType}. Membutuhkan perawatan rutin yang sesuai untuk menjaga kelembapan dan kesehatan barier kulit Anda secara optimal.`;
+
     page.innerHTML = `
       <div class="page-header">
         <button class="back-btn" id="back-btn">${icons.chevronLeft}</button>
@@ -205,8 +245,8 @@ export function renderSkinScan() {
           <div class="std-card">
             <div class="std-icon">💧</div>
             <div class="std-info">
-              <h3>Kulit Kombinasi (Combination)</h3>
-              <p>Kulit kombinasi memiliki karakteristik berminyak di area T-zone (dahi, hidung, dagu) namun cenderung normal atau kering di area pipi. Membutuhkan perawatan yang menyeimbangkan kedua kondisi ini.</p>
+              <h3>Kulit ${skinType}</h3>
+              <p>${typeDesc}</p>
             </div>
           </div>
         </div>
@@ -223,21 +263,21 @@ export function renderSkinScan() {
               <div class="pc-icon" style="background:#FEF2F2;">🔴</div>
               <div class="pc-info">
                 <h4>Jerawat (Acne)</h4>
-                <p>Mild — Grade 1. Terdapat beberapa komedo dan papula kecil di area dahi dan dagu.</p>
+                <p>${acneLevel}. Terdapat beberapa tanda jerawat atau komedo di area wajah.</p>
               </div>
             </div>
             <div class="problem-card">
               <div class="pc-icon" style="background:#FFFBEB;">✨</div>
               <div class="pc-info">
-                <h4>Minyak Berlebih (Oily T-Zone)</h4>
-                <p>Produksi sebum berlebih di area T-zone. Level sedang, perlu kontrol minyak yang tepat.</p>
+                <h4>Minyak Berlebih (Oil Level)</h4>
+                <p>Kadar sebum di wajah tergolong ${oilLevel}.</p>
               </div>
             </div>
             <div class="problem-card">
               <div class="pc-icon" style="background:#FEF3C7;">🟡</div>
               <div class="pc-info">
-                <h4>Pori-pori Terbuka</h4>
-                <p>Pori-pori tampak membesar di area hidung dan pipi. Perlu perawatan untuk meminimalisir.</p>
+                <h4>Kondisi Pori</h4>
+                <p>Kondisi pori-pori wajah saat ini terdeteksi ${poreCondition}.</p>
               </div>
             </div>
           </div>
@@ -249,33 +289,17 @@ export function renderSkinScan() {
           <div class="result-card">
             <div class="rc-icon" style="background:#EFF6FF;">💧</div>
             <div class="rc-info">
-              <div class="rc-label">Jenis Kulit</div>
-              <div class="rc-value">Kombinasi</div>
-              <div class="rc-bar"><div class="rc-bar-fill" style="width:65%;background:var(--primary);"></div></div>
+              <div class="rc-label">Skor Kesehatan Kulit</div>
+              <div class="rc-value">${skinScore}/100</div>
+              <div class="rc-bar"><div class="rc-bar-fill" style="width:${skinScore}%;background:var(--primary);"></div></div>
             </div>
           </div>
           <div class="result-card">
             <div class="rc-icon" style="background:#FEF2F2;">🔴</div>
             <div class="rc-info">
-              <div class="rc-label">Level Jerawat</div>
-              <div class="rc-value">Ringan — Grade 1</div>
-              <div class="rc-bar"><div class="rc-bar-fill" style="width:30%;background:#EF4444;"></div></div>
-            </div>
-          </div>
-          <div class="result-card">
-            <div class="rc-icon" style="background:#FFFBEB;">✨</div>
-            <div class="rc-info">
-              <div class="rc-label">Level Minyak</div>
-              <div class="rc-value">Sedang — T-Zone</div>
-              <div class="rc-bar"><div class="rc-bar-fill" style="width:55%;background:#F59E0B;"></div></div>
-            </div>
-          </div>
-          <div class="result-card">
-            <div class="rc-icon" style="background:#ECFDF5;">🟢</div>
-            <div class="rc-info">
-              <div class="rc-label">Kondisi Pori</div>
-              <div class="rc-value">Baik — Minimal</div>
-              <div class="rc-bar"><div class="rc-bar-fill" style="width:25%;background:#10B981;"></div></div>
+              <div class="rc-label">Jenis Kulit</div>
+              <div class="rc-value">${skinType}</div>
+              <div class="rc-bar"><div class="rc-bar-fill" style="width:70%;background:#EF4444;"></div></div>
             </div>
           </div>
         </div>
@@ -295,48 +319,28 @@ export function renderSkinScan() {
     });
 
     page.querySelector('#rescan-btn').addEventListener('click', () => {
+      localStorage.removeItem('bglow_has_scanned_' + userId);
+      localStorage.removeItem('bglow_captured_image_' + userId);
+      capturedImage = null;
       renderCamera();
     });
 
     page.querySelector('#get-reco-btn').addEventListener('click', async () => {
-      const userId = getUserId();
-      localStorage.setItem('bglow_has_scanned_' + userId, '1');
-      
-      // Simpan kondisi lokal
-      localStorage.setItem('bglow_skin_type_' + userId, 'Kombinasi');
-      localStorage.setItem('bglow_acne_level_' + userId, 'Ringan — Grade 1');
-      localStorage.setItem('bglow_oil_level_' + userId, 'Sedang — T-Zone');
-      localStorage.setItem('bglow_pore_condition_' + userId, 'Baik — Minimal');
-      localStorage.setItem('bglow_skin_score_' + userId, '65');
-
       // Increment scan count
       const countKey = 'bglow_scan_count_' + userId;
       const current = parseInt(localStorage.getItem(countKey) || '0');
       localStorage.setItem(countKey, String(current + 1));
 
-      // Kirim hasil scan ke database
-      if (userId && userId !== 'guest') {
-        try {
-          await fetch(`http://localhost:8000/api/user/${userId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              skin_type: 'Kombinasi',
-              acne_level: 'Ringan — Grade 1',
-              oil_level: 'Sedang — T-Zone',
-              pore_condition: 'Baik — Minimal',
-              skin_score: 65
-            })
-          });
-        } catch (e) {
-          console.error("Gagal menyimpan data kulit ke server:", e);
-        }
-      }
-
       window.location.hash = '#/recommendations';
     });
   }
 
-  renderCamera();
+  const hasScanned = localStorage.getItem('bglow_has_scanned_' + userId) === '1';
+  if (hasScanned) {
+    renderResults();
+  } else {
+    renderCamera();
+  }
+
   return page;
 }
