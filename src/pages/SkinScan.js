@@ -5,8 +5,25 @@ export function renderSkinScan() {
   const page = document.createElement('div');
   page.className = 'page';
   let phase = 'camera'; // camera → processing → results
+  let stream = null;
+  let capturedImage = null;
+
+  function stopCamera() {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      stream = null;
+    }
+  }
+
+  // Auto-cleanup camera on page navigation/hash change
+  const handleHashChange = () => {
+    stopCamera();
+    window.removeEventListener('hashchange', handleHashChange);
+  };
+  window.addEventListener('hashchange', handleHashChange);
 
   function renderCamera() {
+    capturedImage = null; // reset on new scan start
     page.innerHTML = `
       <div class="page-header">
         <button class="back-btn" id="back-btn">${icons.chevronLeft}</button>
@@ -14,14 +31,15 @@ export function renderSkinScan() {
       </div>
       <div class="scan-camera">
         <div class="camera-feed">
-          <div class="face-outline"></div>
-          <div class="scan-line"></div>
-          <div class="detection-points" id="det-points"></div>
-          <div class="scan-status">
+          <video id="webcam" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover; display: none; transform: scaleX(-1); position: absolute; top: 0; left: 0; z-index: 1;"></video>
+          <div class="face-outline" style="z-index: 2;"></div>
+          <div class="scan-line" style="z-index: 2;"></div>
+          <div class="detection-points" id="det-points" style="z-index: 3;"></div>
+          <div class="scan-status" style="z-index: 4;">
             <span class="shimmer-text">Menganalisis kondisi kulit Anda...</span>
           </div>
         </div>
-        <div class="scan-controls">
+        <div class="scan-controls" style="z-index: 5;">
           <button class="scan-btn-main" id="start-scan">${icons.camera}</button>
         </div>
       </div>
@@ -32,11 +50,48 @@ export function renderSkinScan() {
       </div>
     `;
 
+    const video = page.querySelector('#webcam');
+
+    // Request camera access
+    navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
+    })
+    .then(s => {
+      stream = s;
+      if (video) {
+        video.srcObject = s;
+        video.style.display = 'block';
+      }
+    })
+    .catch(err => {
+      console.error("Gagal mengakses kamera:", err);
+      // Fallback: dummy-face.png will show since video is display: none
+    });
+
     page.querySelector('#back-btn').addEventListener('click', () => {
+      stopCamera();
       window.location.hash = '#/';
     });
 
     page.querySelector('#start-scan').addEventListener('click', () => {
+      // Capture the mirrored frame from video stream
+      if (video && stream) {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = video.videoWidth || 640;
+          canvas.height = video.videoHeight || 480;
+          const ctx = canvas.getContext('2d');
+          
+          // Mirror the captured image to match what the user saw
+          ctx.translate(canvas.width, 0);
+          ctx.scale(-1, 1);
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          
+          capturedImage = canvas.toDataURL('image/jpeg');
+        } catch (err) {
+          console.error("Gagal menangkap gambar dari video feed:", err);
+        }
+      }
       startScanning();
     });
   }
@@ -60,11 +115,14 @@ export function renderSkinScan() {
         dot.style.top = pos.top;
         dot.style.left = pos.left;
         dot.style.animationDelay = `${i * 100}ms`;
-        pointsContainer.appendChild(dot);
+        if (pointsContainer) pointsContainer.appendChild(dot);
       }, 400 + i * 300);
     });
 
-    setTimeout(() => renderProcessing(), 3000);
+    setTimeout(() => {
+      stopCamera();
+      renderProcessing();
+    }, 3000);
   }
 
   function renderProcessing() {
@@ -129,7 +187,7 @@ export function renderSkinScan() {
       </div>
       <div class="scan-results anim-fade-in">
         <div class="result-face-card">
-          <div class="result-face-img">
+          <div class="result-face-img"${capturedImage ? ` style="background-image: url('${capturedImage}');"` : ''}>
             <div class="face-placeholder">
               <div class="highlight-zone zone-1"></div>
               <div class="highlight-zone zone-2"></div>
