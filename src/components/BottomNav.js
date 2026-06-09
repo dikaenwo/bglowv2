@@ -5,7 +5,18 @@ export const icons = {
   diary: `<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h2M8 18h4"/></svg>`,
   profile: `<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>`,
   routine: `<svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>`,
-  skinScan: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V5a2 2 0 0 1 2-2h3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M21 16v3a2 2 0 0 1-2 2h-3" /><path d="M12 6c-3 0-5 2.2-5 5c0 2.5 1.5 4.5 2.5 5.5l1.5 2.5h2l1.5-2.5c1-1 2.5-3 2.5-5.5c0-2.8-2-5-5-5z" /><circle cx="10" cy="10.5" r="0.8" fill="currentColor" /><circle cx="14" cy="10.5" r="0.8" fill="currentColor" /><path d="M12 11.5v1.5h0.8" /><path d="M10.5 15.5 Q12 16.5, 13.5 15.5" /></svg>`,
+  skinScan: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M3 17v2a2 2 0 0 0 2 2h2M17 21h2a2 2 0 0 0 2-2v-2" stroke-width="1.8" />
+    <path d="M7 10.5a5 5 0 0 1 10 0" />
+    <path d="M7 10.5c-1 0-1.2 1.3 0 1.7" />
+    <path d="M17 10.5c1 0 1.2 1.3 0 1.7" />
+    <path d="M7 12.2c.5 2.8 2.5 4.8 5 4.8s4.5-2 5-4.8" />
+    <path d="M9.5 15.8c0 2-2 3.4-3 3.7" />
+    <path d="M14.5 15.8c0 2 2 3.4 3 3.7" />
+    <path d="M12 5.5q-.5 2.3-3.8 3" />
+    <path d="M12 5.5q1.5 2.3 3.8 3" />
+    <path d="M3.5 11.5h17" stroke-width="2.2" />
+  </svg>`,
   bpom: `<svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>`,
   sun: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>`,
   book: `<svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>`,
