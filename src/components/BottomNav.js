@@ -33,7 +33,7 @@ export const icons = {
     <path d="M14.5 15.8c0 2 2 3.4 3 3.7" />
     <path d="M12 5.5q-.5 2.3-3.8 3" />
     <path d="M12 5.5q1.5 2.3 3.8 3" />
-    <path d="M3.5 11.5h17" stroke="currentColor" stroke-width="2.2" />
+    <path d="M3.5 11.5h17" stroke="white" stroke-width="2.2" />
   </svg>`,
   crown: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 19h20M2 19l3-9 5 5 2-8 2 8 5-5 3 9H2z"/><circle cx="12" cy="6" r="1" fill="currentColor"/></svg>`,
 };

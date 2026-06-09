@@ -80,8 +80,8 @@
 }
 
 .nav-item.scan-btn .scan-icon-wrap {
-  width: 48px;
-  height: 48px;
+  width: 54px;
+  height: 54px;
   background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   border-radius: var(--radius-full);
   display: flex;
@@ -89,13 +89,13 @@
   justify-content: center;
   box-shadow: 0 4px 15px rgba(59, 130, 246, 0.35);
   transition: all var(--duration-fast) var(--ease-smooth);
-  margin-top: -12px;
+  margin-top: -16px;
 }
 
 .nav-item.scan-btn .scan-icon-wrap svg {
   stroke: white;
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
 }
 
 .nav-item.scan-btn:active .scan-icon-wrap {
