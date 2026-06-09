@@ -495,6 +495,14 @@ export function renderSkinDiary() {
 
   function showNewEntryModal() {
     let selectedImageURL = null;
+    let localStream = null;
+
+    const stopLocalStream = () => {
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+      }
+    };
 
     const overlay = document.createElement('div');
     overlay.className = 'diary-modal-overlay';
@@ -506,10 +514,27 @@ export function renderSkinDiary() {
         <div class="modal-field">
           <label>Foto Kulit (Opsional)</label>
           <div class="image-upload-wrapper">
-            <input type="file" id="diary-image-upload" accept="image/*" style="display:none;" />
-            <button class="image-upload-btn" id="upload-trigger-btn">
-              ${icons.camera || '📷'} Ambil / Pilih Foto
-            </button>
+            <input type="file" id="diary-image-camera" accept="image/*" capture="environment" style="display:none;" />
+            <input type="file" id="diary-image-gallery" accept="image/*" style="display:none;" />
+            
+            <div id="upload-buttons-container" style="display:flex; gap: 10px;">
+              <button class="image-upload-btn" id="camera-trigger-btn" style="flex: 1; padding: 12px; font-size: 0.85rem; justify-content: center;">
+                ${icons.camera || '📷'} Ambil Foto
+              </button>
+              <button class="image-upload-btn" id="gallery-trigger-btn" style="flex: 1; padding: 12px; font-size: 0.85rem; justify-content: center;">
+                🖼️ Pilih Galeri
+              </button>
+            </div>
+
+            <!-- Webcam stream container -->
+            <div id="camera-stream-container" style="display:none; flex-direction:column; gap:10px; align-items:center; margin-top:10px;">
+              <video id="diary-webcam" autoplay playsinline style="width: 100%; max-height: 240px; border-radius: 12px; background: #000; object-fit: cover; transform: scaleX(-1);"></video>
+              <div style="display:flex; gap: 10px; width: 100%;">
+                <button class="btn btn-outline" id="camera-cancel-btn" style="flex: 1; padding: 8px; font-size: 0.8rem; height: 36px; display: flex; align-items: center; justify-content: center;">Batal</button>
+                <button class="btn btn-primary" id="camera-capture-btn" style="flex: 1; padding: 8px; font-size: 0.8rem; height: 36px; display: flex; align-items: center; justify-content: center;">Jepret</button>
+              </div>
+            </div>
+            
             <div id="image-preview-container" style="display:none; margin-top: 10px; position:relative;">
               <img id="diary-image-preview" src="" alt="Preview" style="border-radius:12px; max-width:100%; height:auto;" />
               <button class="remove-img-btn" id="remove-img-btn" style="position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.5); color:white; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer;">×</button>
@@ -561,29 +586,129 @@ export function renderSkinDiary() {
     }
 
     // Image Upload Logic
-    const uploadInput = overlay.querySelector('#diary-image-upload');
-    const uploadBtn = overlay.querySelector('#upload-trigger-btn');
+    const cameraInput = overlay.querySelector('#diary-image-camera');
+    const galleryInput = overlay.querySelector('#diary-image-gallery');
+    const cameraBtn = overlay.querySelector('#camera-trigger-btn');
+    const galleryBtn = overlay.querySelector('#gallery-trigger-btn');
+    const buttonsContainer = overlay.querySelector('#upload-buttons-container');
+    const cameraStreamContainer = overlay.querySelector('#camera-stream-container');
+    const captureBtn = overlay.querySelector('#camera-capture-btn');
+    const cancelCaptureBtn = overlay.querySelector('#camera-cancel-btn');
+    const videoElement = overlay.querySelector('#diary-webcam');
+    
     const previewContainer = overlay.querySelector('#image-preview-container');
     const previewImg = overlay.querySelector('#diary-image-preview');
     const removeImgBtn = overlay.querySelector('#remove-img-btn');
 
-    uploadBtn.addEventListener('click', () => uploadInput.click());
+    // "Ambil Foto" click handler - try webcam getUserMedia
+    cameraBtn.addEventListener('click', () => {
+      buttonsContainer.style.display = 'none';
+      cameraStreamContainer.style.display = 'flex';
+      
+      navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
+      })
+      .then(s => {
+        localStream = s;
+        if (videoElement) {
+          videoElement.srcObject = s;
+          videoElement.play();
+        }
+      })
+      .catch(err => {
+        console.warn("Gagal membuka webcam, fallback ke input camera intent:", err);
+        // Stop stream if any, clean up UI
+        stopLocalStream();
+        cameraStreamContainer.style.display = 'none';
+        buttonsContainer.style.display = 'flex';
+        // Fallback: trigger system native camera
+        cameraInput.click();
+      });
+    });
 
-    uploadInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        selectedImageURL = URL.createObjectURL(file);
-        previewImg.src = selectedImageURL;
-        previewContainer.style.display = 'block';
-        uploadBtn.style.display = 'none';
+    // "Jepret" click handler
+    captureBtn.addEventListener('click', () => {
+      if (videoElement && localStream) {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = videoElement.videoWidth || 640;
+          canvas.height = videoElement.videoHeight || 480;
+          const ctx = canvas.getContext('2d');
+          
+          // Mirror image for front camera feel
+          ctx.translate(canvas.width, 0);
+          ctx.scale(-1, 1);
+          ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+          
+          selectedImageURL = canvas.toDataURL('image/jpeg', 0.85);
+          previewImg.src = selectedImageURL;
+          previewContainer.style.display = 'block';
+          
+          stopLocalStream();
+          cameraStreamContainer.style.display = 'none';
+        } catch (e) {
+          console.error("Gagal menangkap gambar dari webcam stream:", e);
+        }
       }
     });
 
+    // Cancel webcam capture handler
+    cancelCaptureBtn.addEventListener('click', () => {
+      stopLocalStream();
+      cameraStreamContainer.style.display = 'none';
+      buttonsContainer.style.display = 'flex';
+    });
+
+    // "Pilih Galeri" click handler
+    galleryBtn.addEventListener('click', () => galleryInput.click());
+
+    const handleImageChange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          alert('Ukuran foto terlalu besar. Maksimal 5MB.');
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const maxSize = 600; // max size of 600px is great for diary photos
+            let w = img.width;
+            let h = img.height;
+            if (w > h) {
+              if (w > maxSize) { h = (h * maxSize) / w; w = maxSize; }
+            } else {
+              if (h > maxSize) { w = (w * maxSize) / h; h = maxSize; }
+            }
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            
+            selectedImageURL = canvas.toDataURL('image/jpeg', 0.85);
+            previewImg.src = selectedImageURL;
+            previewContainer.style.display = 'block';
+            buttonsContainer.style.display = 'none';
+          };
+          img.src = evt.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+
+    cameraInput.addEventListener('change', handleImageChange);
+    galleryInput.addEventListener('change', handleImageChange);
+
     removeImgBtn.addEventListener('click', () => {
       selectedImageURL = null;
-      previewInput.value = '';
+      cameraInput.value = '';
+      galleryInput.value = '';
       previewContainer.style.display = 'none';
-      uploadBtn.style.display = 'flex';
+      buttonsContainer.style.display = 'flex';
     });
 
     // Condition chips
@@ -594,6 +719,7 @@ export function renderSkinDiary() {
     });
 
     overlay.querySelector('#modal-cancel').addEventListener('click', () => {
+      stopLocalStream();
       overlay.remove();
     });
 
@@ -621,12 +747,16 @@ export function renderSkinDiary() {
       entries.unshift(newEntry);
       saveDiaryEntries(entries);
       
+      stopLocalStream();
       overlay.remove();
       render(); // re-render diary
     });
 
     overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) overlay.remove();
+      if (e.target === overlay) {
+        stopLocalStream();
+        overlay.remove();
+      }
     });
 
     document.body.appendChild(overlay);

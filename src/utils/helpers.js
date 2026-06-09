@@ -67,7 +67,7 @@ if (typeof document !== 'undefined' && !document.getElementById('custom-popup-st
     .custom-popup-overlay {
       position: fixed !important;
       inset: 0 !important;
-      background: rgba(6, 12, 8, 0.82) !important; /* Premium dark forest green translucent overlay */
+      background: rgba(15, 23, 42, 0.45) !important; /* Soft dark slate translucent overlay */
       z-index: 99999 !important;
       display: flex !important;
       align-items: center !important;
@@ -82,10 +82,10 @@ if (typeof document !== 'undefined' && !document.getElementById('custom-popup-st
       padding: 36px 28px !important;
       text-align: center !important;
       border-radius: 28px !important;
-      background: linear-gradient(145deg, #0e1711, #060a07) !important; /* Premium deep emerald-dark gradient */
-      border: 1px solid rgba(255, 255, 255, 0.08) !important;
-      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.75), inset 0 1px 1px rgba(255, 255, 255, 0.06) !important;
-      color: #ffffff !important;
+      background: #ffffff !important; /* Clean premium white card background */
+      border: 1px solid rgba(15, 23, 42, 0.08) !important;
+      box-shadow: 0 24px 50px rgba(15, 23, 42, 0.15) !important;
+      color: #1e293b !important;
       animation: popupZoom 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) both !important;
       box-sizing: border-box !important;
     }
@@ -93,18 +93,15 @@ if (typeof document !== 'undefined' && !document.getElementById('custom-popup-st
       box-sizing: border-box !important;
     }
     
-    /* Glowing borders and shadows based on alert type */
+    /* Subtle borders based on alert type */
     .custom-popup-modal.success {
-      border-color: rgba(16, 185, 129, 0.3) !important;
-      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.75), 0 0 24px rgba(16, 185, 129, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.06) !important;
+      border-color: rgba(16, 185, 129, 0.2) !important;
     }
     .custom-popup-modal.warning {
-      border-color: rgba(245, 158, 11, 0.3) !important;
-      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.75), 0 0 24px rgba(245, 158, 11, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.06) !important;
+      border-color: rgba(245, 158, 11, 0.2) !important;
     }
     .custom-popup-modal.info {
-      border-color: rgba(59, 130, 246, 0.3) !important;
-      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.75), 0 0 24px rgba(59, 130, 246, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.06) !important;
+      border-color: rgba(59, 130, 246, 0.2) !important;
     }
 
     .custom-popup-icon-wrapper {
@@ -118,34 +115,34 @@ if (typeof document !== 'undefined' && !document.getElementById('custom-popup-st
       font-size: 1.8rem !important;
     }
     .custom-popup-icon-wrapper.success {
-      background: rgba(16, 185, 129, 0.12) !important;
-      border: 1px solid rgba(16, 185, 129, 0.3) !important;
+      background: rgba(16, 185, 129, 0.1) !important;
+      border: 1px solid rgba(16, 185, 129, 0.25) !important;
       color: #10b981 !important;
-      box-shadow: 0 0 15px rgba(16, 185, 129, 0.25) !important;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1) !important;
     }
     .custom-popup-icon-wrapper.warning {
-      background: rgba(245, 158, 11, 0.12) !important;
-      border: 1px solid rgba(245, 158, 11, 0.3) !important;
+      background: rgba(245, 158, 11, 0.1) !important;
+      border: 1px solid rgba(245, 158, 11, 0.25) !important;
       color: #f59e0b !important;
-      box-shadow: 0 0 15px rgba(245, 158, 11, 0.25) !important;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.1) !important;
     }
     .custom-popup-icon-wrapper.info {
-      background: rgba(59, 130, 246, 0.12) !important;
-      border: 1px solid rgba(59, 130, 246, 0.3) !important;
+      background: rgba(59, 130, 246, 0.1) !important;
+      border: 1px solid rgba(59, 130, 246, 0.25) !important;
       color: #3b82f6 !important;
-      box-shadow: 0 0 15px rgba(59, 130, 246, 0.25) !important;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1) !important;
     }
     
     .custom-popup-title {
       margin: 0 0 12px 0 !important;
       font-size: 1.25rem !important;
       font-weight: 700 !important;
-      color: #ffffff !important;
+      color: #0f172a !important;
       letter-spacing: -0.3px !important;
       line-height: 1.3 !important;
     }
     .custom-popup-message {
-      color: #cbd5e1 !important;
+      color: #475569 !important;
       font-size: 0.95rem !important;
       line-height: 1.6 !important;
       margin: 0 0 28px 0 !important;
@@ -172,37 +169,37 @@ if (typeof document !== 'undefined' && !document.getElementById('custom-popup-st
       margin: 0 !important;
     }
     
-    /* Type specific button coloring */
+    /* Type specific button coloring (Vibrant with White Text) */
     .success .custom-btn-ok {
-      background: #9ee3b4 !important; /* Pastel light green */
-      color: #0c1a10 !important;
-      box-shadow: 0 4px 12px rgba(158, 227, 180, 0.25) !important;
+      background: #10b981 !important;
+      color: #ffffff !important;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2) !important;
     }
     .success .custom-btn-ok:hover {
-      background: #b6f0cb !important;
-      box-shadow: 0 6px 16px rgba(158, 227, 180, 0.4) !important;
+      background: #059669 !important;
+      box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35) !important;
       transform: translateY(-1px) !important;
     }
     
     .warning .custom-btn-ok {
-      background: #fde68a !important; /* Pastel yellow */
-      color: #3b2005 !important;
-      box-shadow: 0 4px 12px rgba(253, 230, 138, 0.25) !important;
+      background: #f59e0b !important;
+      color: #ffffff !important;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2) !important;
     }
     .warning .custom-btn-ok:hover {
-      background: #fef08a !important;
-      box-shadow: 0 6px 16px rgba(253, 230, 138, 0.4) !important;
+      background: #d97706 !important;
+      box-shadow: 0 6px 16px rgba(245, 158, 11, 0.35) !important;
       transform: translateY(-1px) !important;
     }
     
     .info .custom-btn-ok {
-      background: #bfdbfe !important; /* Pastel blue */
-      color: #08204e !important;
-      box-shadow: 0 4px 12px rgba(191, 219, 254, 0.25) !important;
+      background: #3b82f6 !important;
+      color: #ffffff !important;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2) !important;
     }
     .info .custom-btn-ok:hover {
-      background: #dbeafe !important;
-      box-shadow: 0 6px 16px rgba(191, 219, 254, 0.4) !important;
+      background: #2563eb !important;
+      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.35) !important;
       transform: translateY(-1px) !important;
     }
     
@@ -212,9 +209,9 @@ if (typeof document !== 'undefined' && !document.getElementById('custom-popup-st
     
     .custom-btn-cancel {
       flex: 1 !important;
-      background: rgba(255, 255, 255, 0.05) !important;
-      color: #cbd5e1 !important;
-      border: 1px solid rgba(255, 255, 255, 0.12) !important;
+      background: #f1f5f9 !important;
+      color: #475569 !important;
+      border: 1px solid #cbd5e1 !important;
       border-radius: 9999px !important;
       padding: 12px 24px !important;
       font-size: 0.95rem !important;
@@ -225,8 +222,8 @@ if (typeof document !== 'undefined' && !document.getElementById('custom-popup-st
       margin: 0 !important;
     }
     .custom-btn-cancel:hover {
-      background: rgba(255, 255, 255, 0.1) !important;
-      color: #ffffff !important;
+      background: #e2e8f0 !important;
+      color: #0f172a !important;
       transform: translateY(-1px) !important;
     }
     .custom-btn-cancel:active {
@@ -248,7 +245,10 @@ export function showCustomAlert(message, title = 'B-Glow', callback = null) {
   let icon_type = 'info';
   let icon_char = '🔔';
   
-  if (title_lower.includes('sukses') || title_lower.includes('berhasil') || title_lower.includes('diperbarui') || title_lower.includes('pendaftaran') || msg_lower.includes('berhasil') || msg_lower.includes('sukses')) {
+  if (title_lower.includes('profil') || title_lower.includes('akun') || title_lower.includes('user') || msg_lower.includes('profil') || msg_lower.includes('akun') || msg_lower.includes('user')) {
+    icon_type = 'success';
+    icon_char = '👤'; // Human profile icon
+  } else if (title_lower.includes('sukses') || title_lower.includes('berhasil') || title_lower.includes('diperbarui') || title_lower.includes('pendaftaran') || msg_lower.includes('berhasil') || msg_lower.includes('sukses')) {
     icon_type = 'success';
     icon_char = '✨';
   } else if (title_lower.includes('gagal') || title_lower.includes('salah') || title_lower.includes('kosong') || title_lower.includes('masalah') || title_lower.includes('kunci') || title_lower.includes('belum') || title_lower.includes('terkunci') || title_lower.includes('batal') || title_lower.includes('peringatan') || msg_lower.includes('gagal') || msg_lower.includes('belum')) {
@@ -300,7 +300,10 @@ export function showCustomConfirm(message, callback, title = 'Konfirmasi') {
   let icon_type = 'info';
   let icon_char = '❓';
   
-  if (title_lower.includes('hapus') || msg_lower.includes('hapus') || title_lower.includes('yakin') || msg_lower.includes('yakin')) {
+  if (title_lower.includes('profil') || title_lower.includes('akun') || title_lower.includes('user') || msg_lower.includes('profil') || msg_lower.includes('akun') || msg_lower.includes('user')) {
+    icon_type = 'info';
+    icon_char = '👤'; // Human profile icon
+  } else if (title_lower.includes('hapus') || msg_lower.includes('hapus') || title_lower.includes('yakin') || msg_lower.includes('yakin')) {
     icon_type = 'warning';
     icon_char = '⚠️';
   }

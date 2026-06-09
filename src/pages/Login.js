@@ -8,7 +8,9 @@ export function renderLogin() {
 
   page.innerHTML = `
     <div class="auth-brand">
-      <div class="auth-logo">${icons.scan}</div>
+      <div class="auth-logo">
+        <img src="/BGLOW-Polos.png" alt="B-Glow Logo" />
+      </div>
       <h1>B-Glow</h1>
       <p>Asisten Skincare AI Anda</p>
     </div>

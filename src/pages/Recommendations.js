@@ -244,9 +244,15 @@ export function renderRecommendations() {
           Ingin memasukkan <strong>${product.name}</strong> ke rutinitas yang mana?
         </p>
         <div style="display:flex; flex-direction:column; gap:10px;">
-          <button class="btn btn-outline btn-add-time" data-time="morning">🌅 Pagi Hari</button>
-          <button class="btn btn-outline btn-add-time" data-time="night">🌙 Malam Hari</button>
-          <button class="btn btn-primary btn-add-time" data-time="both">🌅 & 🌙 Keduanya</button>
+          <button class="btn btn-outline btn-add-time" data-time="morning" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <img src="/pagi.png" alt="Pagi" style="width: 20px; height: 20px; object-fit: contain;" /> Pagi Hari
+          </button>
+          <button class="btn btn-outline btn-add-time" data-time="night" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <img src="/malam.png" alt="Malam" style="width: 20px; height: 20px; object-fit: contain;" /> Malam Hari
+          </button>
+          <button class="btn btn-primary btn-add-time" data-time="both" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <img src="/pagi.png" alt="Pagi" style="width: 20px; height: 20px; object-fit: contain; filter: brightness(0) invert(1);" /> & <img src="/malam.png" alt="Malam" style="width: 20px; height: 20px; object-fit: contain; filter: brightness(0) invert(1);" /> Keduanya
+          </button>
         </div>
         <button class="btn" id="btn-cancel-add" style="margin-top: 15px; width: 100%; color:var(--text-secondary);">Batal</button>
       </div>

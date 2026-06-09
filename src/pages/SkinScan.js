@@ -135,6 +135,30 @@ export function renderSkinScan() {
       localStorage.setItem('bglow_pore_condition_' + userId, 'Baik — Minimal');
       localStorage.setItem('bglow_skin_score_' + userId, '65');
 
+      // Append to scan history list
+      try {
+        const historyKey = 'bglow_scan_history_' + userId;
+        const historyData = localStorage.getItem(historyKey);
+        let historyList = [];
+        if (historyData) {
+          historyList = JSON.parse(historyData);
+        }
+        const newRecord = {
+          id: 'scan_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+          date: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+          skin_type: 'Kombinasi',
+          acne_level: 'Ringan — Grade 1',
+          oil_level: 'Sedang — T-Zone',
+          pore_condition: 'Baik — Minimal',
+          skin_score: 65,
+          image: capturedImage
+        };
+        historyList.unshift(newRecord);
+        localStorage.setItem(historyKey, JSON.stringify(historyList));
+      } catch (e) {
+        console.error("Gagal menyimpan ke riwayat scan:", e);
+      }
+
       // Sync to database if not guest
       if (userId && userId !== 'guest') {
         fetch(`http://localhost:8000/api/user/${userId}`, {

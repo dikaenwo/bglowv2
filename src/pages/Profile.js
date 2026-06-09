@@ -147,7 +147,7 @@ export function renderProfile() {
 
       <div class="menu-section">
         <div class="menu-section-title">Perawatan Kulit</div>
-        <div class="menu-item anim-fade-in-up anim-delay-4">
+        <div class="menu-item anim-fade-in-up anim-delay-4" id="menu-history">
           <div class="mi-icon blue">${icons.camera || '📷'}</div>
           <span class="mi-text">Riwayat Scan</span>
           <span class="mi-arrow">${icons.chevronRight || '>'}</span>
@@ -174,12 +174,14 @@ export function renderProfile() {
     const diary = page.querySelector('#menu-diary');
     const settings = page.querySelector('#menu-settings');
     const favorites = page.querySelector('#menu-favorites');
+    const history = page.querySelector('#menu-history');
 
     if (bpom) bpom.addEventListener('click', () => window.location.hash = '#/bpom');
     if (alarm) alarm.addEventListener('click', () => window.location.hash = '#/alarm');
     if (diary) diary.addEventListener('click', () => window.location.hash = '#/diary');
     if (settings) settings.addEventListener('click', () => window.location.hash = '#/settings');
     if (favorites) favorites.addEventListener('click', () => window.location.hash = '#/favorites');
+    if (history) history.addEventListener('click', () => window.location.hash = '#/scan-history');
 
     // Profile photo edit
     const editBtn = page.querySelector('#avatar-edit-btn');

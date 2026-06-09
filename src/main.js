@@ -14,6 +14,7 @@ import './styles/recommendations.css';
 import './styles/routine.css';
 import './styles/subscription.css';
 import './styles/product-detail.css';
+import './styles/scan-history.css';
 import { createBottomNav } from './components/BottomNav.js';
 import { renderHome } from './pages/Home.js';
 import { renderSkinScan } from './pages/SkinScan.js';
@@ -30,6 +31,7 @@ import { renderSettings } from './pages/Settings.js';
 import { renderSubscription } from './pages/Subscription.js';
 import { renderProductDetail } from './pages/ProductDetail.js';
 import { renderFavorites } from './pages/Favorites.js';
+import { renderScanHistory } from './pages/ScanHistory.js';
 
 const app = document.querySelector('#app');
 
@@ -47,6 +49,7 @@ const tabMap = {
   'alarm': 'profile',
   'diary': 'profile',
   'favorites': 'profile',
+  'scan-history': 'profile',
   'recommendations': 'recommendations',
 };
 
@@ -85,6 +88,7 @@ function handleRoute() {
     case 'subscription': pageEl = renderSubscription(); break;
     case 'product-detail': pageEl = renderProductDetail(); break;
     case 'favorites': pageEl = renderFavorites(); break;
+    case 'scan-history': pageEl = renderScanHistory(); break;
     default: pageEl = renderHome(); break;
   }
 

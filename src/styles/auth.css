@@ -42,23 +42,23 @@
 }
 
 .auth-logo {
-  width: 64px;
-  height: 64px;
-  border-radius: var(--radius-xl);
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  width: 80px;
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto var(--space-md);
-  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
 }
 
-.auth-logo svg {
-  width: 32px;
-  height: 32px;
-  stroke: white;
-  fill: none;
-  stroke-width: 1.8;
+.auth-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: transform var(--duration-normal) var(--ease-smooth);
+}
+
+.auth-logo img:hover {
+  transform: scale(1.08);
 }
 
 .auth-brand h1 {

@@ -393,8 +393,12 @@ export function renderRoutine() {
         <div class="modal-field">
           <label>Waktu Rutinitas</label>
           <div class="time-picker-modal">
-            <button class="time-pick-btn ${targetTime === 'morning' ? 'active' : ''}" data-time="morning">🌅 Pagi</button>
-            <button class="time-pick-btn ${targetTime === 'night' ? 'active' : ''}" data-time="night">🌙 Malam</button>
+            <button class="time-pick-btn ${targetTime === 'morning' ? 'active' : ''}" data-time="morning" style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+              <img src="/pagi.png" alt="Pagi" style="width: 20px; height: 20px; object-fit: contain;" /> Pagi
+            </button>
+            <button class="time-pick-btn ${targetTime === 'night' ? 'active' : ''}" data-time="night" style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+              <img src="/malam.png" alt="Malam" style="width: 20px; height: 20px; object-fit: contain;" /> Malam
+            </button>
           </div>
         </div>
 
