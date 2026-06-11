@@ -1,3 +1,5 @@
+import { API_BASE_URL } from '../config.js';
+
 export function getUserId() {
   const userStr = localStorage.getItem('bglow_user');
   if (userStr) {
@@ -91,7 +93,7 @@ export async function syncUserData(fields) {
   const userId = getUserId();
   if (userId && userId !== 'guest') {
     try {
-      await fetch(`http://localhost:8000/api/user/${userId}`, {
+      await fetch(`${API_BASE_URL}/api/user/${userId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(fields)

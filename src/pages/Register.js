@@ -1,5 +1,6 @@
 import { icons } from '../components/BottomNav.js';
 import { showCustomAlert } from '../utils/helpers.js';
+import { API_BASE_URL } from '../config.js';
 
 export function renderRegister() {
   const page = document.createElement('div');
@@ -60,7 +61,7 @@ export function renderRegister() {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/api/register', {
+      const response = await fetch(`${API_BASE_URL}/api/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password })

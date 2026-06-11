@@ -1,6 +1,7 @@
 import { icons } from '../components/BottomNav.js';
 import { getStreak, getUserId } from '../utils/store.js';
 import { showCustomAlert } from '../utils/helpers.js';
+import { API_BASE_URL } from '../config.js';
 
 function getProfilePhoto() {
   return localStorage.getItem('bglow_profile_photo_' + getUserId()) || null;
@@ -11,7 +12,7 @@ async function saveProfilePhoto(dataUrl) {
   localStorage.setItem('bglow_profile_photo_' + userId, dataUrl);
   if (userId && userId !== 'guest') {
     try {
-      await fetch(`http://localhost:8000/api/user/${userId}`, {
+      await fetch(`${API_BASE_URL}/api/user/${userId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ profile_photo: dataUrl })
@@ -241,7 +242,7 @@ export function renderProfile() {
       const userId = getUserId();
       if (userId && userId !== 'guest') {
         try {
-          const res = await fetch(`http://localhost:8000/api/user/${userId}`);
+          const res = await fetch(`${API_BASE_URL}/api/user/${userId}`);
           if (res.ok) {
             const user = await res.json();
             

@@ -1,6 +1,7 @@
 import { icons } from '../components/BottomNav.js';
 import { clearUserData, getUserId } from '../utils/store.js';
 import { showCustomAlert } from '../utils/helpers.js';
+import { API_BASE_URL } from '../config.js';
 
 export function renderSettings() {
   const page = document.createElement('div');
@@ -134,7 +135,7 @@ export function renderSettings() {
           overlay.querySelector('#btn-save-edit').textContent = 'Menyimpan...';
           overlay.querySelector('#btn-save-edit').disabled = true;
           
-          const res = await fetch(`http://localhost:8000/api/user/${userId}`, {
+          const res = await fetch(`${API_BASE_URL}/api/user/${userId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name: newName, email: newEmail })
@@ -263,7 +264,7 @@ export function renderSettings() {
           overlay.querySelector('#btn-save-skin').textContent = 'Menyimpan...';
           overlay.querySelector('#btn-save-skin').disabled = true;
           
-          const res = await fetch(`http://localhost:8000/api/user/${userId}`, {
+          const res = await fetch(`${API_BASE_URL}/api/user/${userId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

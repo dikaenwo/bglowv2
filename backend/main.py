@@ -182,6 +182,71 @@ def login_user():
             cursor.close()
             conn.close()
 
+@app.route("/api/forgot-password", methods=["POST"])
+def forgot_password():
+    data = request.get_json()
+    if not data or 'email' not in data:
+        return jsonify({"detail": "Email wajib diisi"}), 400
+        
+    email = data['email']
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"detail": "Database connection failed"}), 500
+        
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+        db_user = cursor.fetchone()
+        
+        if not db_user:
+            return jsonify({"detail": "Email tidak terdaftar"}), 400
+            
+        # Return mock OTP 1234
+        return jsonify({
+            "message": "Kode OTP telah dikirim (Mock)",
+            "otp": "1234",
+            "email": email
+        }), 200
+    except Exception as e:
+        return jsonify({"detail": str(e)}), 500
+    finally:
+        if conn.is_connected():
+            cursor.close()
+            conn.close()
+
+@app.route("/api/reset-password", methods=["POST"])
+def reset_password():
+    data = request.get_json()
+    if not data or 'email' not in data or 'password' not in data:
+        return jsonify({"detail": "Data tidak lengkap"}), 400
+        
+    email = data['email']
+    password = data['password']
+    
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"detail": "Database connection failed"}), 500
+        
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+        db_user = cursor.fetchone()
+        
+        if not db_user:
+            return jsonify({"detail": "User tidak ditemukan"}), 404
+            
+        hashed_password = generate_password_hash(password)
+        cursor.execute("UPDATE users SET password_hash = %s WHERE email = %s", (hashed_password, email))
+        conn.commit()
+        
+        return jsonify({"message": "Kata sandi berhasil diperbarui", "status": "success"}), 200
+    except Exception as e:
+        return jsonify({"detail": str(e)}), 500
+    finally:
+        if conn.is_connected():
+            cursor.close()
+            conn.close()
+
 @app.route("/api/social-login", methods=["POST"])
 def social_login():
     data = request.get_json()
@@ -421,4 +486,4 @@ def read_data():
     return jsonify({"data": "API is running"})
 
 if __name__ == "__main__":
-    app.run(debug=True, port=8000)
+    app.run(host="0.0.0.0", debug=True, port=8000)

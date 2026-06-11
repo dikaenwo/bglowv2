@@ -1,5 +1,6 @@
 import { icons } from '../components/BottomNav.js';
 import { Html5Qrcode } from 'html5-qrcode';
+import { BPOM_API_URL } from '../config.js';
 
 // Mock BPOM data
 const bpomData = [
@@ -237,7 +238,7 @@ export function renderBpomCheck() {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 detik timeout
 
-    fetch(`http://10.12.12.87:7000/cekbpom?na=${encodeURIComponent(query)}`, { signal: controller.signal })
+    fetch(`${BPOM_API_URL}?na=${encodeURIComponent(query)}`, { signal: controller.signal })
       .then(response => {
         clearTimeout(timeoutId);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);

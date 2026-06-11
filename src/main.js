@@ -25,6 +25,7 @@ import { renderProfile } from './pages/Profile.js';
 import { renderOnboarding } from './pages/Onboarding.js';
 import { renderLogin } from './pages/Login.js';
 import { renderRegister } from './pages/Register.js';
+import { renderForgotPassword } from './pages/ForgotPassword.js';
 import { renderRecommendations } from './pages/Recommendations.js';
 import { renderRoutine } from './pages/Routine.js';
 import { renderSettings } from './pages/Settings.js';
@@ -36,7 +37,7 @@ import { renderScanHistory } from './pages/ScanHistory.js';
 const app = document.querySelector('#app');
 
 // ─── No-nav routes (onboarding, auth) ───
-const noNavRoutes = ['onboarding', 'login', 'register', 'subscription', 'product-detail'];
+const noNavRoutes = ['onboarding', 'login', 'register', 'subscription', 'product-detail', 'forgot-password'];
 
 // ─── Route → tab mapping ───
 const tabMap = {
@@ -61,7 +62,7 @@ function handleRoute() {
   const isOnboarded = localStorage.getItem('bglow_onboarded');
   const isAuth = localStorage.getItem('bglow_auth');
 
-  if (!isOnboarded && route !== 'onboarding' && route !== 'login' && route !== 'register') {
+  if (!isOnboarded && route !== 'onboarding' && route !== 'login' && route !== 'register' && route !== 'forgot-password') {
     window.location.hash = '#/onboarding';
     return;
   }
@@ -77,6 +78,7 @@ function handleRoute() {
     case 'onboarding': pageEl = renderOnboarding(); break;
     case 'login': pageEl = renderLogin(); break;
     case 'register': pageEl = renderRegister(); break;
+    case 'forgot-password': pageEl = renderForgotPassword(); break;
     case 'scan': pageEl = renderSkinScan(); break;
     case 'bpom': pageEl = renderBpomCheck(); break;
     case 'alarm': pageEl = renderSunscreenAlarm(); break;

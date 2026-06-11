@@ -1,6 +1,7 @@
 import { icons } from '../components/BottomNav.js';
 import { clearUserData } from '../utils/store.js';
 import { showCustomAlert } from '../utils/helpers.js';
+import { API_BASE_URL } from '../config.js';
 
 export function renderLogin() {
   const page = document.createElement('div');
@@ -33,6 +34,10 @@ export function renderLogin() {
       </div>
 
       <button class="auth-submit" id="login-btn">Masuk</button>
+
+      <div style="text-align: right; margin-top: 12px;">
+        <a id="go-forgot-password" style="font-size: var(--font-sm); color: var(--primary); font-weight: 600; cursor: pointer; text-decoration: none;">Lupa Kata Sandi?</a>
+      </div>
 
       <div class="auth-divider">atau masuk dengan</div>
 
@@ -106,7 +111,7 @@ export function renderLogin() {
     if (hasError) return;
 
     try {
-      const response = await fetch('http://localhost:8000/api/login', {
+      const response = await fetch(`${API_BASE_URL}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -174,7 +179,7 @@ export function renderLogin() {
   // ─── Social Login Handler ───
   const handleSocialLogin = async (provider, email, name) => {
     try {
-      const response = await fetch('http://localhost:8000/api/social-login', {
+      const response = await fetch(`${API_BASE_URL}/api/social-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ provider, email, name })
@@ -433,6 +438,11 @@ export function renderLogin() {
   page.querySelector('#go-register').addEventListener('click', (e) => {
     e.preventDefault();
     window.location.hash = '#/register';
+  });
+
+  page.querySelector('#go-forgot-password').addEventListener('click', (e) => {
+    e.preventDefault();
+    window.location.hash = '#/forgot-password';
   });
 
   return page;

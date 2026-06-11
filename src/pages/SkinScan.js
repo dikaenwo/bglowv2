@@ -1,5 +1,6 @@
 import { icons } from '../components/BottomNav.js';
 import { getUserId } from '../utils/store.js';
+import { API_BASE_URL } from '../config.js';
 
 export function renderSkinScan() {
   const page = document.createElement('div');
@@ -161,7 +162,7 @@ export function renderSkinScan() {
 
       // Sync to database if not guest
       if (userId && userId !== 'guest') {
-        fetch(`http://localhost:8000/api/user/${userId}`, {
+        fetch(`${API_BASE_URL}/api/user/${userId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -171,7 +172,8 @@ export function renderSkinScan() {
             pore_condition: 'Baik — Minimal',
             skin_score: 65
           })
-        }).catch(e => console.error("Gagal sinkronisasi otomatis hasil scan:", e));
+        })
+.catch(e => console.error("Gagal sinkronisasi otomatis hasil scan:", e));
       }
 
       renderProcessing();
