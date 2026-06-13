@@ -11,6 +11,36 @@ export function renderSunscreenAlarm() {
 
   const userId = getUserId();
   let currentInterval = parseInt(localStorage.getItem('bglow_sunscreen_interval_' + userId)) || 2;
+  
+  let activeAudioCtx = null;
+  let activeAlarmInterval = null;
+
+  // Request notification permission on mount
+  if (typeof window !== 'undefined' && 'Notification' in window) {
+    if (Notification.permission === 'default') {
+      Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+          console.log("Izin notifikasi diberikan.");
+        }
+      });
+    }
+  }
+
+  // Helper to send system notification
+  function sendNotification(title, body) {
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification(title, {
+          body: body,
+          icon: '/pagi.png',
+          tag: 'sunscreen-reminder',
+          renotify: true
+        });
+      } catch (e) {
+        console.error("Gagal mengirim notifikasi:", e);
+      }
+    }
+  }
 
   // Helper to calculate schedules dynamically
   function getSchedulesForInterval(intervalHrs) {
@@ -191,16 +221,14 @@ export function renderSunscreenAlarm() {
 
   // Web Audio API Alarm sound synthesizer (Retro Digital Alarm Sound)
   function playAlarmSound() {
+    stopAlarmSound(); // stop any existing sound first
+    
     try {
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      let count = 0;
+      activeAudioCtx = audioCtx;
       
       const interval = setInterval(() => {
-        if (count >= 5) { // Beep 5 times
-          clearInterval(interval);
-          setTimeout(() => audioCtx.close(), 1000);
-          return;
-        }
+        if (audioCtx.state === 'closed') return;
         
         // Dual beep helper
         const playBeep = (delay) => {
@@ -222,25 +250,61 @@ export function renderSunscreenAlarm() {
         
         playBeep(0);
         playBeep(0.18);
-        
-        count++;
       }, 800);
+      
+      activeAlarmInterval = interval;
     } catch (e) {
       console.error("Gagal memutar suara alarm:", e);
     }
+  }
+
+  function stopAlarmSound() {
+    if (activeAlarmInterval) {
+      clearInterval(activeAlarmInterval);
+      activeAlarmInterval = null;
+    }
+    if (activeAudioCtx) {
+      try {
+        if (activeAudioCtx.state !== 'closed') {
+          activeAudioCtx.close();
+        }
+      } catch (e) {
+        console.error("Gagal menutup audio context:", e);
+      }
+      activeAudioCtx = null;
+    }
+  }
+
+  function showTestAlarmPopup() {
+    // Prevent duplicate overlays
+    const existing = document.querySelector('.test-alarm-popup-overlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'diary-modal-overlay test-alarm-popup-overlay';
+    overlay.innerHTML = `
+      <div class="diary-modal" style="text-align:center; max-width: 320px; padding: 24px; border-radius: var(--radius-lg); background: white;">
+        <div class="modal-handle" style="width: 40px; height: 4px; background: var(--border-light); border-radius: var(--radius-full); margin: 0 auto 16px auto;"></div>
+        <div style="font-size: 3.5rem; margin-bottom: 15px; animation: pulse 1s infinite alternate;">🔔</div>
+        <h2 style="margin-bottom: 10px; color: var(--primary); font-weight: 700; font-size: 1.25rem;">Uji Coba Alarm</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 20px; line-height: 1.5; font-size: 0.85rem;">Alarm sedang berbunyi untuk menguji sistem pengingat sunscreen Anda.</p>
+        <button class="btn btn-primary" id="btn-stop-test-alarm" style="width: 100%; padding: 12px; font-weight: 600; border-radius: var(--radius-md); background: var(--primary); color: white; border: none; cursor: pointer;">Matikan Alarm</button>
+      </div>
+    `;
+
+    overlay.querySelector('#btn-stop-test-alarm').addEventListener('click', () => {
+      overlay.remove();
+      stopAlarmSound();
+    });
+
+    document.body.appendChild(overlay);
   }
 
   // Test alarm button listener
   page.querySelector('#btn-test-alarm').addEventListener('click', (e) => {
     e.stopPropagation();
     playAlarmSound();
-    
-    // Show toast for testing
-    const toast = page.querySelector('#toast');
-    if (toast) {
-      toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 3000);
-    }
+    showTestAlarmPopup();
   });
 
   // Helper to show a custom interval popup modal instead of browser prompt
@@ -427,6 +491,9 @@ export function renderSunscreenAlarm() {
       playAlarmSound();
       showAlarmPopup();
       
+      // Send system push notification
+      sendNotification("Waktunya Re-apply! ☀️", "Ayo oleskan ulang sunscreen Anda untuk melindungi kulit dari sinar UV.");
+
       // Update timeline status dynamically since a slot just passed
       renderTimeline();
       
@@ -459,6 +526,7 @@ export function renderSunscreenAlarm() {
     
     overlay.querySelector('#btn-done-reapply').addEventListener('click', () => {
       overlay.remove();
+      stopAlarmSound();
       // Recalculate and reset
       const next = getNextSchedule();
       seconds = getSecondsRemaining(next);
@@ -467,6 +535,7 @@ export function renderSunscreenAlarm() {
     
     overlay.querySelector('#btn-snooze').addEventListener('click', () => {
       overlay.remove();
+      stopAlarmSound();
       seconds = 600; // snooze for 10 minutes
     });
     
@@ -477,6 +546,7 @@ export function renderSunscreenAlarm() {
   const originalRemove = page.remove;
   page.remove = function() {
     clearInterval(timerInterval);
+    stopAlarmSound();
     originalRemove.call(this);
   };
 

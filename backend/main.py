@@ -485,5 +485,87 @@ def update_user_profile(user_id):
 def read_data():
     return jsonify({"data": "API is running"})
 
+@app.route("/api/bpom-history/<int:user_id>", methods=["GET"])
+def get_bpom_history(user_id):
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"detail": "Database connection failed"}), 500
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT id, product_name, reg_no, manufacturer, status, created_at 
+            FROM user_bpom_history 
+            WHERE user_id = %s 
+            ORDER BY id DESC LIMIT 10
+        """, (user_id,))
+        rows = cursor.fetchall()
+        
+        # Convert created_at to string
+        for row in rows:
+            if row.get('created_at'):
+                row['created_at'] = row['created_at'].isoformat()
+                
+        return jsonify(rows), 200
+    except Exception as e:
+        return jsonify({"detail": str(e)}), 500
+    finally:
+        if conn.is_connected():
+            cursor.close()
+            conn.close()
+
+@app.route("/api/bpom-history", methods=["POST"])
+def add_bpom_history():
+    data = request.get_json()
+    if not data or 'user_id' not in data or 'product_name' not in data or 'reg_no' not in data or 'status' not in data:
+        return jsonify({"detail": "Data tidak lengkap"}), 400
+        
+    user_id = data['user_id']
+    product_name = data['product_name']
+    reg_no = data['reg_no']
+    manufacturer = data.get('manufacturer', '')
+    status = data['status']
+    
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"detail": "Database connection failed"}), 500
+    try:
+        cursor = conn.cursor()
+        
+        # Check if the exact product already exists in recent history to prevent duplicates
+        cursor.execute("""
+            SELECT id FROM user_bpom_history 
+            WHERE user_id = %s AND product_name = %s AND reg_no = %s
+        """, (user_id, product_name, reg_no))
+        existing = cursor.fetchone()
+        
+        if existing:
+            cursor.execute("DELETE FROM user_bpom_history WHERE id = %s", (existing[0],))
+            
+        cursor.execute("""
+            INSERT INTO user_bpom_history (user_id, product_name, reg_no, manufacturer, status) 
+            VALUES (%s, %s, %s, %s, %s)
+        """, (user_id, product_name, reg_no, manufacturer, status))
+        
+        # Prune older entries keeping only the top 10
+        cursor.execute("""
+            DELETE FROM user_bpom_history 
+            WHERE user_id = %s AND id NOT IN (
+                SELECT id FROM (
+                    SELECT id FROM user_bpom_history 
+                    WHERE user_id = %s 
+                    ORDER BY id DESC LIMIT 10
+                ) tmp
+            )
+        """, (user_id, user_id))
+        
+        conn.commit()
+        return jsonify({"message": "Riwayat berhasil disimpan", "status": "success"}), 201
+    except Exception as e:
+        return jsonify({"detail": str(e)}), 500
+    finally:
+        if conn.is_connected():
+            cursor.close()
+            conn.close()
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True, port=8000)

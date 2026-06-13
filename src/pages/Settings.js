@@ -39,12 +39,12 @@ export function renderSettings() {
           <span class="mi-arrow">${icons.chevronRight}</span>
         </div>
         <div class="menu-item anim-fade-in-up anim-delay-6">
-          <div class="mi-icon red">${icons.alert}</div>
+          <div class="mi-icon blue">${icons.info}</div>
           <span class="mi-text">Bantuan & Dukungan</span>
           <span class="mi-arrow">${icons.chevronRight}</span>
         </div>
         <div class="menu-item anim-fade-in-up anim-delay-7" id="logout-btn" style="cursor:pointer;">
-          <div class="mi-icon red">${icons.chevronLeft}</div>
+          <div class="mi-icon red">${icons.logout}</div>
           <span class="mi-text" style="color:var(--danger);">Keluar</span>
           <span class="mi-arrow"></span>
         </div>

@@ -154,7 +154,7 @@ export function renderProfile() {
           <span class="mi-arrow">${icons.chevronRight || '>'}</span>
         </div>
         <div class="menu-item anim-fade-in-up anim-delay-5" id="menu-favorites">
-          <div class="mi-icon green">${icons.shield || '🛡️'}</div>
+          <div class="mi-icon red">${icons.heart || '❤️'}</div>
           <span class="mi-text">Produk Favorit</span>
           <span class="mi-arrow">${icons.chevronRight || '>'}</span>
         </div>

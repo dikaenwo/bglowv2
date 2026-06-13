@@ -142,6 +142,21 @@ def init_database():
             """)
             print("Table 'user_special_schedules' checked/created.")
             
+            # 8. Buat tabel user_bpom_history jika belum ada
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS user_bpom_history (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                product_name VARCHAR(255) NOT NULL,
+                reg_no VARCHAR(255) NOT NULL,
+                manufacturer VARCHAR(255) DEFAULT '',
+                status VARCHAR(50) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+            """)
+            print("Table 'user_bpom_history' checked/created.")
+            
             conn.commit()
             cursor.close()
             conn.close()

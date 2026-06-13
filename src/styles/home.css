@@ -324,3 +324,23 @@
   line-height: 1.4;
   font-weight: 500;
 }
+
+/* Extinguished streak card */
+.streak-card.padam {
+  background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+  border-color: #E2E8F0;
+  box-shadow: none;
+}
+
+.streak-card.padam .sc-icon {
+  filter: grayscale(1) opacity(0.4);
+}
+
+.streak-card.padam h4 {
+  color: #475569;
+}
+
+.streak-card.padam p {
+  color: #64748B;
+}
+

@@ -1,5 +1,15 @@
 import { icons } from '../components/BottomNav.js';
-import { getRoutine, saveRoutine, getSpecialSchedule, saveSpecialSchedule, getProgress, saveProgress, getStreak, saveStreak } from '../utils/store.js';
+import { 
+  getRoutine, saveRoutine, 
+  getSpecialSchedule, saveSpecialSchedule, 
+  getProgress, saveProgress, 
+  getStreak, saveStreak,
+  getDateStringForDate, getMostRecentWeekdayDate,
+  getTodayDateString, getLatestCompletedDate,
+  isDateCompleted, setDateCompleted,
+  calculateCurrentStreak, getLatestCompletedDateFromDict,
+  calculateBestStreak
+} from '../utils/store.js';
 import { showCustomAlert, showCustomConfirm } from '../utils/helpers.js';
 
 const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
@@ -233,15 +243,19 @@ export function renderRoutine() {
     return [...new Set(labels)].join(', ');
   }
 
+  const getSelectedDateStr = () => {
+    return getDateStringForDate(getMostRecentWeekdayDate(selectedDay, today));
+  };
+
   function getDoneIndices() {
-    const progress = getProgress();
+    const progress = getProgress(getSelectedDateStr());
     return progress[currentTime] || [];
   }
 
-  function checkStreakStatus() {
-    const progress = getProgress();
-    const morningSteps = getStepsForDay(today.getDay(), 'morning');
-    const nightSteps = getStepsForDay(today.getDay(), 'night');
+  function checkStreakStatus(dayIdx, dateStr) {
+    const progress = getProgress(dateStr);
+    const morningSteps = getStepsForDay(dayIdx, 'morning');
+    const nightSteps = getStepsForDay(dayIdx, 'night');
     
     const morningDone = morningSteps.length === 0 || (progress.morning && progress.morning.length === morningSteps.length);
     const nightDone = nightSteps.length === 0 || (progress.night && progress.night.length === nightSteps.length);
@@ -250,26 +264,33 @@ export function renderRoutine() {
     const isBothDone = morningDone && nightDone && hasAnySteps;
     
     const streak = getStreak();
-    const todayIdx = today.getDay();
-    const wasStreakDone = streak.completedDays[todayIdx];
+    const wasStreakDone = isDateCompleted(streak, dateStr);
     
     if (isBothDone && !wasStreakDone) {
-      streak.completedDays[todayIdx] = true;
-      streak.current += 1;
-      if (streak.current > streak.best) streak.best = streak.current;
+      setDateCompleted(streak, dateStr, true);
+      streak.current = calculateCurrentStreak(streak.completedDays);
+      streak.lastDate = getLatestCompletedDateFromDict(streak.completedDays);
+      streak.best = calculateBestStreak(streak.completedDays);
       saveStreak(streak);
-      setTimeout(() => {
-        showCompletionPopup();
-      }, 500);
+      
+      // Only show popup and trigger animations if we completed the routine for TODAY
+      if (dateStr === getTodayDateString()) {
+        setTimeout(() => {
+          showCompletionPopup();
+        }, 500);
+      }
     } else if (!isBothDone && wasStreakDone) {
-      streak.completedDays[todayIdx] = false;
-      streak.current = Math.max(0, streak.current - 1);
+      setDateCompleted(streak, dateStr, false);
+      streak.current = calculateCurrentStreak(streak.completedDays);
+      streak.lastDate = getLatestCompletedDateFromDict(streak.completedDays);
+      streak.best = calculateBestStreak(streak.completedDays);
       saveStreak(streak);
     }
   }
 
   function toggleStep(idx) {
-    const progress = getProgress();
+    const dateStr = getSelectedDateStr();
+    const progress = getProgress(dateStr);
     if (!progress[currentTime]) progress[currentTime] = [];
     
     const wasDone = progress[currentTime].includes(idx);
@@ -278,9 +299,9 @@ export function renderRoutine() {
     } else {
       progress[currentTime].push(idx);
     }
-    saveProgress(progress);
+    saveProgress(progress, dateStr);
     
-    checkStreakStatus();
+    checkStreakStatus(selectedDay, dateStr);
     render();
   }
 
@@ -343,11 +364,12 @@ export function renderRoutine() {
       saveRoutine(routine);
     }
     
-    const progress = getProgress();
+    const dateStr = getSelectedDateStr();
+    const progress = getProgress(dateStr);
     progress[currentTime] = [];
-    saveProgress(progress);
+    saveProgress(progress, dateStr);
     
-    checkStreakStatus();
+    checkStreakStatus(selectedDay, dateStr);
     render();
   }
 
@@ -555,7 +577,7 @@ export function renderRoutine() {
       <div class="page-content">
         <!-- Streak Banner -->
         <div class="streak-banner anim-fade-in">
-          <div class="streak-fire">🔥</div>
+          <div class="streak-fire ${streakData.current === 0 ? 'padam' : ''}">🔥</div>
           <div class="streak-info">
             <div class="streak-count">${streakData.current} Hari Beruntun!</div>
             <div class="streak-sub">Rekor terbaik: ${streakData.best} hari</div>
@@ -563,7 +585,8 @@ export function renderRoutine() {
           <div class="streak-dots">
             ${Array.from({length: 7}).map((_, i) => {
               const dayIdx = (today.getDay() - 6 + i + 7) % 7;
-              const isDone = streakData.completedDays[dayIdx];
+              const targetDateStr = getDateStringForDate(getMostRecentWeekdayDate(dayIdx, today));
+              const isDone = isDateCompleted(streakData, targetDateStr);
               return `<div class="streak-dot ${isDone ? 'done' : ''} ${i === 6 ? 'today' : ''}">
                 ${isDone ? '<div class="sd-fire-icon">🔥</div>' : ''}
                 <span class="sd-label">${dayShort[dayIdx]}</span>
@@ -679,8 +702,8 @@ export function renderRoutine() {
       btn.addEventListener('click', () => {
         const targetTime = btn.dataset.time;
         if (targetTime === 'night') {
-          const morningSteps = getStepsForDay(today.getDay(), 'morning');
-          const progress = getProgress();
+          const morningSteps = getStepsForDay(selectedDay, 'morning');
+          const progress = getProgress(getSelectedDateStr());
           const morningDone = morningSteps.length === 0 || (progress.morning && progress.morning.length === morningSteps.length);
           if (!morningDone) {
             showCustomAlert("Rutinitas pagi belum diselesaikan semua! Selesaikan semua langkah pagi terlebih dahulu sebelum mengakses rutinitas malam.", "Rutinitas Pagi Belum Selesai");

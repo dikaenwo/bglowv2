@@ -1,11 +1,44 @@
 import { icons } from '../components/BottomNav.js';
 import { clearUserData } from '../utils/store.js';
 import { showCustomAlert } from '../utils/helpers.js';
-import { API_BASE_URL } from '../config.js';
+import { API_BASE_URL, GOOGLE_CLIENT_ID, APPLE_CLIENT_ID } from '../config.js';
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) {
+      resolve();
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = true;
+    script.defer = true;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+}
+
+function decodeJwt(token) {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    return null;
+  }
+}
 
 export function renderLogin() {
   const page = document.createElement('div');
   page.className = 'auth-page';
+
+  // Load Google and Apple SDKs in the background
+  loadScript('https://accounts.google.com/gsi/client').catch(err => console.error("Gagal memuat Google Sign-In SDK:", err));
+  loadScript('https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js').catch(err => console.error("Gagal memuat Apple Sign-In SDK:", err));
 
   page.innerHTML = `
     <div class="auth-brand">
@@ -424,15 +457,131 @@ export function renderLogin() {
   };
 
   page.querySelector('#google-login-btn').addEventListener('click', () => {
-    showMockSocialLogin('Google', (user) => {
-      handleSocialLogin('google', user.email, user.name);
-    });
+    if (!GOOGLE_CLIENT_ID) {
+      console.warn("GOOGLE_CLIENT_ID belum diatur di src/config.js. Menjalankan mode demo.");
+      showCustomAlert("GOOGLE_CLIENT_ID belum diatur di src/config.js. Menjalankan mode demo (Akun Mock).", "Mode Demo");
+      showMockSocialLogin('Google', (user) => {
+        handleSocialLogin('google', user.email, user.name);
+      });
+      return;
+    }
+
+    try {
+      if (typeof google === 'undefined' || !google.accounts) {
+        showCustomAlert("Google Sign-In SDK belum selesai dimuat. Harap tunggu beberapa saat lalu coba lagi.", "SDK Belum Siap");
+        return;
+      }
+
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: 'openid email profile',
+        callback: async (tokenResponse) => {
+          if (tokenResponse && tokenResponse.access_token) {
+            try {
+              // Tampilkan loading overlay sementara mengambil data profil dari Google
+              const loadingEl = document.createElement('div');
+              loadingEl.className = 'social-login-overlay';
+              loadingEl.innerHTML = `
+                <div class="social-login-card">
+                  <div class="social-login-loading">
+                    <div class="social-spinner"></div>
+                    <h3 class="social-login-title">Mengambil Profil...</h3>
+                    <p class="social-login-subtitle">Menghubungkan akun Google Anda ke B-Glow</p>
+                  </div>
+                </div>
+              `;
+              document.body.appendChild(loadingEl);
+
+              const res = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${tokenResponse.access_token}`);
+              const user = await res.json();
+              
+              loadingEl.remove();
+
+              if (user && user.email) {
+                handleSocialLogin('google', user.email, user.name || user.email.split('@')[0]);
+              } else {
+                showCustomAlert("Gagal mengambil data profil Google.", "Google Auth Gagal");
+              }
+            } catch (err) {
+              console.error("Gagal fetch userinfo dari Google:", err);
+              showCustomAlert("Gagal mengambil info pengguna dari Google.", "Google Auth Gagal");
+            }
+          }
+        },
+        error_callback: (err) => {
+          console.error("Google Token Client error:", err);
+          showCustomAlert("Terjadi kesalahan saat otorisasi Google.", "Google Auth Gagal");
+        }
+      });
+      client.requestAccessToken();
+    } catch (e) {
+      console.error("Gagal menginisialisasi Google Token Client:", e);
+      showCustomAlert("Gagal menginisialisasi Google Sign-In.", "Inisialisasi Gagal");
+    }
   });
 
-  page.querySelector('#apple-login-btn').addEventListener('click', () => {
-    showMockSocialLogin('Apple', (user) => {
-      handleSocialLogin('apple', user.email, user.name);
-    });
+  page.querySelector('#apple-login-btn').addEventListener('click', async () => {
+    if (!APPLE_CLIENT_ID) {
+      console.warn("APPLE_CLIENT_ID belum diatur di src/config.js. Menjalankan mode demo.");
+      showCustomAlert("APPLE_CLIENT_ID belum diatur di src/config.js. Menjalankan mode demo (Akun Mock).", "Mode Demo");
+      showMockSocialLogin('Apple', (user) => {
+        handleSocialLogin('apple', user.email, user.name);
+      });
+      return;
+    }
+
+    try {
+      if (typeof AppleID === 'undefined' || !AppleID.auth) {
+        showCustomAlert("Apple Sign-In SDK belum selesai dimuat. Harap tunggu beberapa saat lalu coba lagi.", "SDK Belum Siap");
+        return;
+      }
+
+      AppleID.auth.init({
+        clientId: APPLE_CLIENT_ID,
+        scope: 'name email',
+        redirectURI: window.location.origin,
+        usePopup: true
+      });
+
+      const response = await AppleID.auth.signIn();
+      if (response && response.authorization) {
+        let email = null;
+        let name = null;
+
+        // Apple hanya mengembalikan objek user pada login pertama kali
+        if (response.user) {
+          email = response.user.email;
+          if (response.user.name) {
+            const firstName = response.user.name.firstName || '';
+            const lastName = response.user.name.lastName || '';
+            name = `${firstName} ${lastName}`.trim();
+          }
+        }
+
+        // Jika user tidak ada (karena login ke-2 dst), kita dekode dari id_token JWT
+        if (!email && response.authorization.id_token) {
+          const decoded = decodeJwt(response.authorization.id_token);
+          if (decoded) {
+            email = decoded.email;
+          }
+        }
+
+        if (!name && email) {
+          name = email.split('@')[0];
+        }
+
+        if (email) {
+          handleSocialLogin('apple', email, name || 'Pengguna Apple');
+        } else {
+          showCustomAlert("Gagal mendapatkan email dari otorisasi Apple.", "Apple Auth Gagal");
+        }
+      }
+    } catch (error) {
+      console.error("Apple Sign-In error:", error);
+      if (error && error.error !== 'popup_closed_by_user') {
+        showCustomAlert("Gagal masuk dengan Apple ID Anda.", "Apple Auth Gagal");
+      }
+    }
   });
 
   page.querySelector('#go-register').addEventListener('click', (e) => {

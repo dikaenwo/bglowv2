@@ -1,6 +1,7 @@
 import { icons } from '../components/BottomNav.js';
 import { Html5Qrcode } from 'html5-qrcode';
-import { BPOM_API_URL } from '../config.js';
+import { BPOM_API_URL, API_BASE_URL } from '../config.js';
+import { getUserId } from '../utils/store.js';
 
 // Mock BPOM data
 const bpomData = [
@@ -10,6 +11,75 @@ const bpomData = [
   { name: 'MS Glow Whitening Cream', regNo: 'NA18190700321', manufacturer: 'PT Kosmetika Global', status: 'registered', barcode: '8995544332211' },
   { name: 'Unknown Beauty Cream X', regNo: '-', manufacturer: 'Unknown', status: 'not-registered', barcode: '0000000000000' },
 ];
+
+function getLocalBpomHistory(userId) {
+  const key = 'bglow_bpom_history_' + userId;
+  const data = localStorage.getItem(key);
+  if (data) {
+    try { return JSON.parse(data); } catch(e) { return []; }
+  }
+  return [];
+}
+
+function saveLocalBpomHistory(userId, list) {
+  const key = 'bglow_bpom_history_' + userId;
+  localStorage.setItem(key, JSON.stringify(list));
+}
+
+async function loadBpomHistoryList(userId) {
+  let localList = getLocalBpomHistory(userId);
+  if (localList.length === 0 && userId === 'guest') {
+    localList = bpomData.slice(0, 3);
+    saveLocalBpomHistory(userId, localList);
+  }
+
+  if (userId !== 'guest') {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/bpom-history/${userId}`);
+      if (response.ok) {
+        const dbList = await response.json();
+        const formatted = dbList.map(item => ({
+          name: item.product_name,
+          regNo: item.reg_no,
+          manufacturer: item.manufacturer,
+          status: item.status,
+          barcode: item.reg_no
+        }));
+        saveLocalBpomHistory(userId, formatted);
+        return formatted;
+      }
+    } catch (e) {
+      console.error("Failed to load BPOM history from database, using offline cache:", e);
+    }
+  }
+  return localList;
+}
+
+async function saveBpomHistoryEntry(userId, product) {
+  let list = getLocalBpomHistory(userId);
+  list = list.filter(item => !(item.name === product.name && item.regNo === product.regNo));
+  list.unshift(product);
+  list = list.slice(0, 10);
+  saveLocalBpomHistory(userId, list);
+
+  if (userId !== 'guest') {
+    try {
+      await fetch(`${API_BASE_URL}/api/bpom-history`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: userId,
+          product_name: product.name,
+          reg_no: product.regNo,
+          manufacturer: product.manufacturer,
+          status: product.status
+        })
+      });
+    } catch (e) {
+      console.error("Failed to save BPOM history to database:", e);
+    }
+  }
+}
 
 export function renderBpomCheck() {
   const page = document.createElement('div');
@@ -76,18 +146,26 @@ export function renderBpomCheck() {
 
     // Recent checks
     const recentList = page.querySelector('#recent-list');
-    bpomData.slice(0, 3).forEach(item => {
-      const div = document.createElement('div');
-      div.className = 'recent-item';
-      div.innerHTML = `
-        <div class="ri-icon">${icons.bpom}</div>
-        <div class="ri-info">
-          <div class="ri-name">${item.name}</div>
-          <div class="ri-status">${item.status === 'registered' ? '✅ Terdaftar' : '❌ Tidak Ditemukan'}</div>
-        </div>
-      `;
-      div.addEventListener('click', () => showResult(item));
-      recentList.appendChild(div);
+    const userId = getUserId();
+    loadBpomHistoryList(userId).then(list => {
+      recentList.innerHTML = '';
+      if (list.length === 0) {
+        recentList.innerHTML = '<div style="color: var(--text-tertiary); font-size: 0.85rem; padding: 10px 0;">Belum ada riwayat pengecekan.</div>';
+        return;
+      }
+      list.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'recent-item';
+        div.innerHTML = `
+          <div class="ri-icon">${icons.bpom}</div>
+          <div class="ri-info">
+            <div class="ri-name">${item.name}</div>
+            <div class="ri-status">${item.status === 'registered' ? '✅ Terdaftar' : '❌ Tidak Ditemukan'}</div>
+          </div>
+        `;
+        div.addEventListener('click', () => showResult(item));
+        recentList.appendChild(div);
+      });
     });
 
     page.querySelector('#back-btn').addEventListener('click', () => {
@@ -247,21 +325,25 @@ export function renderBpomCheck() {
       .then(data => {
         if (data.results && data.results.length > 0) {
           const res = data.results[0];
-          showResult({
+          const product = {
             name: res.nama_produk || query,
             regNo: res.nomor_registrasi || '-',
             manufacturer: res.pendaftar || res.merek || 'Unknown',
             status: 'registered',
             barcode: query
-          });
+          };
+          saveBpomHistoryEntry(getUserId(), product);
+          showResult(product);
         } else {
-          showResult({
+          const product = {
             name: query,
             regNo: '-',
             manufacturer: 'Tidak ditemukan di database BPOM',
             status: 'not-registered',
             barcode: query
-          });
+          };
+          saveBpomHistoryEntry(getUserId(), product);
+          showResult(product);
         }
       })
       .catch(err => {

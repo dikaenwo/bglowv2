@@ -97,3 +97,17 @@ CREATE TABLE IF NOT EXISTS `user_special_schedules` (
   UNIQUE KEY `user_id` (`user_id`),
   CONSTRAINT `user_special_schedules_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 8. Struktur dari tabel `user_bpom_history`
+CREATE TABLE IF NOT EXISTS `user_bpom_history` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `user_id` INT(11) NOT NULL,
+  `product_name` VARCHAR(255) NOT NULL,
+  `reg_no` VARCHAR(255) NOT NULL,
+  `manufacturer` VARCHAR(255) DEFAULT '',
+  `status` VARCHAR(50) NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `user_bpom_history_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
