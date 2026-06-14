@@ -3,7 +3,7 @@ import { icons } from '../components/BottomNav.js';
 const slides = [
   {
     cls: 'ob-slide-1',
-    icon: icons.camera,
+    icon: '<div class="ob-logo-custom"></div>',
     title: 'Analisis Kulit AI',
     desc: 'Temukan kebutuhan kulit Anda yang sebenarnya dengan pemindai AI canggih kami. Dapatkan wawasan instan dan akurat tentang jenis serta masalah kulit Anda.',
   },

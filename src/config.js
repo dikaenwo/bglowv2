@@ -15,5 +15,5 @@ export const BPOM_API_URL = `http://${host}:7000/cekbpom`;
 
 // Konfigurasi Kunci Masuk Sosial (Social Login Client IDs)
 // Silakan isi nilai Client ID di bawah ini jika ingin menghubungkannya ke akun developer Google/Apple riil.
-export const GOOGLE_CLIENT_ID = '534452078793-porq14tnbklfibh77co76nb0uhbbup1i.apps.googleusercontent.com';
+export const GOOGLE_CLIENT_ID = '';
 export const APPLE_CLIENT_ID = '';

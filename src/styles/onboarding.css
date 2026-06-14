@@ -65,8 +65,8 @@
 }
 
 .ob-illustration .ob-icon-main {
-  width: 100px;
-  height: 100px;
+  width: 150px;
+  height: 150px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -74,10 +74,24 @@
 }
 
 .ob-illustration .ob-icon-main svg {
-  width: 80px;
-  height: 80px;
+  width: 130px;
+  height: 130px;
   stroke-width: 1.5;
   fill: none;
+}
+
+.ob-logo-custom {
+  width: 130px;
+  height: 130px;
+  background-color: var(--primary);
+  -webkit-mask-image: url('/face-chip-logo.png');
+  mask-image: url('/face-chip-logo.png');
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
 }
 
 /* Floating accent dots */

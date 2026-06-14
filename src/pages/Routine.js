@@ -279,12 +279,57 @@ export function renderRoutine() {
           showCompletionPopup();
         }, 500);
       }
+      return true;
     } else if (!isBothDone && wasStreakDone) {
       setDateCompleted(streak, dateStr, false);
       streak.current = calculateCurrentStreak(streak.completedDays);
       streak.lastDate = getLatestCompletedDateFromDict(streak.completedDays);
       streak.best = calculateBestStreak(streak.completedDays);
       saveStreak(streak);
+      return true;
+    }
+    return false;
+  }
+
+  function updateStepInPlace(idx, isDone) {
+    const stepEl = page.querySelector(`.routine-step[data-idx="${idx}"]`);
+    if (stepEl) {
+      if (isDone) {
+        stepEl.classList.add('done');
+      } else {
+        stepEl.classList.remove('done');
+      }
+    }
+
+    const checkEl = page.querySelector(`.rs-check[data-idx="${idx}"]`);
+    if (checkEl) {
+      if (isDone) {
+        checkEl.classList.add('checked');
+      } else {
+        checkEl.classList.remove('checked');
+      }
+    }
+
+    const steps = getSteps();
+    const doneIndices = getDoneIndices();
+    const progressPct = steps.length > 0 ? Math.round((doneIndices.length / steps.length) * 100) : 0;
+
+    const infoH3 = page.querySelector('.routine-progress-info h3');
+    const infoP = page.querySelector('.routine-progress-info p');
+    if (infoH3) {
+      infoH3.textContent = progressPct === 100 && steps.length > 0 ? 'Selesai Semua! ✨' : 'Terus Lanjutkan!';
+    }
+    if (infoP) {
+      infoP.textContent = `${doneIndices.length} dari ${steps.length} langkah selesai`;
+    }
+
+    const fill = page.querySelector('#routine-ring-fill');
+    const pct = page.querySelector('#routine-percent');
+    if (fill) {
+      fill.style.strokeDashoffset = 220 - (220 * progressPct / 100);
+    }
+    if (pct) {
+      pct.textContent = `${progressPct}%`;
     }
   }
 
@@ -301,8 +346,12 @@ export function renderRoutine() {
     }
     saveProgress(progress, dateStr);
     
-    checkStreakStatus(selectedDay, dateStr);
-    render();
+    const streakChanged = checkStreakStatus(selectedDay, dateStr);
+    if (streakChanged) {
+      render();
+    } else {
+      updateStepInPlace(idx, !wasDone);
+    }
   }
 
   function showCompletionPopup() {
