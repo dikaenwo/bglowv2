@@ -72,7 +72,7 @@ export function createBottomNav(activeTab = 'home') {
       <span>Rutinitas</span>
     </button>
     <button class="nav-item ${activeTab === 'scan' ? 'active' : ''} scan-btn" data-page="scan">
-      <div class="scan-icon-wrap">${icons.brain}</div>
+      <div class="scan-icon-wrap"><img src="/face-chip-logo.png" alt="Scan AI Logo" /></div>
       <span>Scan AI</span>
     </button>
     <button class="nav-item ${activeTab === 'recommendations' ? 'active' : ''}" data-page="recommendations">

@@ -92,10 +92,12 @@
   margin-top: -16px;
 }
 
-.nav-item.scan-btn .scan-icon-wrap svg {
+.nav-item.scan-btn .scan-icon-wrap svg,
+.nav-item.scan-btn .scan-icon-wrap img {
   stroke: white;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
 }
 
 .nav-item.scan-btn:active .scan-icon-wrap {

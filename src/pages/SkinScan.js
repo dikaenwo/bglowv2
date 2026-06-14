@@ -34,6 +34,14 @@ export function renderSkinScan() {
       <div class="scan-camera">
         <div class="camera-feed">
           <video id="webcam" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover; display: none; transform: scaleX(-1); position: absolute; top: 0; left: 0; z-index: 1;"></video>
+          
+          <div class="camera-placeholder" id="camera-placeholder" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1; color: rgba(255,255,255,0.6); gap: 16px; cursor: pointer; text-align: center; padding: 20px;">
+            <div class="placeholder-icon" style="width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; animation: pulseGlow 2s ease-in-out infinite;">
+              <svg viewBox="0 0 24 24" style="width: 32px; height: 32px; stroke: currentColor; fill: none; stroke-width: 2;"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            </div>
+            <span style="font-size: var(--font-sm); font-weight: 500;">Mengaktifkan kamera...</span>
+          </div>
+
           <div class="face-outline" style="z-index: 2;"></div>
           <div class="scan-line" style="z-index: 2;"></div>
           <div class="detection-points" id="det-points" style="z-index: 3;"></div>
@@ -45,6 +53,7 @@ export function renderSkinScan() {
           <button class="scan-btn-main" id="start-scan">${icons.camera}</button>
         </div>
       </div>
+      <input type="file" accept="image/*" capture="user" id="camera-file-input" style="display: none;" />
       <div class="page-content" style="text-align:center; padding-top:24px;">
         <p style="color:var(--text-tertiary); font-size:var(--font-sm);">
           Posisikan wajah Anda dalam garis batas lalu ketuk tombol scan
@@ -53,21 +62,70 @@ export function renderSkinScan() {
     `;
 
     const video = page.querySelector('#webcam');
+    const placeholder = page.querySelector('#camera-placeholder');
+    const placeholderText = placeholder.querySelector('span');
+    const fileInput = page.querySelector('#camera-file-input');
+
+    // Helper to setup fallback native camera trigger
+    const setupFallbackMode = (message) => {
+      if (placeholderText) {
+        placeholderText.textContent = message;
+      }
+      placeholder.addEventListener('click', () => {
+        fileInput.click();
+      });
+    };
 
     // Request camera access
-    navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
-    })
-    .then(s => {
-      stream = s;
-      if (video) {
-        video.srcObject = s;
-        video.style.display = 'block';
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
+      })
+      .then(s => {
+        stream = s;
+        if (video) {
+          video.srcObject = s;
+          video.style.display = 'block';
+          if (placeholder) placeholder.style.display = 'none';
+        }
+      })
+      .catch(err => {
+        console.warn("Gagal mengakses kamera secara langsung:", err);
+        setupFallbackMode("Kamera terblokir. Ketuk di sini untuk mengambil foto.");
+      });
+    } else {
+      console.warn("navigator.mediaDevices.getUserMedia tidak didukung.");
+      setupFallbackMode("Ketuk di sini untuk membuka kamera.");
+    }
+
+    // Handle native camera/file input capture
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          capturedImage = event.target.result;
+          localStorage.setItem('bglow_captured_image_' + userId, capturedImage);
+          
+          // Display the captured image as preview
+          let imgPreview = page.querySelector('#captured-preview');
+          if (!imgPreview) {
+            imgPreview = document.createElement('img');
+            imgPreview.id = 'captured-preview';
+            imgPreview.style.cssText = "width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; z-index: 1; transform: scaleX(-1);";
+            page.querySelector('.camera-feed').appendChild(imgPreview);
+          }
+          imgPreview.src = capturedImage;
+          imgPreview.style.display = 'block';
+          
+          // Hide video and placeholder
+          if (video) video.style.display = 'none';
+          if (placeholder) placeholder.style.display = 'none';
+          
+          startScanning();
+        };
+        reader.readAsDataURL(file);
       }
-    })
-    .catch(err => {
-      console.error("Gagal mengakses kamera:", err);
-      // Fallback: dummy-face.png will show since video is display: none
     });
 
     page.querySelector('#back-btn').addEventListener('click', () => {
@@ -76,8 +134,8 @@ export function renderSkinScan() {
     });
 
     page.querySelector('#start-scan').addEventListener('click', () => {
-      // Capture the mirrored frame from video stream
       if (video && stream) {
+        // Capture the mirrored frame from video stream
         try {
           const canvas = document.createElement('canvas');
           canvas.width = video.videoWidth || 640;
@@ -94,8 +152,11 @@ export function renderSkinScan() {
         } catch (err) {
           console.error("Gagal menangkap gambar dari video feed:", err);
         }
+        startScanning();
+      } else {
+        // Fallback: trigger native camera click
+        fileInput.click();
       }
-      startScanning();
     });
   }
 
@@ -192,7 +253,7 @@ export function renderSkinScan() {
           <div class="loader-ring"></div>
           <div class="loader-ring"></div>
           <div class="loader-glow"></div>
-          <div class="loader-center-icon">${icons.skinScan}</div>
+          <div class="loader-center-icon"><img src="/face-chip-logo.png" class="loader-face-chip" alt="Face Chip Logo" /></div>
           <div class="particles">
             <div class="particle"></div>
             <div class="particle"></div>

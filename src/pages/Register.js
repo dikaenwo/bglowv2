@@ -21,11 +21,13 @@ export function renderRegister() {
       <div class="auth-field">
         <label>Nama Lengkap</label>
         <input class="auth-input" type="text" id="reg-name" placeholder="Nama lengkap Anda" />
+        <div class="auth-error-text" id="name-error" style="display: none;"></div>
       </div>
 
       <div class="auth-field">
         <label>Email</label>
         <input class="auth-input" type="email" id="reg-email" placeholder="email@contoh.com" />
+        <div class="auth-error-text" id="email-error" style="display: none;"></div>
       </div>
 
       <div class="auth-field">
@@ -33,6 +35,7 @@ export function renderRegister() {
         <div class="password-wrap">
           <input class="auth-input" type="password" id="reg-password" placeholder="Min. 8 karakter" />
         </div>
+        <div class="auth-error-text" id="password-error" style="display: none;"></div>
       </div>
 
       <button class="auth-submit" id="register-btn">Buat Akun</button>
@@ -50,15 +53,68 @@ export function renderRegister() {
     </div>
   `;
 
-  page.querySelector('#register-btn').addEventListener('click', async () => {
-    const name = page.querySelector('#reg-name').value;
-    const email = page.querySelector('#reg-email').value;
-    const password = page.querySelector('#reg-password').value;
-    
-    if (!name || !email || !password) {
-      showCustomAlert("Mohon isi semua data!", "Validasi Gagal");
-      return;
+  // Helper functions for displaying input field errors
+  const showFieldError = (inputEl, errorEl, msg) => {
+    inputEl.classList.add('error');
+    errorEl.textContent = msg;
+    errorEl.style.display = 'block';
+  };
+
+  const clearErrors = () => {
+    const inputs = page.querySelectorAll('.auth-input');
+    const errors = page.querySelectorAll('.auth-error-text');
+    inputs.forEach(el => el.classList.remove('error'));
+    errors.forEach(el => {
+      el.textContent = '';
+      el.style.display = 'none';
+    });
+  };
+
+  const passwordInput = page.querySelector('#reg-password');
+  const passwordError = page.querySelector('#password-error');
+
+  // Live validation for password length
+  passwordInput.addEventListener('input', () => {
+    const val = passwordInput.value;
+    if (val.length > 0 && val.length < 8) {
+      showFieldError(passwordInput, passwordError, 'minimal 8 karakter');
+    } else {
+      passwordInput.classList.remove('error');
+      passwordError.textContent = '';
+      passwordError.style.display = 'none';
     }
+  });
+
+  page.querySelector('#register-btn').addEventListener('click', async () => {
+    const nameInput = page.querySelector('#reg-name');
+    const emailInput = page.querySelector('#reg-email');
+    const nameError = page.querySelector('#name-error');
+    const emailError = page.querySelector('#email-error');
+    
+    clearErrors();
+
+    const name = nameInput.value.trim();
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+    
+    let hasError = false;
+    if (!name) {
+      showFieldError(nameInput, nameError, 'Nama lengkap tidak boleh kosong!');
+      hasError = true;
+    }
+    if (!email) {
+      showFieldError(emailInput, emailError, 'Email tidak boleh kosong!');
+      hasError = true;
+    }
+    if (!password) {
+      showFieldError(passwordInput, passwordError, 'Kata sandi tidak boleh kosong!');
+      hasError = true;
+    } else if (password.length < 8) {
+      showFieldError(passwordInput, passwordError, 'minimal 8 karakter');
+      hasError = true;
+    }
+
+    if (hasError) return;
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/register`, {
@@ -74,7 +130,12 @@ export function renderRegister() {
           window.location.hash = '#/login';
         });
       } else {
-        showCustomAlert(data.detail || "Pendaftaran gagal", "Pendaftaran Gagal");
+        const detail = data.detail || '';
+        if (detail.includes('Email sudah terdaftar')) {
+          showFieldError(emailInput, emailError, 'Email sudah terdaftar');
+        } else {
+          showCustomAlert(detail || "Pendaftaran gagal", "Pendaftaran Gagal");
+        }
       }
     } catch (error) {
       console.error('Error:', error);

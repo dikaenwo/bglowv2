@@ -90,6 +90,9 @@ def register_user():
     email = data['email']
     password = data['password']
     
+    if len(password) < 8:
+        return jsonify({"detail": "Kata sandi minimal 8 karakter"}), 400
+        
     conn = get_db_connection()
     if not conn:
         return jsonify({"detail": "Database connection failed"}), 500

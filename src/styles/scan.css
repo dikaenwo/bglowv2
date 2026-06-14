@@ -18,9 +18,7 @@
 .camera-feed {
   width: 100%;
   height: 100%;
-  background-image: url('/dummy-face.png');
-  background-size: cover;
-  background-position: center;
+  background-color: #111827;
   position: relative;
 }
 
@@ -216,6 +214,13 @@
   fill: none;
   stroke-width: 2;
   animation: float 2s ease-in-out infinite;
+}
+
+.loader-face-chip {
+  width: 42px;
+  height: 42px;
+  animation: float 2s ease-in-out infinite;
+  filter: brightness(0) invert(43%) sepia(87%) saturate(1900%) hue-rotate(205deg) brightness(98%) contrast(97%);
 }
 
 /* Particles */
