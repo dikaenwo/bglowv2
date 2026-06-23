@@ -406,8 +406,6 @@ export function renderSkinScan() {
     });
 
     page.querySelector('#rescan-btn').addEventListener('click', () => {
-      localStorage.removeItem('bglow_has_scanned_' + userId);
-      localStorage.removeItem('bglow_captured_image_' + userId);
       capturedImage = null;
       renderCamera();
     });
@@ -422,12 +420,8 @@ export function renderSkinScan() {
     });
   }
 
-  const hasScanned = localStorage.getItem('bglow_has_scanned_' + userId) === '1';
-  if (hasScanned) {
-    renderResults();
-  } else {
-    renderCamera();
-  }
+  // Always open the camera immediately on page load
+  renderCamera();
 
   return page;
 }

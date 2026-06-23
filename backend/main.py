@@ -570,5 +570,30 @@ def add_bpom_history():
             cursor.close()
             conn.close()
 
+@app.route("/api/scan-bpom", methods=["POST"])
+def scan_bpom():
+    data = request.get_json()
+    if not data or 'query' not in data:
+        return jsonify({"detail": "Nomor registrasi/query tidak boleh kosong"}), 400
+        
+    nomor_bpom = data['query']
+    
+    try:
+        # TODO: Jalankan fungsi/modul scraping BPOM kamu di sini
+        # contoh hasil ekstraksi data dari web cekbpom:
+        hasil_scraping = {
+            "status": "success",
+            "reg_no": nomor_bpom,
+            "product_name": "B-Glow Skincare Serum",
+            "brand": "B-Glow",
+            "manufacturer": "PT. Glow Kosmetik Indonesia",
+            "status_bpom": "TERDAFTAR / AKTIF"
+        }
+        
+        return jsonify(hasil_scraping), 200
+        
+    except Exception as e:
+        return jsonify({"detail": f"Gagal memindai data: {str(e)}"}), 500
+    
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True, port=8000)

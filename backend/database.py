@@ -4,7 +4,7 @@ from mysql.connector import Error
 DB_CONFIG = {
     'host': 'localhost',
     'user': 'root',
-    'password': '',
+    'password': 'bglow2026',
     'database': 'bglow_db'
 }
 
