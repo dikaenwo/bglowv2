@@ -1,7 +1,7 @@
 import { icons } from '../components/BottomNav.js';
 import { Html5Qrcode } from 'html5-qrcode';
 import { BPOM_API_URL, API_BASE_URL } from '../config.js';
-import { getUserId } from '../utils/store.js';
+import { getUserId, getAuthHeaders } from '../utils/store.js';
 
 // Mock BPOM data
 const bpomData = [
@@ -35,7 +35,9 @@ async function loadBpomHistoryList(userId) {
 
   if (userId !== 'guest') {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/bpom-history/${userId}`);
+      const response = await fetch(`${API_BASE_URL}/api/bpom-history/${userId}`, {
+        headers: getAuthHeaders()
+      });
       if (response.ok) {
         const dbList = await response.json();
         const formatted = dbList.map(item => ({
@@ -66,7 +68,7 @@ async function saveBpomHistoryEntry(userId, product) {
     try {
       await fetch(`${API_BASE_URL}/api/bpom-history`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           user_id: userId,
           product_name: product.name,

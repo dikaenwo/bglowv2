@@ -31,3 +31,6 @@ venv
 __pycache__/
 *.pyc
 
+# Backend environment secrets — JANGAN commit!
+backend/.env
+.env

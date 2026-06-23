@@ -155,6 +155,10 @@ export function renderLogin() {
       if (response.ok) {
         clearUserData();
         localStorage.setItem('bglow_auth', '1');
+        // Simpan JWT Bearer token untuk request API yang terproteksi
+        if (data.token) {
+          localStorage.setItem('bglow_token', data.token);
+        }
         localStorage.setItem('bglow_user', JSON.stringify({ 
           id: data.user.id,
           name: data.user.name, 
@@ -223,6 +227,10 @@ export function renderLogin() {
       if (response.ok) {
         clearUserData();
         localStorage.setItem('bglow_auth', '1');
+        // Simpan JWT Bearer token untuk request API yang terproteksi
+        if (data.token) {
+          localStorage.setItem('bglow_token', data.token);
+        }
         localStorage.setItem('bglow_user', JSON.stringify({ 
           id: data.user.id,
           name: data.user.name, 

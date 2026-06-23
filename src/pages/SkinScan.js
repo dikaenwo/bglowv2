@@ -1,5 +1,5 @@
 import { icons } from '../components/BottomNav.js';
-import { getUserId } from '../utils/store.js';
+import { getUserId, getAuthHeaders } from '../utils/store.js';
 import { API_BASE_URL } from '../config.js';
 
 export function renderSkinScan() {
@@ -225,7 +225,7 @@ export function renderSkinScan() {
       if (userId && userId !== 'guest') {
         fetch(`${API_BASE_URL}/api/user/${userId}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify({
             skin_type: 'Kombinasi',
             acne_level: 'Ringan — Grade 1',
