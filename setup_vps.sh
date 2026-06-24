@@ -8,7 +8,8 @@ echo "=== Starting B-Glow Project Deployment Setup ==="
 # Define variables
 PROJECT_DIR="$(pwd)"
 DB_NAME="bglow_db"
-DB_PASS="bglow2026"
+DB_USER="bglow"
+DB_PASS="Bglow@2026"
 VENV_DIR="$PROJECT_DIR/backend/venv"
 
 echo "Project Directory: $PROJECT_DIR"
@@ -36,18 +37,17 @@ echo "Configuring MySQL Database..."
 sudo systemctl start mysql
 sudo systemctl enable mysql
 
-# Secure MySQL and set root password
-# Note: For security and compatibility with mysql-connector-python we use mysql_native_password
-sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '$DB_PASS';" || true
-sudo mysql -u root -p"$DB_PASS" -e "FLUSH PRIVILEGES;"
-
-# Create database if not exists
-sudo mysql -u root -p"$DB_PASS" -e "CREATE DATABASE IF NOT EXISTS $DB_NAME CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;"
+# Create database and database user
+echo "Creating database user '$DB_USER' with privileges on '$DB_NAME'..."
+sudo mysql -e "CREATE DATABASE IF NOT EXISTS $DB_NAME CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;"
+sudo mysql -e "CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASS';"
+sudo mysql -e "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost';"
+sudo mysql -e "FLUSH PRIVILEGES;"
 
 # Import database schema
 if [ -f "$PROJECT_DIR/backend/database.sql" ]; then
     echo "Importing database schema from backend/database.sql..."
-    sudo mysql -u root -p"$DB_PASS" "$DB_NAME" < "$PROJECT_DIR/backend/database.sql"
+    sudo mysql -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" < "$PROJECT_DIR/backend/database.sql"
 else
     echo "Warning: backend/database.sql not found!"
 fi
@@ -55,6 +55,18 @@ fi
 # 5. Setup Python Virtual Environment and Backend
 echo "Setting up Python virtual environment..."
 cd "$PROJECT_DIR/backend"
+
+# Create .env from .env.example if it doesn't exist
+if [ ! -f ".env" ]; then
+    echo "Creating .env file..."
+    cp .env.example .env
+    # Generate random JWT secret key
+    JWT_SECRET=$(python3 -c "import secrets; print(secrets.token_hex(32))")
+    # Replace default placeholder with generated key
+    sed -i "s/JWT_SECRET_KEY=ganti-dengan-secret-key-yang-panjang-dan-random/JWT_SECRET_KEY=$JWT_SECRET/g" .env
+    echo ".env file created with a secure JWT_SECRET_KEY."
+fi
+
 python3 -m venv venv
 source venv/bin/activate
 
@@ -89,6 +101,7 @@ After=network.target
 [Service]
 User=$USER
 WorkingDirectory=$PROJECT_DIR/backend
+EnvironmentFile=$PROJECT_DIR/backend/.env
 ExecStart=$VENV_DIR/bin/gunicorn --workers 3 --bind 127.0.0.1:5000 main:app
 Restart=always
 
@@ -136,3 +149,4 @@ sudo systemctl restart nginx
 
 echo "=== B-Glow Project Deployment Setup Completed Successfully! ==="
 echo "You can access your website at: http://103.247.8.169"
+
