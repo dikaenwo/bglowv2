@@ -1,5 +1,5 @@
 import { icons } from '../components/BottomNav.js';
-import { clearUserData, getUserId } from '../utils/store.js';
+import { clearUserData, getUserId, getAuthHeaders } from '../utils/store.js';
 import { showCustomAlert } from '../utils/helpers.js';
 import { API_BASE_URL } from '../config.js';
 
@@ -64,6 +64,7 @@ export function renderSettings() {
         clearUserData();
         localStorage.setItem('bglow_auth', '0');
         localStorage.removeItem('bglow_user');
+        localStorage.removeItem('bglow_token'); // Hapus JWT token saat logout
         window.location.hash = '#/login';
       });
     }
@@ -137,7 +138,7 @@ export function renderSettings() {
           
           const res = await fetch(`${API_BASE_URL}/api/user/${userId}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(),
             body: JSON.stringify({ name: newName, email: newEmail })
           });
           
@@ -266,7 +267,7 @@ export function renderSettings() {
           
           const res = await fetch(`${API_BASE_URL}/api/user/${userId}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(),
             body: JSON.stringify({
               skin_type: selectedSkinType,
               acne_level: selectedAcneLevel,

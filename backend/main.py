@@ -1,14 +1,152 @@
-from flask import Flask, request, jsonify
+import os
+import jwt
+import secrets
+from typing import Optional
+from datetime import datetime, timezone, timedelta
+from functools import wraps
+from flask import Flask, request, jsonify, g
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from database import get_db_connection
+from dotenv import load_dotenv
 import json
+import requests as req
+from bs4 import BeautifulSoup
+import re
+from urllib.parse import unquote
+
+# Muat .env jika ada (untuk development lokal)
+load_dotenv()
 
 app = Flask(__name__)
-# Konfigurasi CORS agar frontend bisa mengakses backend
-CORS(app)
 
-# Helper to fetch all extra user data and format it
+# ─── CORS ───────────────────────────────────────────────────────────────────
+# Di production, ganti dengan origin spesifik via env var CORS_ORIGINS
+_cors_origins = os.environ.get('CORS_ORIGINS', '*')
+CORS(app, resources={r"/api/*": {"origins": _cors_origins}})
+
+# ─── JWT Config ─────────────────────────────────────────────────────────────
+# Di production, WAJIB set JWT_SECRET_KEY di environment variable VPS!
+# Buat dengan: python -c "import secrets; print(secrets.token_hex(32))"
+JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or secrets.token_hex(32)
+JWT_ALGORITHM  = 'HS256'
+JWT_EXPIRY_DAYS = 7   # Token berlaku 7 hari
+
+if not os.environ.get('JWT_SECRET_KEY'):
+    print("[WARN] JWT_SECRET_KEY tidak diset di environment. "
+          "Setiap restart server akan invalidate semua token yang ada. "
+          "Set JWT_SECRET_KEY di file .env atau environment VPS untuk production!")
+
+
+# ─── BPOM Scraping Config ───────────────────────────────────────────────────
+BPOM_BASE = "https://cekbpom.pom.go.id"
+BPOM_DT   = f"{BPOM_BASE}/produk-dt/all"
+BPOM_PAGE = f"{BPOM_BASE}/all-produk"
+UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
+def extract_na_from_query(query):
+    query = query.strip()
+    match = re.search(r'(N[A-E])[\s\-]?(\d{11})', query, re.IGNORECASE)
+    if match:
+        return match.group(1).upper() + match.group(2)
+    if 'cekbpom.pom.go.id' in query or query.startswith('http'):
+        try:
+            from urllib.parse import urlparse, parse_qs
+            parsed = urlparse(query)
+            qs = parse_qs(parsed.query)
+            if 'query' in qs:
+                return qs['query'][0]
+            segments = [s for s in parsed.path.split('/') if s]
+            if segments:
+                return segments[-1]
+        except Exception:
+            parts = query.split('/')
+            return parts[-1].split('?')[0] or query
+    return query
+
+def clean_html(raw):
+    if not raw:
+        return ''
+    return BeautifulSoup(str(raw), 'html.parser').get_text(separator=' ', strip=True)
+
+def get_session_with_csrf():
+    s = req.Session()
+    r = s.get(BPOM_PAGE, headers={"User-Agent": UA}, timeout=12)
+    r.raise_for_status()
+    csrf_match = re.search(r'<meta name="csrf-token" content="([^"]+)"', r.text)
+    csrf_token = csrf_match.group(1) if csrf_match else ""
+    xsrf_cookie = unquote(s.cookies.get("XSRF-TOKEN", ""))
+    return s, csrf_token, xsrf_cookie
+
+def build_payload(query, csrf_token):
+    is_na = bool(re.match(r'^N[A-E]\d+$', query, re.IGNORECASE))
+    
+    payload = {
+        "draw": "1", "columns[0][data]": "PRODUCT_ID", "columns[0][name]": "", "columns[0][searchable]": "true", "columns[0][orderable]": "false", "columns[0][search][value]": "", "columns[0][search][regex]": "false",
+        "columns[1][data]": "PRODUCT_REGISTER", "columns[1][name]": "", "columns[1][searchable]": "true", "columns[1][orderable]": "true", "columns[1][search][value]": "", "columns[1][search][regex]": "false",
+        "columns[2][data]": "PRODUCT_NAME", "columns[2][name]": "", "columns[2][searchable]": "true", "columns[2][orderable]": "true", "columns[2][search][value]": "", "columns[2][search][regex]": "false",
+        "columns[3][data]": "REGISTRAR_NAME", "columns[3][name]": "", "columns[3][searchable]": "true", "columns[3][orderable]": "true", "columns[3][search][value]": "", "columns[3][search][regex]": "false",
+        "order[0][column]": "1", "order[0][dir]": "asc", "start": "0", "length": "10", "search[value]": "", "search[regex]": "false",
+        "query": "", "product_register": "", "product_name": "", "product_brand": "", "product_package": "", "product_form": "", "ingredients": "",
+        "submit_date_start": "", "submit_date_end": "", "product_date_start": "", "product_date_end": "", "expire_date_start": "", "expire_date_end": "",
+        "manufacturer_name": "", "status": "", "release_date": "", "manufacturer": "", "registrar": "",
+        "_token": csrf_token,
+    }
+
+    if is_na:
+        payload["product_register"] = query
+    else:
+        payload["search[value]"] = query
+
+    return payload
+
+
+# ─── JWT Helpers ────────────────────────────────────────────────────────────
+
+def generate_token(user_id: int) -> str:
+    """Buat JWT Bearer token untuk user_id yang diberikan."""
+    payload = {
+        'sub': user_id,                                          # Subject (user id)
+        'iat': datetime.now(timezone.utc),                       # Issued at
+        'exp': datetime.now(timezone.utc) + timedelta(days=JWT_EXPIRY_DAYS)  # Expiry
+    }
+    return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+
+
+def decode_token(token: str) -> Optional[dict]:
+    """Decode dan verifikasi JWT. Return payload dict, atau None jika invalid."""
+    try:
+        return jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
+
+
+def require_auth(f):
+    """
+    Decorator untuk endpoint yang butuh autentikasi.
+    Membaca header: Authorization: Bearer <token>
+    Menyimpan user_id yang ter-autentikasi ke g.current_user_id
+    """
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth_header = request.headers.get('Authorization', '')
+        if not auth_header.startswith('Bearer '):
+            return jsonify({"detail": "Token autentikasi tidak ditemukan. Silakan login terlebih dahulu."}), 401
+
+        token = auth_header.split(' ', 1)[1]
+        payload = decode_token(token)
+        if payload is None:
+            return jsonify({"detail": "Token tidak valid atau sudah kadaluarsa. Silakan login ulang."}), 401
+
+        g.current_user_id = payload['sub']
+        return f(*args, **kwargs)
+    return decorated
+
+
+# ─── Helper ─────────────────────────────────────────────────────────────────
+
 def fetch_extra_user_data(cursor, user_id):
     # 1. Favorites
     cursor.execute("""
@@ -80,42 +218,41 @@ def fetch_extra_user_data(cursor, user_id):
         "routine_progress": routine_progress_json
     }
 
+
+# ─── Public Endpoints (tidak butuh token) ───────────────────────────────────
+
 @app.route("/api/register", methods=["POST"])
 def register_user():
     data = request.get_json()
     if not data or 'name' not in data or 'email' not in data or 'password' not in data:
         return jsonify({"detail": "Data tidak lengkap"}), 400
-        
+
     name = data['name']
     email = data['email']
     password = data['password']
-    
+
     if len(password) < 8:
         return jsonify({"detail": "Kata sandi minimal 8 karakter"}), 400
-        
+
     conn = get_db_connection()
     if not conn:
         return jsonify({"detail": "Database connection failed"}), 500
-        
+
     try:
         cursor = conn.cursor(dictionary=True)
-        # Cek apakah email sudah terdaftar
         cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
         existing_user = cursor.fetchone()
         if existing_user:
             return jsonify({"detail": "Email sudah terdaftar"}), 400
-            
-        # Hash password menggunakan werkzeug (bawaan Flask)
+
         hashed_password = generate_password_hash(password)
-        
-        # Simpan ke database
         cursor.execute(
             "INSERT INTO users (name, email, password_hash) VALUES (%s, %s, %s)",
             (name, email, hashed_password)
         )
         conn.commit()
         return jsonify({"message": "Pendaftaran berhasil", "status": "success"}), 201
-        
+
     except Exception as e:
         return jsonify({"detail": str(e)}), 500
     finally:
@@ -123,41 +260,38 @@ def register_user():
             cursor.close()
             conn.close()
 
+
 @app.route("/api/login", methods=["POST"])
 def login_user():
     data = request.get_json()
     if not data or 'email' not in data or 'password' not in data:
         return jsonify({"detail": "Data tidak lengkap"}), 400
-        
+
     email = data['email']
     password = data['password']
-    
+
     conn = get_db_connection()
     if not conn:
         return jsonify({"detail": "Database connection failed"}), 500
-        
+
     try:
         cursor = conn.cursor(dictionary=True)
-        # Cari user berdasarkan email
         cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
         db_user = cursor.fetchone()
-        
+
         if not db_user:
             return jsonify({"detail": "Email tidak ditemukan"}), 400
-            
-        # Verifikasi password
-        is_password_valid = check_password_hash(db_user['password_hash'], password)
-        
-        if not is_password_valid:
+
+        if not check_password_hash(db_user['password_hash'], password):
             return jsonify({"detail": "Kata sandi salah"}), 400
-            
-        # Fetch extra separated user data
+
         extra = fetch_extra_user_data(cursor, db_user['id'])
-        
-        # Login sukses, kirim kembali info user (tanpa password)
+        token  = generate_token(db_user['id'])
+
         return jsonify({
             "message": "Login berhasil",
             "status": "success",
+            "token": token,
             "user": {
                 "id": db_user['id'],
                 "name": db_user['name'],
@@ -177,7 +311,7 @@ def login_user():
                 "routine_progress": extra["routine_progress"]
             }
         }), 200
-        
+
     except Exception as e:
         return jsonify({"detail": str(e)}), 500
     finally:
@@ -185,25 +319,26 @@ def login_user():
             cursor.close()
             conn.close()
 
+
 @app.route("/api/forgot-password", methods=["POST"])
 def forgot_password():
     data = request.get_json()
     if not data or 'email' not in data:
         return jsonify({"detail": "Email wajib diisi"}), 400
-        
+
     email = data['email']
     conn = get_db_connection()
     if not conn:
         return jsonify({"detail": "Database connection failed"}), 500
-        
+
     try:
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
         db_user = cursor.fetchone()
-        
+
         if not db_user:
             return jsonify({"detail": "Email tidak terdaftar"}), 400
-            
+
         # Return mock OTP 1234
         return jsonify({
             "message": "Kode OTP telah dikirim (Mock)",
@@ -217,31 +352,32 @@ def forgot_password():
             cursor.close()
             conn.close()
 
+
 @app.route("/api/reset-password", methods=["POST"])
 def reset_password():
     data = request.get_json()
     if not data or 'email' not in data or 'password' not in data:
         return jsonify({"detail": "Data tidak lengkap"}), 400
-        
+
     email = data['email']
     password = data['password']
-    
+
     conn = get_db_connection()
     if not conn:
         return jsonify({"detail": "Database connection failed"}), 500
-        
+
     try:
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
         db_user = cursor.fetchone()
-        
+
         if not db_user:
             return jsonify({"detail": "User tidak ditemukan"}), 404
-            
+
         hashed_password = generate_password_hash(password)
         cursor.execute("UPDATE users SET password_hash = %s WHERE email = %s", (hashed_password, email))
         conn.commit()
-        
+
         return jsonify({"message": "Kata sandi berhasil diperbarui", "status": "success"}), 200
     except Exception as e:
         return jsonify({"detail": str(e)}), 500
@@ -250,45 +386,43 @@ def reset_password():
             cursor.close()
             conn.close()
 
+
 @app.route("/api/social-login", methods=["POST"])
 def social_login():
     data = request.get_json()
     if not data or 'email' not in data or 'name' not in data or 'provider' not in data:
         return jsonify({"detail": "Data tidak lengkap"}), 400
-        
+
     email = data['email']
     name = data['name']
     provider = data['provider']
-    
+
     conn = get_db_connection()
     if not conn:
         return jsonify({"detail": "Database connection failed"}), 500
-        
+
     try:
         cursor = conn.cursor(dictionary=True)
-        # Cari user berdasarkan email
         cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
         db_user = cursor.fetchone()
-        
+
         if not db_user:
-            # Jika user belum ada, buat user baru dengan dummy password
             dummy_hash = generate_password_hash(f"social_{provider}_dummy_pass_98765")
             cursor.execute(
                 "INSERT INTO users (name, email, password_hash) VALUES (%s, %s, %s)",
                 (name, email, dummy_hash)
             )
             conn.commit()
-            
-            # Ambil data user yang baru dibuat
             cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
             db_user = cursor.fetchone()
-            
-        # Fetch data relasional lainnya
+
         extra = fetch_extra_user_data(cursor, db_user['id'])
-        
+        token  = generate_token(db_user['id'])
+
         return jsonify({
             "message": f"Login dengan {provider} berhasil",
             "status": "success",
+            "token": token,
             "user": {
                 "id": db_user['id'],
                 "name": db_user['name'],
@@ -308,7 +442,7 @@ def social_login():
                 "routine_progress": extra["routine_progress"]
             }
         }), 200
-        
+
     except Exception as e:
         return jsonify({"detail": str(e)}), 500
     finally:
@@ -316,8 +450,22 @@ def social_login():
             cursor.close()
             conn.close()
 
+
+@app.route("/api/data", methods=["GET"])
+def read_data():
+    """Health check endpoint — public, tanpa autentikasi."""
+    return jsonify({"data": "API is running"})
+
+
+# ─── Protected Endpoints (wajib Bearer token) ────────────────────────────────
+
 @app.route("/api/user/<int:user_id>", methods=["GET"])
+@require_auth
 def get_user_profile(user_id):
+    # Pastikan user hanya bisa akses profil dirinya sendiri
+    if g.current_user_id != user_id:
+        return jsonify({"detail": "Akses tidak diizinkan"}), 403
+
     conn = get_db_connection()
     if not conn:
         return jsonify({"detail": "Database connection failed"}), 500
@@ -330,11 +478,10 @@ def get_user_profile(user_id):
         user_data = cursor.fetchone()
         if not user_data:
             return jsonify({"detail": "User tidak ditemukan"}), 404
-            
-        # Fetch extra separated user data
+
         extra = fetch_extra_user_data(cursor, user_id)
         user_data.update(extra)
-        
+
         return jsonify(user_data), 200
     except Exception as e:
         return jsonify({"detail": str(e)}), 500
@@ -343,31 +490,35 @@ def get_user_profile(user_id):
             cursor.close()
             conn.close()
 
+
 @app.route("/api/user/<int:user_id>", methods=["PUT"])
+@require_auth
 def update_user_profile(user_id):
+    # Pastikan user hanya bisa update profil dirinya sendiri
+    if g.current_user_id != user_id:
+        return jsonify({"detail": "Akses tidak diizinkan"}), 403
+
     data = request.get_json()
     if not data:
         return jsonify({"detail": "Data tidak boleh kosong"}), 400
-        
+
     conn = get_db_connection()
     if not conn:
         return jsonify({"detail": "Database connection failed"}), 500
-        
+
     try:
         cursor = conn.cursor(dictionary=True)
-        # Cek apakah user ada
         cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
         user_data = cursor.fetchone()
         if not user_data:
             return jsonify({"detail": "User tidak ditemukan"}), 404
-            
+
         # Susun update core profile secara dinamis
         update_fields = []
         params = []
-        
-        # Daftar kolom core yang diizinkan untuk diedit di tabel users
+
         allowed_core_fields = [
-            'name', 'email', 'profile_photo', 'skin_type', 
+            'name', 'email', 'profile_photo', 'skin_type',
             'acne_level', 'oil_level', 'pore_condition', 'skin_score',
             'sunscreen_interval'
         ]
@@ -375,13 +526,12 @@ def update_user_profile(user_id):
             if field in data:
                 update_fields.append(f"{field} = %s")
                 params.append(data[field])
-                
+
         if update_fields:
             params.append(user_id)
             update_query = f"UPDATE users SET {', '.join(update_fields)} WHERE id = %s"
             cursor.execute(update_query, tuple(params))
 
-        # Simpan extra separated fields ke tabel masing-masing
         # 1. Favorites
         if 'favorites' in data:
             cursor.execute("DELETE FROM user_favorites WHERE user_id = %s", (user_id,))
@@ -393,13 +543,13 @@ def update_user_profile(user_id):
                         (user_id, product_id, product_name, product_brand, product_price, product_emoji, product_bg_color, product_rating) 
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                     """, (
-                        user_id, 
-                        f.get("id"), 
-                        f.get("name"), 
-                        f.get("brand"), 
-                        f.get("price"), 
-                        f.get("emoji"), 
-                        f.get("bgColor"), 
+                        user_id,
+                        f.get("id"),
+                        f.get("name"),
+                        f.get("brand"),
+                        f.get("price"),
+                        f.get("emoji"),
+                        f.get("bgColor"),
                         f.get("rating")
                     ))
             except Exception as e:
@@ -460,18 +610,15 @@ def update_user_profile(user_id):
             """, (user_id, data['routine_progress'], data['routine_progress']))
 
         conn.commit()
-        
-        # Ambil user terbaru untuk dikembalikan ke frontend
+
         cursor.execute("""
             SELECT id, name, email, profile_photo, skin_type, acne_level, oil_level, pore_condition, skin_score, sunscreen_interval 
             FROM users WHERE id = %s
         """, (user_id,))
         updated_user = cursor.fetchone()
-        
-        # Fetch extra separated user data
         extra = fetch_extra_user_data(cursor, user_id)
         updated_user.update(extra)
-        
+
         return jsonify({
             "message": "Profil berhasil diperbarui",
             "status": "success",
@@ -484,12 +631,13 @@ def update_user_profile(user_id):
             cursor.close()
             conn.close()
 
-@app.route("/api/data", methods=["GET"])
-def read_data():
-    return jsonify({"data": "API is running"})
 
 @app.route("/api/bpom-history/<int:user_id>", methods=["GET"])
+@require_auth
 def get_bpom_history(user_id):
+    if g.current_user_id != user_id:
+        return jsonify({"detail": "Akses tidak diizinkan"}), 403
+
     conn = get_db_connection()
     if not conn:
         return jsonify({"detail": "Database connection failed"}), 500
@@ -502,12 +650,11 @@ def get_bpom_history(user_id):
             ORDER BY id DESC LIMIT 10
         """, (user_id,))
         rows = cursor.fetchall()
-        
-        # Convert created_at to string
+
         for row in rows:
             if row.get('created_at'):
                 row['created_at'] = row['created_at'].isoformat()
-                
+
         return jsonify(rows), 200
     except Exception as e:
         return jsonify({"detail": str(e)}), 500
@@ -516,39 +663,45 @@ def get_bpom_history(user_id):
             cursor.close()
             conn.close()
 
+
 @app.route("/api/bpom-history", methods=["POST"])
+@require_auth
 def add_bpom_history():
     data = request.get_json()
     if not data or 'user_id' not in data or 'product_name' not in data or 'reg_no' not in data or 'status' not in data:
         return jsonify({"detail": "Data tidak lengkap"}), 400
-        
+
     user_id = data['user_id']
+
+    # Pastikan user hanya bisa simpan riwayat untuk dirinya sendiri
+    if g.current_user_id != user_id:
+        return jsonify({"detail": "Akses tidak diizinkan"}), 403
+
     product_name = data['product_name']
     reg_no = data['reg_no']
     manufacturer = data.get('manufacturer', '')
     status = data['status']
-    
+
     conn = get_db_connection()
     if not conn:
         return jsonify({"detail": "Database connection failed"}), 500
     try:
         cursor = conn.cursor()
-        
-        # Check if the exact product already exists in recent history to prevent duplicates
+
         cursor.execute("""
             SELECT id FROM user_bpom_history 
             WHERE user_id = %s AND product_name = %s AND reg_no = %s
         """, (user_id, product_name, reg_no))
         existing = cursor.fetchone()
-        
+
         if existing:
             cursor.execute("DELETE FROM user_bpom_history WHERE id = %s", (existing[0],))
-            
+
         cursor.execute("""
             INSERT INTO user_bpom_history (user_id, product_name, reg_no, manufacturer, status) 
             VALUES (%s, %s, %s, %s, %s)
         """, (user_id, product_name, reg_no, manufacturer, status))
-        
+
         # Prune older entries keeping only the top 10
         cursor.execute("""
             DELETE FROM user_bpom_history 
@@ -560,7 +713,7 @@ def add_bpom_history():
                 ) tmp
             )
         """, (user_id, user_id))
-        
+
         conn.commit()
         return jsonify({"message": "Riwayat berhasil disimpan", "status": "success"}), 201
     except Exception as e:
@@ -570,30 +723,67 @@ def add_bpom_history():
             cursor.close()
             conn.close()
 
-@app.route("/api/scan-bpom", methods=["POST"])
+
+@app.route("/api/scan-bpom", methods=["GET", "POST"])
 def scan_bpom():
-    data = request.get_json()
-    if not data or 'query' not in data:
+    """BPOM scraping endpoint — public karena tidak butuh akun untuk cek produk."""
+    if request.method == "POST":
+        data = request.get_json()
+        raw_query = data.get('query', '').strip()
+    else:
+        raw_query = (request.args.get('na') or request.args.get('query') or "").strip()
+
+    if not raw_query:
         return jsonify({"detail": "Nomor registrasi/query tidak boleh kosong"}), 400
-        
-    nomor_bpom = data['query']
-    
+
+    na_number = extract_na_from_query(raw_query)
+
     try:
-        # TODO: Jalankan fungsi/modul scraping BPOM kamu di sini
-        # contoh hasil ekstraksi data dari web cekbpom:
-        hasil_scraping = {
-            "status": "success",
-            "reg_no": nomor_bpom,
-            "product_name": "B-Glow Skincare Serum",
-            "brand": "B-Glow",
-            "manufacturer": "PT. Glow Kosmetik Indonesia",
-            "status_bpom": "TERDAFTAR / AKTIF"
+        session, csrf_token, xsrf_cookie = get_session_with_csrf()
+        payload = build_payload(na_number, csrf_token)
+
+        headers = {
+            "User-Agent": UA,
+            "Accept": "application/json, text/javascript, */*; q=0.01",
+            "Referer": BPOM_PAGE,
+            "X-Requested-With": "XMLHttpRequest",
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "Origin": BPOM_BASE,
+            "X-CSRF-TOKEN": csrf_token,
+            "X-XSRF-TOKEN": xsrf_cookie,
         }
+
+        resp = session.post(BPOM_DT, data=payload, headers=headers, timeout=20)
         
+        if resp.status_code != 200:
+            return jsonify({"detail": f"BPOM API error {resp.status_code}"}), 502
+
+        data = resp.json()
+        rows = data.get('data', [])
+        
+        results = []
+        for row in rows:
+            results.append({
+                "tipe": clean_html(row.get('CLASS', '') or row.get('CLASS_ID', '')),
+                "nomor_registrasi": clean_html(row.get('PRODUCT_REGISTER', '')),
+                "nama_produk": clean_html(row.get('PRODUCT_NAME', '')),
+                "merek": clean_html(row.get('PRODUCT_BRANDS', '')),
+                "kemasan": clean_html(row.get('PRODUCT_PACKAGE', '')),
+                "pendaftar": clean_html(row.get('REGISTRAR', '') or row.get('MANUFACTURER_NAME', '')),
+                "tanggal_terbit": clean_html(row.get('PRODUCT_DATE', '')),
+            })
+
+        hasil_scraping = {
+            "query": na_number,
+            "raw_query": raw_query,
+            "results": results,
+            "total_found": len(results)
+        }
         return jsonify(hasil_scraping), 200
-        
+
     except Exception as e:
         return jsonify({"detail": f"Gagal memindai data: {str(e)}"}), 500
-    
+
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=True, port=8000)
+    app.run(host="0.0.0.0", debug=True, port=5050)

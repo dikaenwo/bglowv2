@@ -13,6 +13,27 @@ export function getUserId() {
   return 'guest';
 }
 
+/**
+ * Ambil JWT token dari localStorage.
+ * Return null jika belum login.
+ */
+export function getAuthToken() {
+  return localStorage.getItem('bglow_token') || null;
+}
+
+/**
+ * Buat object headers dengan Authorization Bearer token.
+ * Selalu sertakan Content-Type JSON.
+ */
+export function getAuthHeaders() {
+  const token = getAuthToken();
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
 export function getRoutine() {
   const data = localStorage.getItem('bglow_routine_' + getUserId());
   if (data) return JSON.parse(data);
@@ -311,7 +332,7 @@ export async function syncUserData(fields) {
     try {
       await fetch(`${API_BASE_URL}/api/user/${userId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(fields)
       });
     } catch (e) {

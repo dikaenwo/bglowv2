@@ -1,5 +1,5 @@
 import { icons } from '../components/BottomNav.js';
-import { getStreak, getUserId } from '../utils/store.js';
+import { getStreak, getUserId, getAuthHeaders } from '../utils/store.js';
 import { showCustomAlert } from '../utils/helpers.js';
 import { API_BASE_URL } from '../config.js';
 
@@ -14,7 +14,7 @@ async function saveProfilePhoto(dataUrl) {
     try {
       await fetch(`${API_BASE_URL}/api/user/${userId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ profile_photo: dataUrl })
       });
     } catch (e) {
@@ -438,7 +438,9 @@ export function renderProfile() {
       const userId = getUserId();
       if (userId && userId !== 'guest') {
         try {
-          const res = await fetch(`${API_BASE_URL}/api/user/${userId}`);
+          const res = await fetch(`${API_BASE_URL}/api/user/${userId}`, {
+            headers: getAuthHeaders()
+          });
           if (res.ok) {
             const user = await res.json();
             
