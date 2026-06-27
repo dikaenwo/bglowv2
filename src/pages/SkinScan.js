@@ -1,11 +1,29 @@
 import { icons } from '../components/BottomNav.js';
 import { getUserId, getAuthHeaders } from '../utils/store.js';
-import { API_BASE_URL } from '../config.js';
+import { API_BASE_URL, SKIN_SCAN_API_URL } from '../config.js';
+
+// ─── Palet warna per kategori permasalahan ───────────────────────────────────
+const PROBLEM_COLORS = {
+  'Jerawat':         { hex: '#FF3B3B', bg: '#FFF0F0', emoji: '🔴' },
+  'PIE':             { hex: '#3B7FFF', bg: '#EFF4FF', emoji: '🔵' },
+  'PIH':             { hex: '#FF8C00', bg: '#FFF5E6', emoji: '🟠' },
+  'Bopeng':          { hex: '#CC00CC', bg: '#F9EEFF', emoji: '🟣' },
+  'Hiperpigmentasi': { hex: '#CCCC00', bg: '#FEFEE6', emoji: '🟡' },
+  'Kemerahan':       { hex: '#00CC44', bg: '#EDFFF3', emoji: '🟢' },
+};
+
+const PROBLEM_DESCRIPTIONS = {
+  'Jerawat':         'Peradangan folikel rambut akibat sumbatan sebum dan bakteri.',
+  'PIE':             'Post-Inflammatory Erythema — kemerahan sisa bekas jerawat.',
+  'PIH':             'Post-Inflammatory Hyperpigmentation — bercak gelap bekas jerawat.',
+  'Bopeng':          'Jaringan parut cekung akibat kerusakan kolagen dari jerawat parah.',
+  'Hiperpigmentasi': 'Penggelapan kulit akibat produksi melanin berlebih.',
+  'Kemerahan':       'Iritasi atau rosacea menyebabkan kulit tampak merah.',
+};
 
 export function renderSkinScan() {
   const page = document.createElement('div');
   page.className = 'page';
-  let phase = 'camera'; // camera → processing → results
   let stream = null;
   const userId = getUserId();
   let capturedImage = localStorage.getItem('bglow_captured_image_' + userId) || null;
@@ -24,8 +42,9 @@ export function renderSkinScan() {
   };
   window.addEventListener('hashchange', handleHashChange);
 
+  // ─── CAMERA PHASE ─────────────────────────────────────────────────────────
   function renderCamera() {
-    capturedImage = null; // reset on new scan start
+    capturedImage = null;
     page.innerHTML = `
       <div class="page-header">
         <button class="back-btn" id="back-btn">${icons.chevronLeft}</button>
@@ -34,7 +53,7 @@ export function renderSkinScan() {
       <div class="scan-camera">
         <div class="camera-feed">
           <video id="webcam" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover; display: none; transform: scaleX(-1); position: absolute; top: 0; left: 0; z-index: 1;"></video>
-          
+
           <div class="camera-placeholder" id="camera-placeholder" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1; color: rgba(255,255,255,0.6); gap: 16px; cursor: pointer; text-align: center; padding: 20px;">
             <div class="placeholder-icon" style="width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; animation: pulseGlow 2s ease-in-out infinite;">
               <svg viewBox="0 0 24 24" style="width: 32px; height: 32px; stroke: currentColor; fill: none; stroke-width: 2;"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
@@ -66,17 +85,11 @@ export function renderSkinScan() {
     const placeholderText = placeholder.querySelector('span');
     const fileInput = page.querySelector('#camera-file-input');
 
-    // Helper to setup fallback native camera trigger
     const setupFallbackMode = (message) => {
-      if (placeholderText) {
-        placeholderText.textContent = message;
-      }
-      placeholder.addEventListener('click', () => {
-        fileInput.click();
-      });
+      if (placeholderText) placeholderText.textContent = message;
+      placeholder.addEventListener('click', () => fileInput.click());
     };
 
-    // Request camera access
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
@@ -90,42 +103,33 @@ export function renderSkinScan() {
         }
       })
       .catch(err => {
-        console.warn("Gagal mengakses kamera secara langsung:", err);
-        setupFallbackMode("Kamera terblokir. Ketuk di sini untuk mengambil foto.");
+        console.warn('Gagal mengakses kamera:', err);
+        setupFallbackMode('Kamera terblokir. Ketuk di sini untuk mengambil foto.');
       });
     } else {
-      console.warn("navigator.mediaDevices.getUserMedia tidak didukung.");
-      setupFallbackMode("Ketuk di sini untuk membuka kamera.");
+      setupFallbackMode('Ketuk di sini untuk membuka kamera.');
     }
 
-    // Handle native camera/file input capture
     fileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          capturedImage = event.target.result;
-          localStorage.setItem('bglow_captured_image_' + userId, capturedImage);
-          
-          // Display the captured image as preview
-          let imgPreview = page.querySelector('#captured-preview');
-          if (!imgPreview) {
-            imgPreview = document.createElement('img');
-            imgPreview.id = 'captured-preview';
-            imgPreview.style.cssText = "width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; z-index: 1; transform: scaleX(-1);";
-            page.querySelector('.camera-feed').appendChild(imgPreview);
-          }
-          imgPreview.src = capturedImage;
-          imgPreview.style.display = 'block';
-          
-          // Hide video and placeholder
-          if (video) video.style.display = 'none';
-          if (placeholder) placeholder.style.display = 'none';
-          
-          startScanning();
-        };
-        reader.readAsDataURL(file);
-      }
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        capturedImage = event.target.result;
+        localStorage.setItem('bglow_captured_image_' + userId, capturedImage);
+        let imgPreview = page.querySelector('#captured-preview');
+        if (!imgPreview) {
+          imgPreview = document.createElement('img');
+          imgPreview.id = 'captured-preview';
+          imgPreview.style.cssText = 'width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; z-index: 1;';
+          page.querySelector('.camera-feed').appendChild(imgPreview);
+        }
+        imgPreview.src = capturedImage;
+        if (video) video.style.display = 'none';
+        if (placeholder) placeholder.style.display = 'none';
+        startScanning();
+      };
+      reader.readAsDataURL(file);
     });
 
     page.querySelector('#back-btn').addEventListener('click', () => {
@@ -135,31 +139,27 @@ export function renderSkinScan() {
 
     page.querySelector('#start-scan').addEventListener('click', () => {
       if (video && stream) {
-        // Capture the mirrored frame from video stream
         try {
           const canvas = document.createElement('canvas');
           canvas.width = video.videoWidth || 640;
           canvas.height = video.videoHeight || 480;
           const ctx = canvas.getContext('2d');
-          
-          // Mirror the captured image to match what the user saw
           ctx.translate(canvas.width, 0);
           ctx.scale(-1, 1);
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          
-          capturedImage = canvas.toDataURL('image/jpeg');
+          capturedImage = canvas.toDataURL('image/jpeg', 0.85);
           localStorage.setItem('bglow_captured_image_' + userId, capturedImage);
         } catch (err) {
-          console.error("Gagal menangkap gambar dari video feed:", err);
+          console.error('Gagal menangkap gambar:', err);
         }
         startScanning();
       } else {
-        // Fallback: trigger native camera click
         fileInput.click();
       }
     });
   }
 
+  // ─── SCANNING ANIMATION + API CALL ────────────────────────────────────────
   function startScanning() {
     const pointsContainer = page.querySelector('#det-points');
     const positions = [
@@ -183,64 +183,14 @@ export function renderSkinScan() {
       }, 400 + i * 300);
     });
 
+    // Stop camera and go to processing screen after animation
     setTimeout(() => {
       stopCamera();
-
-      // Save default scan results and captured image immediately
-      localStorage.setItem('bglow_has_scanned_' + userId, '1');
-      if (capturedImage) {
-        localStorage.setItem('bglow_captured_image_' + userId, capturedImage);
-      }
-      localStorage.setItem('bglow_skin_type_' + userId, 'Kombinasi');
-      localStorage.setItem('bglow_acne_level_' + userId, 'Ringan — Grade 1');
-      localStorage.setItem('bglow_oil_level_' + userId, 'Sedang — T-Zone');
-      localStorage.setItem('bglow_pore_condition_' + userId, 'Baik — Minimal');
-      localStorage.setItem('bglow_skin_score_' + userId, '65');
-
-      // Append to scan history list
-      try {
-        const historyKey = 'bglow_scan_history_' + userId;
-        const historyData = localStorage.getItem(historyKey);
-        let historyList = [];
-        if (historyData) {
-          historyList = JSON.parse(historyData);
-        }
-        const newRecord = {
-          id: 'scan_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
-          date: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-          skin_type: 'Kombinasi',
-          acne_level: 'Ringan — Grade 1',
-          oil_level: 'Sedang — T-Zone',
-          pore_condition: 'Baik — Minimal',
-          skin_score: 65,
-          image: capturedImage
-        };
-        historyList.unshift(newRecord);
-        localStorage.setItem(historyKey, JSON.stringify(historyList));
-      } catch (e) {
-        console.error("Gagal menyimpan ke riwayat scan:", e);
-      }
-
-      // Sync to database if not guest
-      if (userId && userId !== 'guest') {
-        fetch(`${API_BASE_URL}/api/user/${userId}`, {
-          method: 'PUT',
-          headers: getAuthHeaders(),
-          body: JSON.stringify({
-            skin_type: 'Kombinasi',
-            acne_level: 'Ringan — Grade 1',
-            oil_level: 'Sedang — T-Zone',
-            pore_condition: 'Baik — Minimal',
-            skin_score: 65
-          })
-        })
-.catch(e => console.error("Gagal sinkronisasi otomatis hasil scan:", e));
-      }
-
       renderProcessing();
-    }, 3000);
+    }, 2800);
   }
 
+  // ─── PROCESSING PHASE ─────────────────────────────────────────────────────
   function renderProcessing() {
     page.innerHTML = `
       <div class="page-header">
@@ -264,13 +214,13 @@ export function renderSkinScan() {
           </div>
         </div>
         <div class="processing-text">
-          <h3>AI sedang menganalisis jenis kulit Anda...</h3>
+          <h3>AI Gemini sedang menganalisis kulit Anda...</h3>
           <p>Mohon tunggu sebentar</p>
         </div>
         <div class="processing-steps">
-          <div class="p-step active" id="step-1"><span class="step-dot"></span> Mendeteksi fitur kulit</div>
-          <div class="p-step" id="step-2"><span class="step-dot"></span> Menganalisis kondisi pori</div>
-          <div class="p-step" id="step-3"><span class="step-dot"></span> Mengukur level minyak</div>
+          <div class="p-step active" id="step-1"><span class="step-dot"></span> Mengirim gambar ke Gemini AI</div>
+          <div class="p-step" id="step-2"><span class="step-dot"></span> Mengidentifikasi jenis kulit</div>
+          <div class="p-step" id="step-3"><span class="step-dot"></span> Mendeteksi permasalahan kulit</div>
           <div class="p-step" id="step-4"><span class="step-dot"></span> Menyiapkan hasil analisis</div>
         </div>
       </div>
@@ -280,6 +230,7 @@ export function renderSkinScan() {
       window.location.hash = '#/';
     });
 
+    // Animate steps
     const steps = ['step-1', 'step-2', 'step-3', 'step-4'];
     steps.forEach((id, i) => {
       setTimeout(() => {
@@ -289,104 +240,265 @@ export function renderSkinScan() {
         }
         const el = page.querySelector(`#${id}`);
         if (el) el.classList.add('active');
-      }, i * 800);
+      }, i * 900);
     });
 
-    setTimeout(() => renderResults(), 3500);
+    // Call Gemini AI API
+    callGeminiAPI();
   }
 
-  function renderResults() {
-    const skinType = localStorage.getItem('bglow_skin_type_' + userId) || 'Kombinasi';
-    const acneLevel = localStorage.getItem('bglow_acne_level_' + userId) || 'Ringan — Grade 1';
-    const oilLevel = localStorage.getItem('bglow_oil_level_' + userId) || 'Sedang — T-Zone';
-    const poreCondition = localStorage.getItem('bglow_pore_condition_' + userId) || 'Baik — Minimal';
-    const skinScore = parseInt(localStorage.getItem('bglow_skin_score_' + userId) || '65');
+  // ─── GEMINI API CALL ──────────────────────────────────────────────────────
+  async function callGeminiAPI() {
+    try {
+      const reqBody = { image: capturedImage };
+      if (userId && userId !== 'guest') {
+        reqBody.user_id = parseInt(userId, 10);
+      }
 
-    // Descriptions based on values
-    const typeDesc = skinType === 'Kombinasi'
-      ? 'Kulit kombinasi memiliki karakteristik berminyak di area T-zone (dahi, hidung, dagu) namun cenderung normal atau kering di area pipi. Membutuhkan perawatan yang menyeimbangkan kedua kondisi ini.'
-      : `Kulit bertipe ${skinType}. Membutuhkan perawatan rutin yang sesuai untuk menjaga kelembapan dan kesehatan barier kulit Anda secara optimal.`;
+      const response = await fetch(SKIN_SCAN_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(userId && userId !== 'guest' ? getAuthHeaders() : {}),
+        },
+        body: JSON.stringify(reqBody),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.detail || `HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      // Save results to localStorage
+      localStorage.setItem('bglow_has_scanned_' + userId, '1');
+      localStorage.setItem('bglow_skin_type_' + userId, result.jenis_kulit);
+      localStorage.setItem('bglow_acne_level_' + userId, result.acne_level);
+      localStorage.setItem('bglow_oil_level_' + userId, result.oil_level);
+      localStorage.setItem('bglow_pore_condition_' + userId, result.pore_condition);
+      localStorage.setItem('bglow_skin_score_' + userId, String(result.skin_score));
+      localStorage.setItem('bglow_skin_problems_' + userId, JSON.stringify(result.permasalahan || []));
+
+      // Append to scan history
+      try {
+        const historyKey = 'bglow_scan_history_' + userId;
+        let historyList = JSON.parse(localStorage.getItem(historyKey) || '[]');
+        historyList.unshift({
+          id: 'scan_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+          date: new Date().toLocaleDateString('id-ID', {
+            day: 'numeric', month: 'short', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+          }),
+          skin_type: result.jenis_kulit,
+          acne_level: result.acne_level,
+          oil_level: result.oil_level,
+          pore_condition: result.pore_condition,
+          skin_score: result.skin_score,
+          image: capturedImage,
+        });
+        localStorage.setItem(historyKey, JSON.stringify(historyList));
+      } catch (e) {
+        console.error('Gagal menyimpan ke riwayat scan:', e);
+      }
+
+      renderResults(result);
+
+    } catch (err) {
+      console.error('Gagal analisis Gemini AI:', err);
+      renderError(err.message || 'Terjadi kesalahan saat menghubungi server.');
+    }
+  }
+
+  // ─── ERROR PHASE ──────────────────────────────────────────────────────────
+  function renderError(message) {
+    page.innerHTML = `
+      <div class="page-header">
+        <button class="back-btn" id="back-btn">${icons.chevronLeft}</button>
+        <h1>Gagal Menganalisis</h1>
+      </div>
+      <div class="scan-processing anim-fade-in" style="gap: 20px;">
+        <div style="font-size: 64px; text-align:center;">❌</div>
+        <div class="processing-text">
+          <h3 style="color: var(--danger, #EF4444);">Analisis Gagal</h3>
+          <p style="color: var(--text-secondary); font-size: var(--font-sm); padding: 0 16px; text-align:center;">${message}</p>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:12px; padding: 0 24px; width:100%;">
+          <button class="btn btn-primary btn-lg" id="retry-btn">🔄 Coba Lagi</button>
+          <button class="scan-again-btn" id="back-home-btn">Kembali ke Beranda</button>
+        </div>
+      </div>
+    `;
+    page.querySelector('#back-btn').addEventListener('click', () => {
+      window.location.hash = '#/';
+    });
+    page.querySelector('#retry-btn').addEventListener('click', () => {
+      renderCamera();
+    });
+    page.querySelector('#back-home-btn').addEventListener('click', () => {
+      window.location.hash = '#/';
+    });
+  }
+
+  // ─── RESULTS PHASE ────────────────────────────────────────────────────────
+  function renderResults(result) {
+    const { jenis_kulit, permasalahan, skin_score, acne_level, oil_level, pore_condition } = result;
+
+    const skinTypeEmoji = {
+      'Berminyak': '💦',
+      'Kombinasi': '💧',
+      'Kering': '🍂',
+      'Normal': '✨',
+    }[jenis_kulit] || '✨';
+
+    const skinTypeDesc = {
+      'Berminyak': 'Kulit berminyak memproduksi sebum berlebih di seluruh wajah. Rentan jerawat namun lebih lambat mengalami tanda penuaan.',
+      'Kombinasi': 'Kulit kombinasi berminyak di area T-zone (dahi, hidung, dagu) namun normal atau kering di area pipi.',
+      'Kering': 'Kulit kering kekurangan produksi minyak alami, mudah terasa kencang, kasar, dan rentan terhadap iritasi.',
+      'Normal': 'Kulit seimbang dengan produksi sebum yang ideal. Tidak terlalu berminyak atau kering.',
+    }[jenis_kulit] || `Jenis kulit terdeteksi: ${jenis_kulit}.`;
+
+    // Score color
+    const scoreColor = skin_score >= 80 ? '#22c55e' : skin_score >= 60 ? '#f59e0b' : '#ef4444';
+    const scoreLabel = skin_score >= 80 ? 'Sangat Baik' : skin_score >= 60 ? 'Cukup Baik' : 'Perlu Perhatian';
+
+    // Build problem cards HTML
+    let problemCardsHTML = '';
+    if (!permasalahan || permasalahan.length === 0) {
+      problemCardsHTML = `
+        <div style="text-align:center; padding: 20px; background: #F0FDF4; border-radius: 16px; border: 1px solid #86EFAC;">
+          <div style="font-size: 40px; margin-bottom: 8px;">🎉</div>
+          <p style="color: #16A34A; font-weight: 600; margin: 0;">Tidak ada permasalahan kulit terdeteksi!</p>
+          <p style="color: #4ADE80; font-size: var(--font-xs); margin: 4px 0 0;">Kulit Anda dalam kondisi yang sangat baik.</p>
+        </div>
+      `;
+    } else {
+      problemCardsHTML = permasalahan.map(p => {
+        const col = PROBLEM_COLORS[p.label] || { hex: '#888', bg: '#F5F5F5', emoji: '⚠️' };
+        const desc = PROBLEM_DESCRIPTIONS[p.label] || p.label;
+        const confPct = Math.round((p.confidence || 0.5) * 100);
+        return `
+          <div class="problem-card">
+            <div class="pc-icon" style="background:${col.bg}; font-size: 22px;">${col.emoji}</div>
+            <div class="pc-info">
+              <h4>${p.label}</h4>
+              <p>${desc}</p>
+              <div style="margin-top: 6px; display: flex; align-items: center; gap: 6px;">
+                <div style="flex:1; height: 4px; border-radius: 2px; background: #E5E7EB; overflow: hidden;">
+                  <div style="height:100%; width: ${confPct}%; background: ${col.hex}; border-radius: 2px; transition: width 0.8s ease;"></div>
+                </div>
+                <span style="font-size: var(--font-xs); color: var(--text-tertiary); white-space: nowrap;">
+                  ${confPct}% keyakinan
+                </span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
 
     page.innerHTML = `
       <div class="page-header">
         <button class="back-btn" id="back-btn">${icons.chevronLeft}</button>
-        <h1>Hasil Scan</h1>
+        <h1>Hasil Scan AI</h1>
       </div>
       <div class="scan-results anim-fade-in">
-        <div class="result-face-card">
-          <div class="result-face-img"${capturedImage ? ` style="background-image: url('${capturedImage}');"` : ''}>
-            <div class="face-placeholder">
-              <div class="highlight-zone zone-1"></div>
-              <div class="highlight-zone zone-2"></div>
-              <div class="highlight-zone zone-3"></div>
+
+        <!-- Face image dengan canvas overlay bounding box -->
+        <div class="result-face-card" style="position: relative; overflow: hidden;">
+          <div id="face-img-container" style="position: relative; width: 100%; aspect-ratio: 4/3; overflow: hidden; border-radius: 16px; background: #111;">
+            ${capturedImage ? `<img id="result-face-img" src="${capturedImage}" style="width: 100%; height: 100%; object-fit: cover; display: block;" alt="Foto wajah" />` : ''}
+            <canvas id="bbox-canvas" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;"></canvas>
+          </div>
+          ${permasalahan && permasalahan.length > 0 ? `
+            <div style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;">
+              ${permasalahan.map(p => {
+                const col = PROBLEM_COLORS[p.label] || { hex: '#888', bg: '#F5F5F5' };
+                return `<span style="font-size: var(--font-xs); padding: 3px 10px; border-radius: 100px; background: ${col.bg}; color: ${col.hex}; font-weight: 600; border: 1px solid ${col.hex}40;">${p.label}</span>`;
+              }).join('')}
+            </div>
+          ` : ''}
+        </div>
+
+        <!-- Skin Score -->
+        <div class="skin-type-detail anim-fade-in-up anim-delay-1" style="margin-top: 16px;">
+          <div class="std-header">
+            <span class="std-emoji">📊</span>
+            <span class="std-label">Skor Kesehatan Kulit</span>
+          </div>
+          <div class="std-card" style="flex-direction: column; align-items: flex-start; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 16px; width: 100%;">
+              <div style="font-size: 42px; font-weight: 800; color: ${scoreColor}; line-height:1;">${skin_score}</div>
+              <div style="flex: 1;">
+                <div style="font-size: var(--font-sm); font-weight: 600; color: ${scoreColor};">${scoreLabel}</div>
+                <div style="height: 8px; background: #E5E7EB; border-radius: 4px; overflow: hidden; margin-top: 6px;">
+                  <div id="score-bar" style="height: 100%; width: 0%; background: ${scoreColor}; border-radius: 4px; transition: width 1.2s ease;"></div>
+                </div>
+              </div>
+              <div style="font-size: var(--font-xs); color: var(--text-tertiary);">/100</div>
             </div>
           </div>
         </div>
 
-        <!-- Skin Type Detail -->
+        <!-- Jenis Kulit -->
         <div class="skin-type-detail anim-fade-in-up anim-delay-1">
           <div class="std-header">
             <span class="std-emoji">✨</span>
-            <span class="std-label">Jenis Kulit</span>
+            <span class="std-label">Jenis Kulit Terdeteksi</span>
           </div>
           <div class="std-card">
-            <div class="std-icon">💧</div>
+            <div class="std-icon">${skinTypeEmoji}</div>
             <div class="std-info">
-              <h3>Kulit ${skinType}</h3>
-              <p>${typeDesc}</p>
+              <h3>Kulit ${jenis_kulit}</h3>
+              <p>${skinTypeDesc}</p>
             </div>
           </div>
         </div>
 
-        <!-- Skin Problems -->
+        <!-- Permasalahan Kulit -->
         <div class="skin-problems anim-fade-in-up anim-delay-2">
           <div class="std-header">
             <span class="std-emoji">🔍</span>
             <span class="std-label">Permasalahan Kulit</span>
           </div>
-          <p class="sp-desc">Kulitmu memiliki beberapa permasalahan yang perlu diperhatikan:</p>
+          ${permasalahan && permasalahan.length > 0
+            ? `<p class="sp-desc">Ditemukan <strong>${permasalahan.length} permasalahan</strong> pada kulit Anda:</p>`
+            : '<p class="sp-desc">Tidak ada permasalahan yang terdeteksi.</p>'
+          }
           <div class="problem-cards">
-            <div class="problem-card">
-              <div class="pc-icon" style="background:#FEF2F2;">🔴</div>
-              <div class="pc-info">
-                <h4>Jerawat (Acne)</h4>
-                <p>${acneLevel}. Terdapat beberapa tanda jerawat atau komedo di area wajah.</p>
-              </div>
-            </div>
-            <div class="problem-card">
-              <div class="pc-icon" style="background:#FFFBEB;">✨</div>
-              <div class="pc-info">
-                <h4>Minyak Berlebih (Oil Level)</h4>
-                <p>Kadar sebum di wajah tergolong ${oilLevel}.</p>
-              </div>
-            </div>
-            <div class="problem-card">
-              <div class="pc-icon" style="background:#FEF3C7;">🟡</div>
-              <div class="pc-info">
-                <h4>Kondisi Pori</h4>
-                <p>Kondisi pori-pori wajah saat ini terdeteksi ${poreCondition}.</p>
-              </div>
-            </div>
+            ${problemCardsHTML}
           </div>
         </div>
 
-        <!-- Analysis Cards -->
+        <!-- Detail Analisis -->
         <div class="result-title anim-fade-in-up anim-delay-3">Detail Analisis</div>
         <div class="result-cards">
           <div class="result-card">
             <div class="rc-icon" style="background:#EFF6FF;">💧</div>
             <div class="rc-info">
-              <div class="rc-label">Skor Kesehatan Kulit</div>
-              <div class="rc-value">${skinScore}/100</div>
-              <div class="rc-bar"><div class="rc-bar-fill" style="width:${skinScore}%;background:var(--primary);"></div></div>
+              <div class="rc-label">Level Minyak</div>
+              <div class="rc-value" style="font-size: var(--font-sm);">${oil_level}</div>
             </div>
           </div>
           <div class="result-card">
             <div class="rc-icon" style="background:#FEF2F2;">🔴</div>
             <div class="rc-info">
-              <div class="rc-label">Jenis Kulit</div>
-              <div class="rc-value">${skinType}</div>
-              <div class="rc-bar"><div class="rc-bar-fill" style="width:70%;background:#EF4444;"></div></div>
+              <div class="rc-label">Level Jerawat</div>
+              <div class="rc-value" style="font-size: var(--font-sm);">${acne_level}</div>
+            </div>
+          </div>
+          <div class="result-card">
+            <div class="rc-icon" style="background:#FEF3C7;">🟡</div>
+            <div class="rc-info">
+              <div class="rc-label">Kondisi Pori</div>
+              <div class="rc-value" style="font-size: var(--font-sm);">${pore_condition}</div>
+            </div>
+          </div>
+          <div class="result-card">
+            <div class="rc-icon" style="background:#F0FDF4;">🌿</div>
+            <div class="rc-info">
+              <div class="rc-label">Analisis oleh</div>
+              <div class="rc-value" style="font-size: var(--font-sm);">Gemini AI</div>
             </div>
           </div>
         </div>
@@ -401,6 +513,91 @@ export function renderSkinScan() {
       </div>
     `;
 
+    // Draw bounding boxes on canvas
+    if (capturedImage && permasalahan && permasalahan.length > 0) {
+      const img = page.querySelector('#result-face-img');
+      const canvas = page.querySelector('#bbox-canvas');
+      const container = page.querySelector('#face-img-container');
+
+      const drawBoxes = () => {
+        const w = container.offsetWidth;
+        const h = container.offsetHeight;
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, w, h);
+
+        permasalahan.forEach(item => {
+          const [ymin, xmin, ymax, xmax] = item.box_2d;
+          const col = (PROBLEM_COLORS[item.label] || { hex: '#AAAAAA' }).hex;
+          const confPct = Math.round((item.confidence || 0.5) * 100);
+
+          const x1 = xmin / 1000 * w;
+          const y1 = ymin / 1000 * h;
+          const bw = (xmax - xmin) / 1000 * w;
+          const bh = (ymax - ymin) / 1000 * h;
+
+          // Dim outside area
+          ctx.save();
+          ctx.fillStyle = 'rgba(0,0,0,0.35)';
+          ctx.fillRect(0, 0, w, h);
+          ctx.clearRect(x1, y1, bw, bh);
+          ctx.restore();
+
+          // Draw box
+          ctx.save();
+          ctx.strokeStyle = col;
+          ctx.lineWidth = 2.5;
+          ctx.shadowColor = col;
+          ctx.shadowBlur = 8;
+          const r = 6;
+          ctx.beginPath();
+          ctx.moveTo(x1 + r, y1);
+          ctx.lineTo(x1 + bw - r, y1);
+          ctx.quadraticCurveTo(x1 + bw, y1, x1 + bw, y1 + r);
+          ctx.lineTo(x1 + bw, y1 + bh - r);
+          ctx.quadraticCurveTo(x1 + bw, y1 + bh, x1 + bw - r, y1 + bh);
+          ctx.lineTo(x1 + r, y1 + bh);
+          ctx.quadraticCurveTo(x1, y1 + bh, x1, y1 + bh - r);
+          ctx.lineTo(x1, y1 + r);
+          ctx.quadraticCurveTo(x1, y1, x1 + r, y1);
+          ctx.closePath();
+          ctx.stroke();
+          ctx.restore();
+
+          // Label background
+          const labelText = `${item.label} ${confPct}%`;
+          ctx.font = 'bold 11px system-ui, -apple-system, sans-serif';
+          const textW = ctx.measureText(labelText).width;
+          const labelX = x1;
+          const labelY = Math.max(y1 - 26, 4);
+          const padX = 8, padY = 4;
+
+          ctx.save();
+          ctx.fillStyle = col;
+          ctx.beginPath();
+          ctx.roundRect(labelX, labelY, textW + padX * 2, 20, 4);
+          ctx.fill();
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillText(labelText, labelX + padX, labelY + 14);
+          ctx.restore();
+        });
+      };
+
+      if (img.complete) {
+        drawBoxes();
+      } else {
+        img.addEventListener('load', drawBoxes);
+      }
+    }
+
+    // Animate score bar
+    setTimeout(() => {
+      const scoreBar = page.querySelector('#score-bar');
+      if (scoreBar) scoreBar.style.width = `${skin_score}%`;
+    }, 300);
+
+    // Event listeners
     page.querySelector('#back-btn').addEventListener('click', () => {
       window.location.hash = '#/';
     });
@@ -410,17 +607,15 @@ export function renderSkinScan() {
       renderCamera();
     });
 
-    page.querySelector('#get-reco-btn').addEventListener('click', async () => {
-      // Increment scan count
+    page.querySelector('#get-reco-btn').addEventListener('click', () => {
       const countKey = 'bglow_scan_count_' + userId;
       const current = parseInt(localStorage.getItem(countKey) || '0');
       localStorage.setItem(countKey, String(current + 1));
-
       window.location.hash = '#/recommendations';
     });
   }
 
-  // Always open the camera immediately on page load
+  // Start with camera
   renderCamera();
 
   return page;
