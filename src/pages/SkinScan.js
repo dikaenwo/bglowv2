@@ -72,11 +72,49 @@ export function renderSkinScan() {
           <button class="scan-btn-main" id="start-scan">${icons.camera}</button>
         </div>
       </div>
+
+      <!-- Input camera (fallback) -->
       <input type="file" accept="image/*" capture="user" id="camera-file-input" style="display: none;" />
-      <div class="page-content" style="text-align:center; padding-top:24px;">
-        <p style="color:var(--text-tertiary); font-size:var(--font-sm);">
+      <!-- Input upload galeri -->
+      <input type="file" accept="image/*" id="gallery-file-input" style="display: none;" />
+
+      <div class="page-content" style="text-align:center; padding-top:20px;">
+        <p style="color:var(--text-tertiary); font-size:var(--font-sm); margin-bottom: 16px;">
           Posisikan wajah Anda dalam garis batas lalu ketuk tombol scan
         </p>
+
+        <!-- Divider -->
+        <div style="display: flex; align-items: center; gap: 12px; padding: 0 24px; margin-bottom: 14px;">
+          <div style="flex:1; height:1px; background: var(--border, rgba(255,255,255,0.12));"></div>
+          <span style="color: var(--text-tertiary); font-size: var(--font-xs); white-space: nowrap;">atau</span>
+          <div style="flex:1; height:1px; background: var(--border, rgba(255,255,255,0.12));"></div>
+        </div>
+
+        <!-- Tombol Upload Gambar -->
+        <button id="upload-img-btn" style="
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          width: calc(100% - 48px);
+          margin: 0 auto;
+          padding: 13px 20px;
+          border-radius: 14px;
+          border: 1.5px dashed var(--primary, #A78BFA);
+          background: transparent;
+          color: var(--primary, #A78BFA);
+          font-size: var(--font-sm);
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.2s, transform 0.1s;
+        ">
+          <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0;">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          Upload Gambar dari Galeri
+        </button>
       </div>
     `;
 
@@ -117,6 +155,47 @@ export function renderSkinScan() {
       reader.onload = (event) => {
         capturedImage = event.target.result;
         localStorage.setItem('bglow_captured_image_' + userId, capturedImage);
+        let imgPreview = page.querySelector('#captured-preview');
+        if (!imgPreview) {
+          imgPreview = document.createElement('img');
+          imgPreview.id = 'captured-preview';
+          imgPreview.style.cssText = 'width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; z-index: 1;';
+          page.querySelector('.camera-feed').appendChild(imgPreview);
+        }
+        imgPreview.src = capturedImage;
+        if (video) video.style.display = 'none';
+        if (placeholder) placeholder.style.display = 'none';
+        startScanning();
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // ── Handler tombol Upload Galeri ──────────────────────────────────────────
+    const galleryInput = page.querySelector('#gallery-file-input');
+    const uploadBtn = page.querySelector('#upload-img-btn');
+
+    uploadBtn.addEventListener('mouseenter', () => {
+      uploadBtn.style.background = 'rgba(167,139,250,0.08)';
+      uploadBtn.style.transform = 'scale(1.01)';
+    });
+    uploadBtn.addEventListener('mouseleave', () => {
+      uploadBtn.style.background = 'transparent';
+      uploadBtn.style.transform = 'scale(1)';
+    });
+
+    uploadBtn.addEventListener('click', () => {
+      stopCamera();
+      galleryInput.click();
+    });
+
+    galleryInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        capturedImage = event.target.result;
+        localStorage.setItem('bglow_captured_image_' + userId, capturedImage);
+        // Tampilkan preview di camera feed
         let imgPreview = page.querySelector('#captured-preview');
         if (!imgPreview) {
           imgPreview = document.createElement('img');
