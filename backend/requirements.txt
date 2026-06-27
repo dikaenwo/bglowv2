@@ -5,5 +5,3 @@ PyJWT>=2.8.0
 python-dotenv
 requests
 beautifulsoup4
-google-generativeai
-Pillow
