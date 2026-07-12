@@ -1,7 +1,8 @@
 // ─── Konfigurasi API B-Glow ───────────────────────────────────────────────
 
-// URL Backend VPS production (Flask di port 5050)
-export const API_BASE_URL = 'http://bglow.store:5050';
+// URL Backend — ganti sesuai kebutuhan:
+// export const API_BASE_URL = 'http://localhost:5050'; // 🔧 LOCAL
+export const API_BASE_URL = 'https://bglow.store';      // 🌐 VPS Production (aktif sekarang)
 
 // Endpoint BPOM Scan (live scraping via backend)
 export const BPOM_API_URL = `${API_BASE_URL}/api/scan-bpom`;

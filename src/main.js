@@ -9,6 +9,7 @@ import './styles/alarm.css';
 import './styles/diary.css';
 import './styles/profile.css';
 import './styles/onboarding.css';
+import './styles/intro.css';
 import './styles/auth.css';
 import './styles/recommendations.css';
 import './styles/routine.css';
@@ -16,6 +17,7 @@ import './styles/subscription.css';
 import './styles/product-detail.css';
 import './styles/scan-history.css';
 import { createBottomNav } from './components/BottomNav.js';
+import { renderIntro } from './pages/Intro.js';
 import { renderHome } from './pages/Home.js';
 import { renderSkinScan } from './pages/SkinScan.js';
 import { renderBpomCheck } from './pages/BpomCheck.js';
@@ -36,8 +38,8 @@ import { renderScanHistory } from './pages/ScanHistory.js';
 
 const app = document.querySelector('#app');
 
-// ─── No-nav routes (onboarding, auth) ───
-const noNavRoutes = ['onboarding', 'login', 'register', 'subscription', 'product-detail', 'forgot-password'];
+// ─── No-nav routes (intro, onboarding, auth) ───
+const noNavRoutes = ['intro', 'onboarding', 'login', 'register', 'subscription', 'product-detail', 'forgot-password'];
 
 // ─── Route → tab mapping ───
 const tabMap = {
@@ -59,15 +61,31 @@ function handleRoute() {
   const route = hash.split('?')[0];
 
   // Auth & onboarding guard
+  const isIntroSeen = localStorage.getItem('bglow_intro_seen');
   const isOnboarded = localStorage.getItem('bglow_onboarded');
   const isAuth = localStorage.getItem('bglow_auth');
 
-  if (!isOnboarded && route !== 'onboarding' && route !== 'login' && route !== 'register' && route !== 'forgot-password') {
+  // 0. If intro not seen yet, show intro first (before login)
+  if (isIntroSeen !== '1' && route !== 'intro') {
+    window.location.hash = '#/intro';
+    return;
+  }
+
+  // 1. If not authenticated, force login first (except register & forgot-password & intro)
+  if (isAuth !== '1' && route !== 'login' && route !== 'register' && route !== 'forgot-password' && route !== 'intro') {
+    window.location.hash = '#/login';
+    return;
+  }
+
+  // 2. If authenticated but not yet onboarded, force onboarding
+  if (isAuth === '1' && isOnboarded !== '1' && route !== 'onboarding') {
     window.location.hash = '#/onboarding';
     return;
   }
-  if (isOnboarded && !isAuth && !noNavRoutes.includes(route)) {
-    window.location.hash = '#/login';
+
+  // 3. If authenticated and already onboarded, prevent accessing auth/onboarding/intro pages
+  if (isAuth === '1' && isOnboarded === '1' && (route === 'onboarding' || route === 'login' || route === 'register' || route === 'intro')) {
+    window.location.hash = '#/';
     return;
   }
 
@@ -75,6 +93,7 @@ function handleRoute() {
   let pageEl;
 
   switch (route) {
+    case 'intro': pageEl = renderIntro(); break;
     case 'onboarding': pageEl = renderOnboarding(); break;
     case 'login': pageEl = renderLogin(); break;
     case 'register': pageEl = renderRegister(); break;

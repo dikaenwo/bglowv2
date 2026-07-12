@@ -32,6 +32,7 @@ function decodeJwt(token) {
   }
 }
 
+
 export function renderLogin() {
   const page = document.createElement('div');
   page.className = 'auth-page';
@@ -174,6 +175,9 @@ export function renderLogin() {
           localStorage.setItem('bglow_oil_level_' + data.user.id, data.user.oil_level);
           localStorage.setItem('bglow_pore_condition_' + data.user.id, data.user.pore_condition);
           localStorage.setItem('bglow_skin_score_' + data.user.id, data.user.skin_score);
+          localStorage.setItem('bglow_onboarded', '1');
+        } else {
+          localStorage.removeItem('bglow_onboarded');
         }
         if (data.user.sunscreen_interval) {
           localStorage.setItem('bglow_sunscreen_interval_' + data.user.id, data.user.sunscreen_interval);
@@ -196,7 +200,7 @@ export function renderLogin() {
         if (data.user.routine_progress) {
           localStorage.setItem('bglow_routine_progress_' + data.user.id, data.user.routine_progress);
         }
-        window.location.hash = '#/';
+        window.location.hash = data.user.skin_type ? '#/' : '#/onboarding';
       } else {
         const detail = data.detail || '';
         if (detail.includes('Email tidak ditemukan')) {
@@ -246,6 +250,9 @@ export function renderLogin() {
           localStorage.setItem('bglow_oil_level_' + data.user.id, data.user.oil_level);
           localStorage.setItem('bglow_pore_condition_' + data.user.id, data.user.pore_condition);
           localStorage.setItem('bglow_skin_score_' + data.user.id, data.user.skin_score);
+          localStorage.setItem('bglow_onboarded', '1');
+        } else {
+          localStorage.removeItem('bglow_onboarded');
         }
         if (data.user.sunscreen_interval) {
           localStorage.setItem('bglow_sunscreen_interval_' + data.user.id, data.user.sunscreen_interval);
@@ -268,7 +275,7 @@ export function renderLogin() {
         if (data.user.routine_progress) {
           localStorage.setItem('bglow_routine_progress_' + data.user.id, data.user.routine_progress);
         }
-        window.location.hash = '#/';
+        window.location.hash = data.user.skin_type ? '#/' : '#/onboarding';
       } else {
         showCustomAlert(data.detail || "Social login gagal", "Autentikasi Gagal");
       }
