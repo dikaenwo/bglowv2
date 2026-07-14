@@ -1,7 +1,9 @@
 import { icons } from '../components/BottomNav.js';
 import { getUserId } from '../utils/store.js';
 import { showCustomAlert } from '../utils/helpers.js';
+import { RECOMMENDATIONS_API_URL } from '../config.js';
 
+// ─── Ikon SVG kategori ────────────────────────────────────────────────────────
 const cleanserIcon = `
 <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 32px; height: 32px;">
   <path d="M12 12 H26 L23 48 H15 L12 12 Z" fill="#DBEAFE" stroke="#2563EB" stroke-width="2.5" stroke-linejoin="round" />
@@ -66,51 +68,86 @@ const exfoliationIcon = `
 `;
 
 const categories = [
-  { id: 'cleanser', label: 'Cleansers', icon: cleanserIcon, colorClass: 'cat-cleanser' },
-  { id: 'moisturizer', label: 'Pelembab', icon: moisturizerIcon, colorClass: 'cat-moisturizer' },
-  { id: 'serum', label: 'Serum', icon: serumIcon, colorClass: 'cat-serum' },
-  { id: 'sunscreen', label: 'Sunscreen', icon: sunscreenIcon, colorClass: 'cat-sunscreen' },
-  { id: 'toner', label: 'Eksfoliasi', icon: exfoliationIcon, colorClass: 'cat-exfoliation' },
+  { id: 'cleanser',    label: 'Cleansers',  icon: cleanserIcon,    colorClass: 'cat-cleanser' },
+  { id: 'moisturizer', label: 'Pelembab',   icon: moisturizerIcon, colorClass: 'cat-moisturizer' },
+  { id: 'serum',       label: 'Serum',      icon: serumIcon,       colorClass: 'cat-serum' },
+  { id: 'sunscreen',   label: 'Sunscreen',  icon: sunscreenIcon,   colorClass: 'cat-sunscreen' },
+  { id: 'toner',       label: 'Eksfoliasi', icon: exfoliationIcon, colorClass: 'cat-exfoliation' },
 ];
 
-const productData = {
-  cleanser: [
-    { name: 'Gentle Hydrating Cleanser', brand: 'Skintific', rating: 4.5, price: 89000, emoji: '🧴', match: 95, desc: 'A gentle, pH-balanced cleanser with 5X Ceramide Complex that effectively removes dirt and impurities without stripping the skin barrier.', ingredients: ['Ceramide NP', 'Hyaluronic Acid', 'Centella Asiatica', 'Niacinamide'], bgColor: '#E8F5E9' },
-    { name: 'Low pH Gel Cleanser', brand: 'COSRX', rating: 4.7, price: 125000, emoji: '🫧', match: 92, desc: 'Mild cleanser with tea tree oil that calms acne-prone skin while maintaining optimal pH level of 5.5.', ingredients: ['Tea Tree Oil', 'Betaine Salicylate', 'Allantoin'], bgColor: '#E3F2FD' },
-    { name: 'Centella Cleansing Gel', brand: 'Skin1004', rating: 4.3, price: 95000, emoji: '🌱', match: 88, desc: 'Soothing gel cleanser infused with Centella Asiatica extract for sensitive and irritated skin.', ingredients: ['Centella Asiatica', 'Green Tea', 'Aloe Vera'], bgColor: '#F1F8E9' },
-    { name: 'Rice Water Cleanser', brand: 'Somethinc', rating: 4.4, price: 79000, emoji: '🍚', match: 85, desc: 'Brightening cleanser with fermented rice water that gently exfoliates and evens out skin tone.', ingredients: ['Rice Ferment', 'Niacinamide', 'Vitamin C'], bgColor: '#FFFDE7' },
-  ],
-  moisturizer: [
-    { name: '5X Ceramide Barrier Gel', brand: 'Skintific', rating: 4.6, price: 145000, emoji: '💧', match: 96, desc: 'Lightweight gel moisturizer packed with 5 types of ceramides to strengthen skin barrier and lock in moisture.', ingredients: ['Ceramide EOP', 'Ceramide NP', 'Hyaluronic Acid', 'Squalane'], bgColor: '#E1F5FE' },
-    { name: 'Aloe Vera Moisture Gel', brand: 'Nature Republic', rating: 4.2, price: 65000, emoji: '🪴', match: 82, desc: 'Multi-purpose gel with 92% aloe vera to soothe and hydrate dry, irritated skin.', ingredients: ['Aloe Vera', 'Carbomer', 'Glycerin'], bgColor: '#E8F5E9' },
-    { name: 'Snail Repair Cream', brand: 'COSRX', rating: 4.8, price: 185000, emoji: '🐌', match: 90, desc: 'Rich cream with 92% snail mucin for intense repair and moisture. Great for acne scars and fine lines.', ingredients: ['Snail Secretion', 'Shea Butter', 'Adenosine'], bgColor: '#FFF3E0' },
-    { name: 'Cica Moisture Cream', brand: 'Wardah', rating: 4.1, price: 55000, emoji: '🌿', match: 78, desc: 'Calming moisturizer with Centella Asiatica for redness-prone and sensitive skin.', ingredients: ['Centella Asiatica', 'Panthenol', 'Allantoin'], bgColor: '#F1F8E9' },
-  ],
-  serum: [
-    { name: '10% Niacinamide Serum', brand: 'Somethinc', rating: 4.7, price: 99000, emoji: '✨', match: 97, desc: 'Powerful brightening serum with 10% Niacinamide + Zinc to minimize pores, reduce oiliness, and fade dark spots.', ingredients: ['Niacinamide 10%', 'Zinc PCA', 'Hyaluronic Acid'], bgColor: '#E8EAF6' },
-    { name: 'AHA BHA Serum', brand: 'Avoskin', rating: 4.5, price: 135000, emoji: '⚗️', match: 88, desc: 'Exfoliating serum with alpha and beta hydroxy acids for smoother, clearer skin. Great for unclogging pores.', ingredients: ['Glycolic Acid', 'Salicylic Acid', 'Lactic Acid'], bgColor: '#FCE4EC' },
-    { name: 'Hyaluronic Acid 2%', brand: 'The Ordinary', rating: 4.6, price: 115000, emoji: '💎', match: 91, desc: 'Hydration serum with multi-weight hyaluronic acid for deep, lasting moisture.', ingredients: ['HA Low MW', 'HA High MW', 'Vitamin B5'], bgColor: '#E1F5FE' },
-    { name: 'Vitamin C Serum', brand: 'Lacoco', rating: 4.3, price: 89000, emoji: '🍊', match: 84, desc: 'Antioxidant serum with stable Vitamin C derivative for brightening and protecting skin from UV damage.', ingredients: ['Ascorbyl Glucoside', 'Vitamin E', 'Ferulic Acid'], bgColor: '#FFF8E1' },
-  ],
-  sunscreen: [
-    { name: 'UV Shield SPF 50', brand: 'Wardah', rating: 4.4, price: 48000, emoji: '☀️', match: 93, desc: 'Lightweight sunscreen with broad-spectrum SPF 50 PA++++ protection. Non-greasy formula suitable for daily use.', ingredients: ['Zinc Oxide', 'Titanium Dioxide', 'Niacinamide', 'Aloe Vera'], bgColor: '#FFFDE7' },
-    { name: 'Aqua Sun Gel SPF 50', brand: 'Skin Aqua', rating: 4.7, price: 55000, emoji: '🌊', match: 95, desc: 'Water-based gel sunscreen that feels like skincare. Ultra-light with moisture-boosting hyaluronic acid.', ingredients: ['HA', 'Collagen', 'Vitamin E'], bgColor: '#E0F7FA' },
-    { name: 'Tone Up Sunscreen', brand: 'Emina', rating: 4.0, price: 35000, emoji: '🪞', match: 80, desc: 'Sunscreen with tone-up effect for instant brightening while protecting from UV rays.', ingredients: ['SPF 30', 'Niacinamide', 'Vitamin C'], bgColor: '#FCE4EC' },
-    { name: 'Cica Sun Essence', brand: 'Skintific', rating: 4.6, price: 89000, emoji: '🛡️', match: 91, desc: 'Soothing sun essence with Cica complex for sensitive skin. Calms and protects simultaneously.', ingredients: ['Centella', 'SPF 50', 'Zinc', 'Ceramide'], bgColor: '#E8F5E9' },
-  ],
-  toner: [
-    { name: 'AHA/BHA Toner', brand: 'COSRX', rating: 4.5, price: 145000, emoji: '🌿', match: 89, desc: 'Gentle exfoliating toner with natural BHA from willow bark water. Minimizes pores and prevents breakouts.', ingredients: ['Willow Bark Water', 'AHA', 'BHA'], bgColor: '#F1F8E9' },
-    { name: 'Mugwort Essence Toner', brand: 'Isntree', rating: 4.6, price: 165000, emoji: '🍃', match: 86, desc: 'Calming toner with 100% mugwort extract for soothing irritated, redness-prone skin.', ingredients: ['Mugwort Extract', 'Panthenol', 'Allantoin'], bgColor: '#E8F5E9' },
-    { name: 'Hyaluronic Toner', brand: 'Hada Labo', rating: 4.4, price: 75000, emoji: '💦', match: 90, desc: 'Hydrating toner with 4 types of hyaluronic acid for intense multi-layer hydration.', ingredients: ['HA 4 Types', 'Glycerin', 'Ceramide'], bgColor: '#E1F5FE' },
-    { name: 'Green Tea Toner', brand: 'Innisfree', rating: 4.3, price: 125000, emoji: '🍵', match: 83, desc: 'Antioxidant-rich toner with fresh Jeju green tea for oil control and pore care.', ingredients: ['Green Tea', 'Amino Acids', 'Betaine'], bgColor: '#E8F5E9' },
-  ],
+// ─── Warna & emoji per kategori (untuk tampilan card) ────────────────────────
+const CATEGORY_DISPLAY = {
+  'Facial Wash':  { emoji: '🧴', bgColor: '#E3F2FD' },
+  'Moisturizer':  { emoji: '💧', bgColor: '#E8F5E9' },
+  'Serum':        { emoji: '✨', bgColor: '#EDE9FE' },
+  'Sunscreen':    { emoji: '☀️', bgColor: '#FFFDE7' },
+  'Eksfoliasi':   { emoji: '🌿', bgColor: '#F1F8E9' },
 };
+
+// ─── WSM badge styling ────────────────────────────────────────────────────────
+const WSM_BADGE_STYLES = {
+  'Sangat Direkomendasikan': {
+    bg: 'rgba(34,197,94,0.15)',
+    color: '#16a34a',
+    border: 'rgba(34,197,94,0.3)',
+    icon: '✓',
+    label: 'Sangat Cocok',
+  },
+  'Cukup Direkomendasikan': {
+    bg: 'rgba(251,191,36,0.15)',
+    color: '#d97706',
+    border: 'rgba(251,191,36,0.3)',
+    icon: '◐',
+    label: 'Cukup Cocok',
+  },
+  'Tidak Direkomendasikan': {
+    bg: 'rgba(239,68,68,0.12)',
+    color: '#dc2626',
+    border: 'rgba(239,68,68,0.25)',
+    icon: '✗',
+    label: 'Kurang Cocok',
+  },
+};
+
+// ─── Badge icon mapping ───────────────────────────────────────────────────────
+const BADGE_ICONS = {
+  'acne fighter':      '🎯',
+  'brightening':       '✨',
+  'hydrating':         '💧',
+  'antioxidant':       '🛡️',
+  'niacinamide':       '🧬',
+  'vitamin c':         '🍊',
+  'exfoliant':         '🔬',
+  'peptide':           '⚗️',
+  'ceramide':          '🧱',
+  'retinoid':          '🌙',
+  'bha':               '🔬',
+  'aha':               '🔬',
+  'urea':              '💧',
+  'zinc':              '🔩',
+  'fragrance':         '⚠️',
+  'sulfate':           '⚠️',
+  'preservative':      '🧪',
+  'oil':               '🫧',
+  'coconut derived':   '🥥',
+  'eu allergen':       '⚠️',
+};
+
+function getBadgeIcon(badgeText) {
+  const lower = badgeText.toLowerCase();
+  for (const [key, icon] of Object.entries(BADGE_ICONS)) {
+    if (lower.includes(key)) return icon;
+  }
+  return '🏷️';
+}
 
 export function renderRecommendations() {
   const page = document.createElement('div');
   page.className = 'page';
-  
-  const hasScanned = localStorage.getItem('bglow_has_scanned_' + getUserId());
+
+  const userId      = getUserId();
+  const hasScanned  = localStorage.getItem('bglow_has_scanned_' + userId);
+
   if (!hasScanned) {
     page.innerHTML = `
       <div class="empty-state anim-fade-in" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;padding:20px;text-align:center;">
@@ -126,41 +163,87 @@ export function renderRecommendations() {
     `;
     setTimeout(() => {
       const btn = page.querySelector('#go-scan-btn');
-      if (btn) {
-        btn.addEventListener('click', () => {
-          window.location.hash = '#/scan';
-        });
-      }
+      if (btn) btn.addEventListener('click', () => { window.location.hash = '#/scan'; });
     }, 0);
     return page;
   }
 
-  let currentCat = 'cleanser';
-  let filterMin = null;
-  let filterMax = null;
+  // ── Baca data kulit dari localStorage ──────────────────────────────────────
+  const jenis_kulit    = localStorage.getItem('bglow_skin_type_'     + userId) || 'Normal';
+  
+  // Ambil masalah kulit prioritas (hanya 1 masalah)
+  const prioritas      = localStorage.getItem('bglow_journey_priority_' + userId);
+  const rawProblems    = localStorage.getItem('bglow_skin_problems_' + userId) || '[]';
+  
+  let permasalahan = [];
+  if (prioritas) {
+    permasalahan = [prioritas];
+  } else {
+    // Fallback jika belum ada prioritas yang dipilih, ambil masalah pertama saja
+    try {
+      const parsed = JSON.parse(rawProblems);
+      if (parsed.length > 0) {
+        permasalahan = [parsed[0].label || parsed[0]];
+      }
+    } catch (_) {}
+  }
 
-  function render() {
-    let products = productData[currentCat] || [];
-    
-    if (filterMin !== null) {
-      products = products.filter(p => p.price >= filterMin);
+  let currentCat  = 'cleanser';
+  let filterMin   = null;
+  let filterMax   = null;
+  let allProducts = [];
+  let isLoading   = false;
+
+  // ── Fetch produk dari backend ───────────────────────────────────────────────
+  async function fetchProducts(kategori) {
+    isLoading = true;
+    renderShell(kategori, [], true);
+
+    try {
+      const body = {
+        jenis_kulit,
+        permasalahan: JSON.stringify(permasalahan),
+        kategori,
+        limit: 50,
+      };
+      const resp = await fetch(RECOMMENDATIONS_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (!resp.ok) throw new Error(`Server error ${resp.status}`);
+      const data = await resp.json();
+      allProducts = data.products || [];
+    } catch (err) {
+      console.error('[Rekomendasi] Fetch error:', err);
+      allProducts = [];
     }
-    if (filterMax !== null) {
-      products = products.filter(p => p.price <= filterMax);
-    }
+
+    isLoading = false;
+    renderShell(kategori, allProducts, false);
+  }
+
+  // ── Render utama ────────────────────────────────────────────────────────────
+  function renderShell(kategori, products, loading) {
+    let filtered = products;
+    if (filterMin !== null) filtered = filtered.filter(p => p.price >= filterMin);
+    if (filterMax !== null) filtered = filtered.filter(p => p.price <= filterMax);
 
     page.innerHTML = `
       <div class="page-header" style="margin-bottom: 8px; justify-content: center;">
-        <h1 style="text-align: center; width: 100%;">Rekomendasi ${categories.find(c => c.id === currentCat)?.label || ''}</h1>
+        <h1 style="text-align: center; width: 100%;">Rekomendasi ${categories.find(c => c.id === kategori)?.label || ''}</h1>
       </div>
+
+      <!-- Skin context banner (Removed) -->
 
       <!-- Price Filter -->
       <div class="price-filter-container anim-fade-in">
         <div class="filter-label">Filter range harga</div>
         <div class="price-filter-bar">
-          <input type="number" class="price-input" placeholder="Rp. 0" id="min-price" value="${filterMin || ''}">
+          <input type="number" class="price-input" placeholder="Rp. 0"      id="min-price" value="${filterMin || ''}">
           <span class="price-separator">—</span>
-          <input type="number" class="price-input" placeholder="Rp. 150000" id="max-price" value="${filterMax || ''}">
+          <input type="number" class="price-input" placeholder="Rp. 500000" id="max-price" value="${filterMax || ''}">
           <button class="btn-terapkan" id="btn-apply-filter">Terapkan</button>
         </div>
       </div>
@@ -168,7 +251,7 @@ export function renderRecommendations() {
       <!-- Category Tabs -->
       <div class="reco-categories" id="cat-tabs">
         ${categories.map(c => `
-          <button class="reco-cat ${c.colorClass} ${c.id === currentCat ? 'active' : ''}" data-cat="${c.id}">
+          <button class="reco-cat ${c.colorClass} ${c.id === kategori ? 'active' : ''}" data-cat="${c.id}">
             <div class="cat-icon">${c.icon}</div>
             <span class="cat-label">${c.label}</span>
           </button>
@@ -177,68 +260,174 @@ export function renderRecommendations() {
 
       <!-- Product Grid -->
       <div class="product-grid" id="product-grid">
-        ${products.map((p, i) => `
-          <div class="product-card" data-idx="${i}">
-            <div class="product-img" style="background:${p.bgColor}">
-              <div class="img-placeholder">${p.emoji}</div>
-              ${p.match >= 90 ? `<div class="product-match-badge">${p.match}% Match</div>` : ''}
-            </div>
-            <div class="product-info">
-              <div class="product-name">${p.name}</div>
-              <div class="product-brand">${p.brand}</div>
-              <div class="product-rating">
-                <span class="stars">${'★'.repeat(Math.floor(p.rating))}${p.rating % 1 ? '½' : ''}</span>
-                <span class="rating-num">(${p.rating})</span>
-              </div>
-              <div class="product-price">Rp${p.price.toLocaleString()}</div>
-              <button class="product-cta btn-detail" data-idx="${i}">Lihat Detail</button>
-            </div>
-          </div>
-        `).join('')}
+        ${loading ? renderSkeleton() : filtered.length === 0 ? renderEmpty() : filtered.map((p, i) => renderCard(p, i)).join('')}
       </div>
     `;
 
-    // Category tabs
+    // ── Event: category tabs ─────────────────────────────────────────────────
     page.querySelectorAll('.reco-cat').forEach(tab => {
       tab.addEventListener('click', () => {
         currentCat = tab.dataset.cat;
         filterMin = null;
         filterMax = null;
-        render();
+        fetchProducts(currentCat);
       });
     });
 
-    // Apply filter
+    // ── Event: price filter ──────────────────────────────────────────────────
     page.querySelector('#btn-apply-filter')?.addEventListener('click', () => {
       const minVal = page.querySelector('#min-price').value;
       const maxVal = page.querySelector('#max-price').value;
-      
       filterMin = minVal ? parseInt(minVal) : null;
       filterMax = maxVal ? parseInt(maxVal) : null;
-      render();
+      renderShell(currentCat, allProducts, false);
     });
 
-
-
-    // Product detail
+    // ── Event: product detail ────────────────────────────────────────────────
     page.querySelectorAll('.btn-detail').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const idx = parseInt(btn.dataset.idx);
-        const product = products[idx];
-        sessionStorage.setItem('bglow_selected_product', JSON.stringify(product));
+        const product = filtered[idx];
+        if (!product) return;
+        const display = CATEGORY_DISPLAY[product.kategori] || { emoji: '🧴', bgColor: '#EEE' };
+        const enriched = {
+          ...product,
+          name:        product.name,
+          brand:       extractBrand(product.name),
+          price:       product.price,
+          emoji:       display.emoji,
+          bgColor:     display.bgColor,
+          rating:      4.2,
+          desc:        buildDesc(product),
+          ingredients: (product.cocok || []).concat(product.tidak_cocok || []),
+          link:        product.link || '',
+        };
+        sessionStorage.setItem('bglow_selected_product', JSON.stringify(enriched));
         window.location.hash = '#/product-detail';
       });
     });
   }
 
+  // ── Render satu product card ────────────────────────────────────────────────
+  function renderCard(p, i) {
+    const display  = CATEGORY_DISPLAY[p.kategori] || { emoji: '🧴', bgColor: '#F5F5F5' };
+    const imgTag   = p.image_url && p.image_url !== 'nan'
+      ? `<img src="${p.image_url}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;border-radius:14px;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+         <div class="img-placeholder" style="display:none;">${display.emoji}</div>`
+      : `<div class="img-placeholder">${display.emoji}</div>`;
+
+    // WSM category badge
+    const wsmStyle = WSM_BADGE_STYLES[p.kategori_rekomendasi] || WSM_BADGE_STYLES['Tidak Direkomendasikan'];
+    const wsmBadge = `<div class="wsm-cat-badge" style="background:${wsmStyle.bg};color:${wsmStyle.color};border:1px solid ${wsmStyle.border};">${wsmStyle.icon} ${wsmStyle.label}</div>`;
+
+    // Top ingredient badges (max 3, from positive ingredients only)
+    const analysis = p.ingredients_analysis || [];
+    const topBadges = [];
+    const seenBadges = new Set();
+    for (const a of analysis) {
+      if (a.status !== 'positif' || !a.badge) continue;
+      const badges = a.badge.split(' | ');
+      for (const b of badges) {
+        const bLower = b.trim().toLowerCase();
+        // Skip generic/uninteresting badges
+        if (['preservative', 'oil', 'silicon', 'coconut derived'].includes(bLower)) continue;
+        if (!seenBadges.has(bLower) && topBadges.length < 3) {
+          seenBadges.add(bLower);
+          topBadges.push(b.trim());
+        }
+      }
+      if (topBadges.length >= 3) break;
+    }
+
+    const badgeChips = topBadges.map(b =>
+      `<span class="ing-badge-chip">${getBadgeIcon(b)} ${b}</span>`
+    ).join('');
+
+    // Ingredient count
+    const posCount = analysis.filter(a => a.status === 'positif' || a.status === 'campuran').length;
+    const negCount = analysis.filter(a => a.status === 'negatif' || a.status === 'campuran').length;
+
+    // WSM score bar
+    const scorePercent = Math.round(p.score * 100);
+    const barColor = scorePercent >= 75 ? '#22c55e' : scorePercent >= 50 ? '#eab308' : '#ef4444';
+
+    return `
+      <div class="product-card" data-idx="${i}">
+        <div class="product-img" style="background:${display.bgColor}">
+          ${imgTag}
+          <div class="product-match-badge" style="background:${wsmStyle.bg};color:${wsmStyle.color};border:1px solid ${wsmStyle.border};font-weight:700;">${scorePercent}%</div>
+        </div>
+        <div class="product-info">
+          <div class="product-name">${p.name}</div>
+          <div class="product-brand" style="font-size:var(--font-xs);color:var(--text-tertiary);margin-bottom:4px;">${p.kategori}</div>
+
+          <!-- WSM Category Badge -->
+          ${wsmBadge}
+
+          <!-- Ingredient Badges (Removed) -->
+
+          <!-- WSM Score Bar -->
+          <div class="wsm-score-bar-wrap">
+            <div class="wsm-score-bar" style="width:${scorePercent}%;background:${barColor};"></div>
+          </div>
+
+          <div class="product-price">Rp${p.price.toLocaleString('id-ID')}</div>
+          <button class="product-cta btn-detail" data-idx="${i}">Lihat Detail</button>
+        </div>
+      </div>
+    `;
+  }
+
+  // ── Skeleton loader ─────────────────────────────────────────────────────────
+  function renderSkeleton() {
+    return Array(4).fill(0).map(() => `
+      <div class="product-card" style="opacity:0.5;pointer-events:none;">
+        <div class="product-img" style="background:#f0f0f0;animation:pulse 1.5s ease-in-out infinite;">
+          <div class="img-placeholder">⏳</div>
+        </div>
+        <div class="product-info">
+          <div style="height:14px;background:#e0e0e0;border-radius:6px;margin-bottom:8px;animation:pulse 1.5s ease-in-out infinite;"></div>
+          <div style="height:10px;background:#e0e0e0;border-radius:6px;width:60%;animation:pulse 1.5s ease-in-out infinite;"></div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ── Empty state ─────────────────────────────────────────────────────────────
+  function renderEmpty() {
+    return `
+      <div style="grid-column:1/-1;text-align:center;padding:40px 20px;color:var(--text-secondary);">
+        <div style="font-size:3rem;margin-bottom:16px;">🔍</div>
+        <div style="font-weight:600;margin-bottom:8px;">Tidak ada produk ditemukan</div>
+        <div style="font-size:var(--font-sm);">Coba ubah filter harga atau kategori lain.</div>
+      </div>
+    `;
+  }
+
+  // ── Helper: ekstrak brand dari nama produk ──────────────────────────────────
+  function extractBrand(name) {
+    if (!name) return '';
+    return name.split(' ')[0] || name;
+  }
+
+  // ── Helper: bangun deskripsi singkat dari ingredien ─────────────────────────
+  function buildDesc(product) {
+    const cocok = (product.cocok || []).slice(0, 3).join(', ');
+    const base  = product.texture ? `Tekstur ${product.texture}.` : '';
+    if (cocok) return `${base} Mengandung ${cocok} yang cocok untuk kulit Anda.`.trim();
+    return base || `Produk ${product.kategori} dari dataset B-Glow.`;
+  }
+
+  // ── Fungsi tambah ke rutinitas ──────────────────────────────────────────────
   function showAddToRoutineModal(product) {
     const overlay = document.createElement('div');
     overlay.className = 'diary-modal-overlay';
+    const display = CATEGORY_DISPLAY[product.kategori] || { emoji: '🧴' };
     overlay.innerHTML = `
       <div class="diary-modal" style="text-align:center;">
         <div class="modal-handle"></div>
-        <div style="font-size: 2rem; margin-bottom: 10px;">${product.emoji}</div>
+        <div style="font-size: 2rem; margin-bottom: 10px;">${display.emoji}</div>
         <h3 style="margin-bottom: 5px;">Tambah ke Rutinitas?</h3>
         <p style="font-size:0.9rem; color:var(--text-secondary); margin-bottom: 20px;">
           Ingin memasukkan <strong>${product.name}</strong> ke rutinitas yang mana?
@@ -251,7 +440,10 @@ export function renderRecommendations() {
             <img src="/malam.png" alt="Malam" style="width: 20px; height: 20px; object-fit: contain;" /> Malam Hari
           </button>
           <button class="btn btn-primary btn-add-time" data-time="both" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-            <img src="/pagi.png" alt="Pagi" style="width: 20px; height: 20px; object-fit: contain; filter: brightness(0) invert(1);" /> & <img src="/malam.png" alt="Malam" style="width: 20px; height: 20px; object-fit: contain; filter: brightness(0) invert(1);" /> Keduanya
+            <img src="/pagi.png" alt="Pagi" style="width: 20px; height: 20px; object-fit: contain; filter: brightness(0) invert(1);" />
+            &
+            <img src="/malam.png" alt="Malam" style="width: 20px; height: 20px; object-fit: contain; filter: brightness(0) invert(1);" />
+            Keduanya
           </button>
         </div>
         <button class="btn" id="btn-cancel-add" style="margin-top: 15px; width: 100%; color:var(--text-secondary);">Batal</button>
@@ -261,26 +453,22 @@ export function renderRecommendations() {
     overlay.querySelectorAll('.btn-add-time').forEach(btn => {
       btn.addEventListener('click', async () => {
         const time = btn.dataset.time;
-        // dynamic import of store to avoid top-level issues if any
         const { getRoutine, saveRoutine } = await import('../utils/store.js');
         const routine = getRoutine();
-        
-        const catObj = categories.find(c => c.id === currentCat);
+        const catObj  = categories.find(c => c.id === currentCat);
+        const display = CATEGORY_DISPLAY[product.kategori] || { emoji: '🧴', bgColor: '#EEE' };
         const newStep = {
-          label: catObj ? catObj.label : 'Produk',
+          label:   catObj ? catObj.label : 'Produk',
           product: product.name,
-          brand: product.brand,
-          emoji: product.emoji,
-          bg: product.bgColor
+          brand:   extractBrand(product.name),
+          emoji:   display.emoji,
+          bg:      display.bgColor,
         };
-
         if (time === 'morning' || time === 'both') routine.morning.push(newStep);
-        if (time === 'night' || time === 'both') routine.night.push(newStep);
-        
+        if (time === 'night'   || time === 'both') routine.night.push(newStep);
         saveRoutine(routine);
         overlay.remove();
-        
-        showCustomAlert("Berhasil ditambahkan ke Rutinitas!", "Rutinitas Diperbarui");
+        showCustomAlert('Berhasil ditambahkan ke Rutinitas!', 'Rutinitas Diperbarui');
       });
     });
 
@@ -288,6 +476,7 @@ export function renderRecommendations() {
     document.body.appendChild(overlay);
   }
 
-  render();
+  // ── Init: fetch kategori pertama ────────────────────────────────────────────
+  fetchProducts(currentCat);
   return page;
 }

@@ -21,6 +21,54 @@ const PROBLEM_DESCRIPTIONS = {
   'Kemerahan':       'Iritasi atau rosacea menyebabkan kulit tampak merah.',
 };
 
+// ─── Urutan prioritas medis ───────────────────────────────────────────────────
+const MEDICAL_PRIORITY_ORDER = ['Jerawat', 'Kemerahan', 'PIE', 'PIH', 'Hiperpigmentasi', 'Bopeng'];
+
+const JOURNEY_INFO = {
+  'Jerawat': {
+    tagline: 'Atasi akar masalahnya dulu',
+    why: 'Jerawat aktif adalah sumber utama dari PIE, PIH, dan bopeng. Selama jerawat masih muncul, perawatan bekas luka tidak akan efektif. Prioritas utama adalah menghentikan siklus peradangan.',
+    ingredients: ['Salicylic Acid', 'Niacinamide', 'Benzoyl Peroxide', 'Tea Tree Oil'],
+    duration: '4–8 minggu',
+    done_when: 'Tidak ada jerawat aktif selama ≥ 2 minggu berturut-turut',
+  },
+  'Kemerahan': {
+    tagline: 'Tenangkan peradangan kulit',
+    why: 'Kemerahan berlebih menandakan kulit dalam kondisi inflamasi. Mengatasinya lebih awal mencegah memburuknya kondisi dan membuat kulit lebih siap menerima perawatan selanjutnya.',
+    ingredients: ['Centella Asiatica', 'Azelaic Acid', 'Green Tea Extract', 'Aloe Vera'],
+    duration: '6–10 minggu',
+    done_when: 'Kemerahan berkurang signifikan dan kulit terasa lebih tenang',
+  },
+  'PIE': {
+    tagline: 'Pudarkan kemerahan bekas jerawat',
+    why: 'PIE adalah kemerahan sisa peradangan jerawat yang sudah sembuh. Setelah jerawat aktif terkontrol, kapiler kulit yang membesar bisa dipulihkan dengan bahan anti-inflamasi dan penenang.',
+    ingredients: ['Azelaic Acid', 'Centella Asiatica', 'Niacinamide', 'Tranexamic Acid'],
+    duration: '8–12 minggu',
+    done_when: 'Kemerahan bekas jerawat memudar dan warna kulit lebih merata',
+  },
+  'PIH': {
+    tagline: 'Cerahkan flek hitam bekas jerawat',
+    why: 'Flek hitam (PIH) paling efektif diobati setelah peradangan reda. Produk pencerah bekerja optimal di kulit yang sudah stabil dan bebas dari jerawat aktif.',
+    ingredients: ['Alpha Arbutin', 'Vitamin C', 'Kojic Acid', 'AHA (Glycolic/Lactic Acid)'],
+    duration: '12–24 minggu',
+    done_when: 'Flek hitam memudar dan warna kulit lebih merata',
+  },
+  'Hiperpigmentasi': {
+    tagline: 'Ratakan warna kulit secara menyeluruh',
+    why: 'Hiperpigmentasi umum perlu ditangani setelah kondisi jerawat stabil agar produk pencerah dapat bekerja optimal tanpa terganggu peradangan aktif.',
+    ingredients: ['Vitamin C', 'Kojic Acid', 'Licorice Root Extract', 'Retinol'],
+    duration: '12–20 minggu',
+    done_when: 'Warna kulit lebih merata dan bercak gelap berkurang',
+  },
+  'Bopeng': {
+    tagline: 'Pulihkan tekstur kulit',
+    why: 'Bopeng adalah kerusakan struktural yang hanya dapat diatasi setelah kulit benar-benar bersih dari jerawat dan inflamasi. Ini adalah tahap akhir perjalanan perawatan kulit.',
+    ingredients: ['Retinol', 'Peptide', 'Bakuchiol', 'Konsultasi dokter untuk prosedur'],
+    duration: '6–12 bulan',
+    done_when: 'Tekstur kulit membaik dan bekas luka cekung berkurang',
+  },
+};
+
 export function renderSkinScan() {
   const page = document.createElement('div');
   page.className = 'page';
@@ -437,44 +485,11 @@ export function renderSkinScan() {
       'Normal': 'Kulit seimbang dengan produksi sebum yang ideal. Tidak terlalu berminyak atau kering.',
     }[jenis_kulit] || `Jenis kulit terdeteksi: ${jenis_kulit}.`;
 
-    // Score color
-    const scoreColor = skin_score >= 80 ? '#22c55e' : skin_score >= 60 ? '#f59e0b' : '#ef4444';
-    const scoreLabel = skin_score >= 80 ? 'Sangat Baik' : skin_score >= 60 ? 'Cukup Baik' : 'Perlu Perhatian';
-
-    // Build problem cards HTML
-    let problemCardsHTML = '';
-    if (!permasalahan || permasalahan.length === 0) {
-      problemCardsHTML = `
-        <div style="text-align:center; padding: 20px; background: #F0FDF4; border-radius: 16px; border: 1px solid #86EFAC;">
-          <div style="font-size: 40px; margin-bottom: 8px;">🎉</div>
-          <p style="color: #16A34A; font-weight: 600; margin: 0;">Tidak ada permasalahan kulit terdeteksi!</p>
-          <p style="color: #4ADE80; font-size: var(--font-xs); margin: 4px 0 0;">Kulit Anda dalam kondisi yang sangat baik.</p>
-        </div>
-      `;
-    } else {
-      problemCardsHTML = permasalahan.map(p => {
-        const col = PROBLEM_COLORS[p.label] || { hex: '#888', bg: '#F5F5F5', emoji: '⚠️' };
-        const desc = PROBLEM_DESCRIPTIONS[p.label] || p.label;
-        const confPct = Math.round((p.confidence || 0.5) * 100);
-        return `
-          <div class="problem-card">
-            <div class="pc-icon" style="background:${col.bg}; font-size: 22px;">${col.emoji}</div>
-            <div class="pc-info">
-              <h4>${p.label}</h4>
-              <p>${desc}</p>
-              <div style="margin-top: 6px; display: flex; align-items: center; gap: 6px;">
-                <div style="flex:1; height: 4px; border-radius: 2px; background: #E5E7EB; overflow: hidden;">
-                  <div style="height:100%; width: ${confPct}%; background: ${col.hex}; border-radius: 2px; transition: width 0.8s ease;"></div>
-                </div>
-                <span style="font-size: var(--font-xs); color: var(--text-tertiary); white-space: nowrap;">
-                  ${confPct}% keyakinan
-                </span>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
+    // Build sorted skin journey steps based on medical priority
+    const detectedLabels = (permasalahan || []).map(p => p.label);
+    const journeySteps = MEDICAL_PRIORITY_ORDER
+      .filter(label => detectedLabels.includes(label))
+      .map((label, idx) => ({ label, stepNum: idx + 1, info: JOURNEY_INFO[label] || null, col: PROBLEM_COLORS[label] || { hex: '#888', bg: '#F5F5F5', emoji: '⚠️' } }));
 
     page.innerHTML = `
       <div class="page-header">
@@ -483,46 +498,54 @@ export function renderSkinScan() {
       </div>
       <div class="scan-results anim-fade-in">
 
-        <!-- Face image dengan canvas overlay bounding box -->
+        <!-- Deteksi per-masalah: carousel slider -->
+        ${permasalahan && permasalahan.length > 0 ? `
+        <div class="detection-section">
+          <div class="std-header" style="margin-bottom: 12px;">
+            <span class="std-emoji">🔬</span>
+            <span class="std-label">Deteksi Area Kulit</span>
+            <span class="detection-count-badge">${permasalahan.length} area</span>
+          </div>
+          <div class="detection-slider-wrapper">
+            <div class="detection-slider" id="detection-slider">
+              ${permasalahan.map((p, idx) => {
+                const col = PROBLEM_COLORS[p.label] || { hex: '#888', bg: '#F5F5F5', emoji: '⚠️' };
+                return `
+                <div class="detection-slide" data-idx="${idx}">
+                  <div class="detection-slide-img-wrap">
+                    <canvas class="detection-bbox-canvas" data-idx="${idx}" style="display: block; width: 100%; border-radius: 14px;"></canvas>
+                    <div class="detection-slide-badge" style="background: ${col.hex};">
+                      ${col.emoji} ${p.label}
+                    </div>
+                  </div>
+                  <div class="detection-slide-footer" style="border-top: 2px solid ${col.hex}20;">
+                    <div class="dsf-label" style="color: ${col.hex};">${col.emoji} ${p.label}</div>
+                    <div class="dsf-desc">${PROBLEM_DESCRIPTIONS[p.label] || p.label}</div>
+                  </div>
+                </div>`;
+              }).join('')}
+            </div>
+            ${permasalahan.length > 1 ? `
+            <div class="detection-slider-dots" id="slider-dots">
+              ${permasalahan.map((p, idx) => {
+                const col = PROBLEM_COLORS[p.label] || { hex: '#888' };
+                return `<div class="slider-dot ${idx === 0 ? 'active' : ''}" data-idx="${idx}" style="--dot-color: ${col.hex};"></div>`;
+              }).join('')}
+            </div>` : ''}
+          </div>
+        </div>
+        ` : `
         <div class="result-face-card" style="position: relative; overflow: hidden;">
           <div id="face-img-container" style="position: relative; width: 100%; aspect-ratio: 4/3; overflow: hidden; border-radius: 16px; background: #111;">
             ${capturedImage ? `<img id="result-face-img" src="${capturedImage}" style="width: 100%; height: 100%; object-fit: cover; display: block;" alt="Foto wajah" />` : ''}
-            <canvas id="bbox-canvas" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;"></canvas>
-          </div>
-          ${permasalahan && permasalahan.length > 0 ? `
-            <div style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;">
-              ${permasalahan.map(p => {
-                const col = PROBLEM_COLORS[p.label] || { hex: '#888', bg: '#F5F5F5' };
-                return `<span style="font-size: var(--font-xs); padding: 3px 10px; border-radius: 100px; background: ${col.bg}; color: ${col.hex}; font-weight: 600; border: 1px solid ${col.hex}40;">${p.label}</span>`;
-              }).join('')}
-            </div>
-          ` : ''}
-        </div>
-
-        <!-- Skin Score -->
-        <div class="skin-type-detail anim-fade-in-up anim-delay-1" style="margin-top: 16px;">
-          <div class="std-header">
-            <span class="std-emoji">📊</span>
-            <span class="std-label">Skor Kesehatan Kulit</span>
-          </div>
-          <div class="std-card" style="flex-direction: column; align-items: flex-start; gap: 12px;">
-            <div style="display: flex; align-items: center; gap: 16px; width: 100%;">
-              <div style="font-size: 42px; font-weight: 800; color: ${scoreColor}; line-height:1;">${skin_score}</div>
-              <div style="flex: 1;">
-                <div style="font-size: var(--font-sm); font-weight: 600; color: ${scoreColor};">${scoreLabel}</div>
-                <div style="height: 8px; background: #E5E7EB; border-radius: 4px; overflow: hidden; margin-top: 6px;">
-                  <div id="score-bar" style="height: 100%; width: 0%; background: ${scoreColor}; border-radius: 4px; transition: width 1.2s ease;"></div>
-                </div>
-              </div>
-              <div style="font-size: var(--font-xs); color: var(--text-tertiary);">/100</div>
-            </div>
           </div>
         </div>
+        `}
 
         <!-- Jenis Kulit -->
-        <div class="skin-type-detail anim-fade-in-up anim-delay-1">
+        <div class="skin-type-detail anim-fade-in-up anim-delay-1" style="margin-top: 16px;">
           <div class="std-header">
-            <span class="std-emoji">✨</span>
+            <span class="std-emoji">${skinTypeEmoji}</span>
             <span class="std-label">Jenis Kulit Terdeteksi</span>
           </div>
           <div class="std-card">
@@ -534,147 +557,190 @@ export function renderSkinScan() {
           </div>
         </div>
 
-        <!-- Permasalahan Kulit -->
-        <div class="skin-problems anim-fade-in-up anim-delay-2">
-          <div class="std-header">
-            <span class="std-emoji">🔍</span>
-            <span class="std-label">Permasalahan Kulit</span>
+        <!-- Skin Journey Roadmap -->
+        ${journeySteps.length > 0 ? `
+        <div class="skin-journey-section anim-fade-in-up anim-delay-2">
+          <div class="sj-header">
+            <div class="sj-header-top">
+              <span class="sj-icon">🗺️</span>
+              <div>
+                <div class="sj-title">Skin Journey Kamu</div>
+                <div class="sj-subtitle">${journeySteps.length} tahap perawatan · mulai dari yang paling mendesak</div>
+              </div>
+            </div>
+            <div class="sj-banner">
+              💡 Selesaikan satu tahap sebelum lanjut ke tahap berikutnya untuk hasil yang optimal
+            </div>
           </div>
-          ${permasalahan && permasalahan.length > 0
-            ? `<p class="sp-desc">Ditemukan <strong>${permasalahan.length} permasalahan</strong> pada kulit Anda:</p>`
-            : '<p class="sp-desc">Tidak ada permasalahan yang terdeteksi.</p>'
-          }
-          <div class="problem-cards">
-            ${problemCardsHTML}
-          </div>
-        </div>
 
-        <!-- Detail Analisis -->
-        <div class="result-title anim-fade-in-up anim-delay-3">Detail Analisis</div>
-        <div class="result-cards">
-          <div class="result-card">
-            <div class="rc-icon" style="background:#EFF6FF;">💧</div>
-            <div class="rc-info">
-              <div class="rc-label">Level Minyak</div>
-              <div class="rc-value" style="font-size: var(--font-sm);">${oil_level}</div>
-            </div>
-          </div>
-          <div class="result-card">
-            <div class="rc-icon" style="background:#FEF2F2;">🔴</div>
-            <div class="rc-info">
-              <div class="rc-label">Level Jerawat</div>
-              <div class="rc-value" style="font-size: var(--font-sm);">${acne_level}</div>
-            </div>
-          </div>
-          <div class="result-card">
-            <div class="rc-icon" style="background:#FEF3C7;">🟡</div>
-            <div class="rc-info">
-              <div class="rc-label">Kondisi Pori</div>
-              <div class="rc-value" style="font-size: var(--font-sm);">${pore_condition}</div>
-            </div>
-          </div>
-          <div class="result-card">
-            <div class="rc-icon" style="background:#F0FDF4;">🌿</div>
-            <div class="rc-info">
-              <div class="rc-label">Analisis oleh</div>
-              <div class="rc-value" style="font-size: var(--font-sm);">Gemini AI</div>
-            </div>
+          <div class="sj-steps">
+            ${journeySteps.map((step, idx) => {
+              const isActive = idx === 0;
+              const col = step.col;
+              const info = step.info;
+              if (!info) return '';
+              return `
+              <div class="sj-step ${isActive ? 'sj-step--active' : 'sj-step--locked'}" data-step="${idx}">
+                <div class="sj-step-connector ${idx === journeySteps.length - 1 ? 'sj-step-connector--last' : ''}"></div>
+                <div class="sj-step-left">
+                  <div class="sj-step-circle ${isActive ? 'sj-step-circle--active' : ''}" style="${isActive ? `background: ${col.hex}; border-color: ${col.hex};` : ''}">
+                    ${isActive ? `<span style="color:#fff; font-size:15px;">${col.emoji}</span>` : `<span class="sj-step-num">${step.stepNum}</span>`}
+                  </div>
+                </div>
+                <div class="sj-step-body">
+                  <div class="sj-step-meta">
+                    <span class="sj-step-status ${isActive ? 'sj-step-status--active' : 'sj-step-status--upcoming'}" style="${isActive ? `background:${col.hex}15; color:${col.hex}; border-color:${col.hex}40;` : ''}">
+                      ${isActive ? '🎯 Fokus Sekarang' : `Tahap ${step.stepNum}`}
+                    </span>
+                    <span class="sj-step-duration">⏱ ${info.duration}</span>
+                  </div>
+                  <div class="sj-step-name" style="${isActive ? `color: ${col.hex};` : ''}">${step.label}</div>
+                  <div class="sj-step-tagline">${info.tagline}</div>
+
+                  ${isActive ? `
+                  <div class="sj-step-detail">
+                    <div class="sj-why">
+                      <div class="sj-why-label">Kenapa duluan?</div>
+                      <div class="sj-why-text">${info.why}</div>
+                    </div>
+                    <div class="sj-ingredients">
+                      <div class="sj-ing-label">Bahan aktif yang dicari:</div>
+                      <div class="sj-ing-chips">
+                        ${info.ingredients.map(ing => `<span class="sj-ing-chip" style="border-color: ${col.hex}40; color: ${col.hex};">${ing}</span>`).join('')}
+                      </div>
+                    </div>
+                    <div class="sj-done-when">
+                      <span class="sj-done-icon">✅</span>
+                      <span class="sj-done-text">Lanjut ke tahap berikutnya jika: <em>${info.done_when}</em></span>
+                    </div>
+                  </div>
+                  ` : `
+                  <div class="sj-step-locked-hint">Selesaikan <strong>${journeySteps[idx-1]?.label || 'tahap sebelumnya'}</strong> terlebih dahulu</div>
+                  `}
+                </div>
+              </div>`;
+            }).join('')}
           </div>
         </div>
+        ` : `
+        <div class="sj-clear anim-fade-in-up anim-delay-2">
+          <div class="sj-clear-icon">🎉</div>
+          <div class="sj-clear-title">Kulit Kamu Bersih!</div>
+          <div class="sj-clear-desc">Tidak ada permasalahan kulit yang terdeteksi. Pertahankan rutinitas perawatan yang baik!</div>
+        </div>
+        `}
 
         <!-- CTA Buttons -->
-        <div class="scan-cta-group anim-fade-in-up anim-delay-4">
-          <button class="btn btn-primary btn-lg" id="get-reco-btn">
-            ✨ Dapatkan Rekomendasi Produk
+        <div class="scan-cta-group anim-fade-in-up anim-delay-3">
+          ${journeySteps.length > 0 ? `
+          <button class="btn btn-journey btn-lg" id="start-journey-btn" style="background: ${journeySteps[0].col.hex};">
+            ${journeySteps[0].col.emoji} Mulai Atasi ${journeySteps[0].label}
           </button>
+          ` : `
+          <button class="btn btn-primary btn-lg" id="start-journey-btn">
+            ✨ Lihat Rekomendasi Produk
+          </button>
+          `}
           <button class="scan-again-btn" id="rescan-btn">Scan Ulang</button>
         </div>
       </div>
     `;
 
-    // Draw bounding boxes on canvas
+    // Draw per-detection bounding boxes: each problem gets its OWN canvas
     if (capturedImage && permasalahan && permasalahan.length > 0) {
-      const img = page.querySelector('#result-face-img');
-      const canvas = page.querySelector('#bbox-canvas');
-      const container = page.querySelector('#face-img-container');
+      const sourceImg = new Image();
+      sourceImg.src = capturedImage;
 
-      const drawBoxes = () => {
-        const w = container.offsetWidth;
-        const h = container.offsetHeight;
-        canvas.width = w;
-        canvas.height = h;
+      const drawSingleBox = (canvas, item) => {
+        // Use natural canvas resolution
+        const displayW = canvas.parentElement ? canvas.parentElement.offsetWidth : 320;
+        const aspect = sourceImg.naturalHeight / sourceImg.naturalWidth;
+        const displayH = Math.round(displayW * aspect);
+        canvas.width = displayW;
+        canvas.height = displayH;
+
         const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, w, h);
 
-        permasalahan.forEach(item => {
-          const [ymin, xmin, ymax, xmax] = item.box_2d;
-          const col = (PROBLEM_COLORS[item.label] || { hex: '#AAAAAA' }).hex;
-          const confPct = Math.round((item.confidence || 0.5) * 100);
+        // Draw the base image scaled to canvas
+        ctx.drawImage(sourceImg, 0, 0, displayW, displayH);
 
-          const x1 = xmin / 1000 * w;
-          const y1 = ymin / 1000 * h;
-          const bw = (xmax - xmin) / 1000 * w;
-          const bh = (ymax - ymin) / 1000 * h;
+        const [ymin, xmin, ymax, xmax] = item.box_2d;
+        const col = (PROBLEM_COLORS[item.label] || { hex: '#AAAAAA' }).hex;
+        const confPct = Math.round((item.confidence || 0.5) * 100);
 
-          // Dim outside area
-          ctx.save();
-          ctx.fillStyle = 'rgba(0,0,0,0.35)';
-          ctx.fillRect(0, 0, w, h);
-          ctx.clearRect(x1, y1, bw, bh);
-          ctx.restore();
+        const x1 = xmin / 1000 * displayW;
+        const y1 = ymin / 1000 * displayH;
+        const bw = (xmax - xmin) / 1000 * displayW;
+        const bh = (ymax - ymin) / 1000 * displayH;
 
-          // Draw box
-          ctx.save();
-          ctx.strokeStyle = col;
-          ctx.lineWidth = 2.5;
-          ctx.shadowColor = col;
-          ctx.shadowBlur = 8;
-          const r = 6;
-          ctx.beginPath();
-          ctx.moveTo(x1 + r, y1);
-          ctx.lineTo(x1 + bw - r, y1);
-          ctx.quadraticCurveTo(x1 + bw, y1, x1 + bw, y1 + r);
-          ctx.lineTo(x1 + bw, y1 + bh - r);
-          ctx.quadraticCurveTo(x1 + bw, y1 + bh, x1 + bw - r, y1 + bh);
-          ctx.lineTo(x1 + r, y1 + bh);
-          ctx.quadraticCurveTo(x1, y1 + bh, x1, y1 + bh - r);
-          ctx.lineTo(x1, y1 + r);
-          ctx.quadraticCurveTo(x1, y1, x1 + r, y1);
-          ctx.closePath();
-          ctx.stroke();
-          ctx.restore();
+        // Dim overlay outside the bounding box only
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,0,0.50)';
+        // top strip
+        ctx.fillRect(0, 0, displayW, y1);
+        // bottom strip
+        ctx.fillRect(0, y1 + bh, displayW, displayH - y1 - bh);
+        // left strip
+        ctx.fillRect(0, y1, x1, bh);
+        // right strip
+        ctx.fillRect(x1 + bw, y1, displayW - x1 - bw, bh);
+        ctx.restore();
 
-          // Label background
-          const labelText = `${item.label} ${confPct}%`;
-          ctx.font = 'bold 11px system-ui, -apple-system, sans-serif';
-          const textW = ctx.measureText(labelText).width;
-          const labelX = x1;
-          const labelY = Math.max(y1 - 26, 4);
-          const padX = 8, padY = 4;
+        // Draw rounded rectangle border
+        ctx.save();
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 3;
+        ctx.shadowColor = col;
+        ctx.shadowBlur = 12;
+        const r = 8;
+        ctx.beginPath();
+        ctx.moveTo(x1 + r, y1);
+        ctx.lineTo(x1 + bw - r, y1);
+        ctx.quadraticCurveTo(x1 + bw, y1, x1 + bw, y1 + r);
+        ctx.lineTo(x1 + bw, y1 + bh - r);
+        ctx.quadraticCurveTo(x1 + bw, y1 + bh, x1 + bw - r, y1 + bh);
+        ctx.lineTo(x1 + r, y1 + bh);
+        ctx.quadraticCurveTo(x1, y1 + bh, x1, y1 + bh - r);
+        ctx.lineTo(x1, y1 + r);
+        ctx.quadraticCurveTo(x1, y1, x1 + r, y1);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.restore();
+      };
 
-          ctx.save();
-          ctx.fillStyle = col;
-          ctx.beginPath();
-          ctx.roundRect(labelX, labelY, textW + padX * 2, 20, 4);
-          ctx.fill();
-          ctx.fillStyle = '#FFFFFF';
-          ctx.fillText(labelText, labelX + padX, labelY + 14);
-          ctx.restore();
+      const canvases = page.querySelectorAll('.detection-bbox-canvas');
+      const doDrawAll = () => {
+        canvases.forEach((canvas, idx) => {
+          if (permasalahan[idx]) drawSingleBox(canvas, permasalahan[idx]);
         });
       };
 
-      if (img.complete) {
-        drawBoxes();
+      if (sourceImg.complete && sourceImg.naturalWidth > 0) {
+        doDrawAll();
       } else {
-        img.addEventListener('load', drawBoxes);
+        sourceImg.onload = doDrawAll;
+      }
+
+      // Slider interaction
+      const slider = page.querySelector('#detection-slider');
+      const dots = page.querySelectorAll('.slider-dot');
+      if (slider && dots.length > 0) {
+        slider.addEventListener('scroll', () => {
+          const slideW = slider.offsetWidth;
+          const activeIdx = Math.round(slider.scrollLeft / slideW);
+          dots.forEach((dot, i) => {
+            dot.classList.toggle('active', i === activeIdx);
+          });
+        }, { passive: true });
+
+        dots.forEach(dot => {
+          dot.addEventListener('click', () => {
+            const idx = parseInt(dot.dataset.idx);
+            slider.scrollTo({ left: idx * slider.offsetWidth, behavior: 'smooth' });
+          });
+        });
       }
     }
-
-    // Animate score bar
-    setTimeout(() => {
-      const scoreBar = page.querySelector('#score-bar');
-      if (scoreBar) scoreBar.style.width = `${skin_score}%`;
-    }, 300);
 
     // Event listeners
     page.querySelector('#back-btn').addEventListener('click', () => {
@@ -686,12 +752,19 @@ export function renderSkinScan() {
       renderCamera();
     });
 
-    page.querySelector('#get-reco-btn').addEventListener('click', () => {
-      const countKey = 'bglow_scan_count_' + userId;
-      const current = parseInt(localStorage.getItem(countKey) || '0');
-      localStorage.setItem(countKey, String(current + 1));
-      window.location.hash = '#/recommendations';
-    });
+    const journeyBtn = page.querySelector('#start-journey-btn');
+    if (journeyBtn) {
+      journeyBtn.addEventListener('click', () => {
+        const countKey = 'bglow_scan_count_' + userId;
+        const current = parseInt(localStorage.getItem(countKey) || '0');
+        localStorage.setItem(countKey, String(current + 1));
+        // Save current journey step label for recommendations page to filter by
+        if (journeySteps.length > 0) {
+          localStorage.setItem('bglow_journey_priority_' + userId, journeySteps[0].label);
+        }
+        window.location.hash = '#/recommendations';
+      });
+    }
   }
 
   // Start with camera

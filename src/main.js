@@ -67,8 +67,13 @@ function handleRoute() {
 
   // 0. If intro not seen yet, show intro first (before login)
   if (isIntroSeen !== '1' && route !== 'intro') {
-    window.location.hash = '#/intro';
-    return;
+    // Auto-skip intro if they are somehow already authenticated
+    if (isAuth === '1') {
+      localStorage.setItem('bglow_intro_seen', '1');
+    } else {
+      window.location.hash = '#/intro';
+      return;
+    }
   }
 
   // 1. If not authenticated, force login first (except register & forgot-password & intro)

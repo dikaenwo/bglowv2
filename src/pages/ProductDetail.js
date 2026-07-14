@@ -2,6 +2,64 @@ import { icons } from '../components/BottomNav.js';
 import { getUserId, syncUserData } from '../utils/store.js';
 import { showCustomAlert } from '../utils/helpers.js';
 
+// ─── Badge icon mapping ───────────────────────────────────────────────────────
+const BADGE_ICONS = {
+  'acne fighter':      '🎯',
+  'brightening':       '✨',
+  'hydrating':         '💧',
+  'antioxidant':       '🛡️',
+  'niacinamide':       '🧬',
+  'vitamin c':         '🍊',
+  'exfoliant':         '🔬',
+  'peptide':           '⚗️',
+  'ceramide':          '🧱',
+  'retinoid':          '🌙',
+  'bha':               '🔬',
+  'aha':               '🔬',
+  'urea':              '💧',
+  'zinc':              '🔩',
+  'fragrance':         '⚠️',
+  'sulfate':           '⚠️',
+  'preservative':      '🧪',
+  'oil':               '🫧',
+  'coconut derived':   '🥥',
+  'eu allergen':       '⚠️',
+  'may feed fungal acne': '🍄',
+  'reduces redness':   '🩹',
+  'reduces irritation': '🩹',
+  'good for oily skin': '💦',
+  'good for texture':  '🪄',
+  'reduces large pores': '🔎',
+  'helps with dark spots': '🌑',
+  'good for scar healing': '💚',
+  'helps with barrier repair': '🧱',
+  'helps with anti-aging': '⏳',
+};
+
+function getBadgeIcon(badgeText) {
+  const lower = badgeText.toLowerCase();
+  for (const [key, icon] of Object.entries(BADGE_ICONS)) {
+    if (lower.includes(key)) return icon;
+  }
+  return '🏷️';
+}
+
+// ─── Status colors ────────────────────────────────────────────────────────────
+const STATUS_CONFIG = {
+  'positif':  { color: '#16a34a', bg: 'rgba(34,197,94,0.1)',  border: 'rgba(34,197,94,0.25)',  icon: '✓', label: 'Cocok' },
+  'negatif':  { color: '#dc2626', bg: 'rgba(239,68,68,0.1)',  border: 'rgba(239,68,68,0.25)',  icon: '✗', label: 'Hindari' },
+  'campuran': { color: '#d97706', bg: 'rgba(251,191,36,0.1)', border: 'rgba(251,191,36,0.25)', icon: '◐', label: 'Campuran' },
+  'netral':   { color: '#6b7280', bg: 'rgba(107,114,128,0.08)', border: 'rgba(107,114,128,0.15)', icon: '·', label: 'Netral' },
+};
+
+// ─── WSM Criteria Labels ──────────────────────────────────────────────────────
+const WSM_CRITERIA = [
+  { key: 'C1', label: 'Kecocokan Jenis Kulit', icon: '🧬', weight: 0.25 },
+  { key: 'C2', label: 'Kecocokan Masalah Kulit', icon: '🎯', weight: 0.30 },
+  { key: 'C3', label: 'Posisi Ingredien', icon: '📊', weight: 0.20 },
+  { key: 'C4', label: 'Keamanan Ingredien', icon: '🛡️', weight: 0.25 },
+];
+
 export function renderProductDetail() {
   const page = document.createElement('div');
   page.className = 'product-detail-page';
@@ -56,6 +114,67 @@ export function renderProductDetail() {
     </button>
   `;
 
+  // ── WSM Data ────────────────────────────────────────────────────────────────
+  const wsmDetail = p.wsm_detail || {};
+  const wsmScore = p.score || 0;
+  const wsmPercent = Math.round(wsmScore * 100);
+  const kategoriRek = p.kategori_rekomendasi || 'Tidak Direkomendasikan';
+  const analysis = p.ingredients_analysis || [];
+
+  // Separate positive, negative, neutral ingredients
+  const positifList = analysis.filter(a => a.status === 'positif' || a.status === 'campuran');
+  const negatifList = analysis.filter(a => a.status === 'negatif' || a.status === 'campuran');
+
+  // WSM bar color
+  const wsmBarColor = wsmPercent >= 75 ? '#22c55e' : wsmPercent >= 50 ? '#eab308' : '#ef4444';
+  const wsmBadgeBg = wsmPercent >= 75 ? 'rgba(34,197,94,0.12)' : wsmPercent >= 50 ? 'rgba(251,191,36,0.12)' : 'rgba(239,68,68,0.1)';
+  const wsmBadgeColor = wsmPercent >= 75 ? '#16a34a' : wsmPercent >= 50 ? '#d97706' : '#dc2626';
+
+  // Build WSM criteria bars
+  const criteriaHtml = WSM_CRITERIA.map(c => {
+    const val = wsmDetail[c.key] || 0;
+    const pct = Math.round(val * 100);
+    const color = pct >= 75 ? '#22c55e' : pct >= 50 ? '#eab308' : '#ef4444';
+    return `
+      <div class="wsm-criteria-row">
+        <div class="wsm-criteria-label">
+          <span class="wsm-criteria-icon">${c.icon}</span>
+          <span class="wsm-criteria-name">${c.label}</span>
+          <span class="wsm-criteria-weight">(${(c.weight * 100).toFixed(0)}%)</span>
+        </div>
+        <div class="wsm-criteria-bar-wrap">
+          <div class="wsm-criteria-bar" style="width:${pct}%;background:${color};"></div>
+        </div>
+        <span class="wsm-criteria-value" style="color:${color};">${val.toFixed(2)}</span>
+      </div>
+    `;
+  }).join('');
+
+  // Build ingredients analysis rows
+  function renderIngRow(a) {
+    const st = STATUS_CONFIG[a.status] || STATUS_CONFIG['netral'];
+    const badges = (a.badge || '').split(' | ').filter(b => b.trim());
+    const badgeHtml = badges.slice(0, 4).map(b =>
+      `<span class="pd-ing-badge" style="color:${st.color};border-color:${st.border};background:${st.bg};">${getBadgeIcon(b)} ${b.trim()}</span>`
+    ).join('');
+
+    const bucketLabel = { 'awal': '🟢 Awal', 'tengah': '🟡 Tengah', 'akhir': '🔴 Akhir' }[a.bucket] || a.bucket;
+
+    return `
+      <div class="pd-ing-row" style="border-left: 3px solid ${st.color};">
+        <div class="pd-ing-header">
+          <span class="pd-ing-name">${a.name}</span>
+          <span class="pd-ing-status-pill" style="background:${st.bg};color:${st.color};border:1px solid ${st.border};">${st.icon} ${st.label}</span>
+        </div>
+        ${badgeHtml ? `<div class="pd-ing-badges">${badgeHtml}</div>` : ''}
+        ${a.deskripsi ? `<div class="pd-ing-meta"><span class="pd-ing-desc">${a.deskripsi}</span></div>` : ''}
+      </div>
+    `;
+  }
+
+  // Get ingredients lists
+  const allIngs = [...positifList, ...negatifList, ...analysis.filter(a => a.status === 'netral')];
+
   page.innerHTML = `
     <!-- Sticky Header -->
     <div class="page-header" style="justify-content: space-between;">
@@ -78,104 +197,73 @@ export function renderProductDetail() {
           <div class="pd-brand">${p.brand}</div>
         </div>
 
+        <!-- WSM Score Overview -->
+        <div class="pd-section">
+          <div class="wsm-overview-card" style="border: 1px solid ${wsmBadgeColor}22;">
+            <div class="wsm-overview-top">
+              <div class="wsm-score-circle" style="border-color:${wsmBarColor};">
+                <span class="wsm-score-num">${wsmPercent}</span>
+                <span class="wsm-score-pct">%</span>
+              </div>
+              <div class="wsm-overview-info">
+                <div class="wsm-overview-badge" style="background:${wsmBadgeBg};color:${wsmBadgeColor};">${kategoriRek}</div>
+                <div class="wsm-overview-subtitle">Skor WSM (Weighted Sum Model)</div>
+              </div>
+            </div>
+
+            <!-- WSM Criteria Breakdown -->
+            <div class="wsm-criteria-section">
+              <div class="wsm-criteria-title">Breakdown 4 Kriteria</div>
+              ${criteriaHtml}
+              <div class="wsm-criteria-row wsm-total-row">
+                <div class="wsm-criteria-label">
+                  <span class="wsm-criteria-icon">Σ</span>
+                  <span class="wsm-criteria-name" style="font-weight:700;">Skor WSM Final</span>
+                </div>
+                <div class="wsm-criteria-bar-wrap">
+                  <div class="wsm-criteria-bar" style="width:${wsmPercent}%;background:${wsmBarColor};"></div>
+                </div>
+                <span class="wsm-criteria-value" style="color:${wsmBarColor};font-weight:700;">${wsmScore.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="pd-section">
           <h3 class="pd-section-title">Deskripsi</h3>
           <p class="pd-text">${p.desc}</p>
         </div>
 
+        <!-- Ingredients Analysis (Dynamic) -->
+        ${allIngs.length > 0 ? `
         <div class="pd-section">
-          <h3 class="pd-section-title">Ingredients Overview</h3>
-          <p class="pd-text">
-            Water, Glycerin, Sodium Cocoyl Glycinate, Lauryl Betaine, Hydroxypropyl Starch Phosphate,
-            Citric Acid, PEG-60 Glyceryl Isostearate, Sodium Chloride, Glyceryl Stearate SE,
-            Coco-Glucoside, Phenoxyethanol, Sodium Cocoyl Isethionate, Sodium Phytate,
-            Ethylhexylglycerin, Polyquaternium-7, 1,2-Hexanediol, Quillaja Saponaria Bark Extract,
-            Sodium Benzoate, Ceramide NP, Ceramide EOP, Hyaluronic Acid, Ceramide AP,
-            Centella Asiatica Extract, Niacinamide, Ceramide AS, Panthenol, Ceramide NS.
+          <h3 class="pd-section-title">Analisis Ingredien 🔬</h3>
+          <p class="pd-text-sm" style="margin-bottom:12px;">Berdasarkan jenis kulit & masalah kulit Anda, berikut analisis ingredien produk ini:</p>
+
+          ${allIngs.slice(0, 5).map(a => renderIngRow(a)).join('')}
+          
+          ${allIngs.length > 5 ? `
+            <div class="ing-list-more" style="display:none;">
+              ${allIngs.slice(5).map(a => renderIngRow(a)).join('')}
+            </div>
+            <button class="pd-show-all-btn" id="show-all-ings-btn">Tampilkan Semua (${allIngs.length})</button>
+          ` : ''}
+        </div>
+        ` : `
+        <div class="pd-section">
+          <h3 class="pd-section-title">Analisis Ingredien 🔬</h3>
+          <p class="pd-text-sm">Tidak ada data analisis ingredien untuk produk ini.</p>
+        </div>
+        `}
+
+        <!-- Penjelasan Metode WSM -->
+        <div class="pd-section">
+          <h3 class="pd-section-title">Tentang Penilaian WSM</h3>
+          <p class="pd-text-sm" style="line-height:1.6;">
+            Skor dihitung menggunakan <strong>Weighted Sum Model (WSM)</strong> dengan 4 kriteria tertimbang.
+            Setiap ingredien dianalisis terhadap database 10.000+ bahan aktif skincare.
+            Posisi ingredien di dalam daftar komposisi (<em>ingredients order</em>) juga diperhitungkan — ingredien di posisi awal memiliki konsentrasi lebih tinggi.
           </p>
-        </div>
-
-        <div class="pd-section">
-          <h3 class="pd-section-title">Ingredients Analysis 🔎</h3>
-          <p class="pd-text-sm">Kandungan yang cocok untuk permasalahan kulit anda</p>
-
-          <table class="pd-table">
-            <thead>
-              <tr>
-                <th>Kandungan</th>
-                <th>Manfaat</th>
-                <th>Skor</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Ceramide</td>
-                <td>memperkuat lapisan pelindung kulit (skin barrier)</td>
-                <td class="text-center">1</td>
-              </tr>
-              <tr>
-                <td>Niacinamide</td>
-                <td>Niacinamide memperkuat fungsi penghalang kulit (skin barrier), membantu mengunci kelembapan</td>
-                <td class="text-center">0.5</td>
-              </tr>
-              <tr>
-                <td>Centella Asiatica</td>
-                <td>menjaga kelembapan, mengurangi peradangan, mempercepat penyembuhan luka</td>
-                <td class="text-center">0.5</td>
-              </tr>
-            </tbody>
-          </table>
-
-          <p class="pd-text-sm" style="margin-top: 16px;">Kandungan yang tidak cocok</p>
-          <table class="pd-table table-danger">
-            <thead>
-              <tr>
-                <th>Kandungan</th>
-                <th>Efek Samping</th>
-                <th>Skor</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Ethanol</td>
-                <td>kulit menjadi kering, iritasi, kemerahan, dan perih</td>
-                <td class="text-center">-2</td>
-              </tr>
-              <tr>
-                <td>Fragrance</td>
-                <td>iritasi kulit, reaksi alergi (dermatitis kontak), peradangan, kemerahan, gatal, bengkak, bahkan jerawat</td>
-                <td class="text-center">-0.5</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="pd-section">
-          <h3 class="pd-section-title">Detail Perhitungan Bobot</h3>
-          <p class="pd-text-sm"><b>Ingredients Order</b><br/>Di seluruh dunia (termasuk aturan BPOM dan FDA), urutan bahan pada label skincare wajib ditulis berdasarkan jumlah terbanyak → terdikit.</p>
-
-          <table class="pd-table">
-            <thead>
-              <tr>
-                <th>Posisi</th>
-                <th>Bobot Skor</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Utama (+)<br/>Utama (-)</td>
-                <td class="text-center">1.0<br/>-2.0</td>
-              </tr>
-              <tr>
-                <td>Menengah (+)<br/>Menengah (-)</td>
-                <td class="text-center">0.5<br/>-1</td>
-              </tr>
-              <tr>
-                <td>Minor (+)<br/>Minor (-)</td>
-                <td class="text-center">0.2<br/>-0.5</td>
-              </tr>
-            </tbody>
-          </table>
         </div>
       </div>
     </div>
@@ -192,8 +280,23 @@ export function renderProductDetail() {
     window.history.back();
   });
 
+  // Buy button → open product link
+  page.querySelector('.pd-btn-buy').addEventListener('click', () => {
+    if (p.link && p.link !== 'nan' && p.link.startsWith('http')) {
+      window.open(p.link, '_blank');
+    } else {
+      showCustomAlert('Link produk tidak tersedia.', 'Info');
+    }
+  });
+
   page.querySelector('.pd-btn-routine').addEventListener('click', () => {
     showAddToRoutineModal(p);
+  });
+
+  // Show All logic
+  page.querySelector('#show-all-ings-btn')?.addEventListener('click', (e) => {
+    page.querySelector('.ing-list-more').style.display = 'block';
+    e.target.style.display = 'none';
   });
 
   const favBtn = page.querySelector('#pd-btn-fav');
@@ -229,7 +332,10 @@ export function renderProductDetail() {
             <img src="/malam.png" alt="Malam" style="width: 20px; height: 20px; object-fit: contain;" /> Malam Hari
           </button>
           <button class="btn btn-primary btn-add-time" data-time="both" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-            <img src="/pagi.png" alt="Pagi" style="width: 20px; height: 20px; object-fit: contain; filter: brightness(0) invert(1);" /> & <img src="/malam.png" alt="Malam" style="width: 20px; height: 20px; object-fit: contain; filter: brightness(0) invert(1);" /> Keduanya
+            <img src="/pagi.png" alt="Pagi" style="width: 20px; height: 20px; object-fit: contain; filter: brightness(0) invert(1);" />
+            &
+            <img src="/malam.png" alt="Malam" style="width: 20px; height: 20px; object-fit: contain; filter: brightness(0) invert(1);" />
+            Keduanya
           </button>
         </div>
         <button class="btn" id="btn-cancel-add" style="margin-top: 15px; width: 100%; color:var(--text-secondary);">Batal</button>
@@ -239,12 +345,11 @@ export function renderProductDetail() {
     overlay.querySelectorAll('.btn-add-time').forEach(btn => {
       btn.addEventListener('click', async () => {
         const time = btn.dataset.time;
-        // dynamic import to avoid top level issues
         const { getRoutine, saveRoutine } = await import('../utils/store.js');
         const routine = getRoutine();
         
         const nameLower = product.name.toLowerCase();
-        let catLabel = 'Pembersih'; // default fallback
+        let catLabel = 'Pembersih';
         if (nameLower.includes('cleanser') || nameLower.includes('cleanse') || product.emoji === '🧴' || product.emoji === '🫧') {
           catLabel = 'Pembersih';
         } else if (nameLower.includes('moisture') || nameLower.includes('pelembab') || nameLower.includes('cream') || nameLower.includes('gel') || product.emoji === '🪴' || product.emoji === '💧' || product.emoji === '🐌') {

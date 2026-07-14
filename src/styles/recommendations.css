@@ -187,11 +187,10 @@
   right: 8px;
   padding: 3px 8px;
   border-radius: var(--radius-full);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
-  color: white;
-  background: var(--success);
-  text-transform: uppercase;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 .product-info {
@@ -259,6 +258,77 @@
 
 .product-cta:hover {
   background: var(--primary-dark);
+}
+
+/* ─── WSM Category Badge ─── */
+.wsm-cat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  font-size: 9px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+/* ─── Ingredient Badge Chips ─── */
+.ing-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-bottom: 6px;
+}
+
+.ing-badge-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 8px;
+  font-weight: 600;
+  background: var(--bg-soft, rgba(167,139,250,0.08));
+  color: var(--text-secondary);
+  border: 1px solid var(--border-light, rgba(167,139,250,0.15));
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+/* ─── Ingredient Count Indicator ─── */
+.ing-count-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.ing-count-pos {
+  color: #16a34a;
+}
+
+.ing-count-neg {
+  color: #dc2626;
+}
+
+/* ─── WSM Score Bar ─── */
+.wsm-score-bar-wrap {
+  width: 100%;
+  height: 3px;
+  background: var(--border-light, rgba(0,0,0,0.06));
+  border-radius: 2px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.wsm-score-bar {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.6s var(--ease-smooth);
 }
 
 /* ─── Product Detail Modal ─── */
