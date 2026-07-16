@@ -1,8 +1,8 @@
 import { icons } from '../components/BottomNav.js';
-import { addRipple, staggerChildren } from '../utils/helpers.js';
-import { getRoutine, getProgress, getStreak } from '../utils/store.js';
+import { addRipple } from '../utils/helpers.js';
+import { getRoutine, getProgress, getStreak, getUserId } from '../utils/store.js';
 import { fetchWeather } from '../utils/weather.js';
-
+import { getStepIcon } from './Routine.js';
 
 export function renderHome() {
   const page = document.createElement('div');
@@ -11,6 +11,7 @@ export function renderHome() {
   const routine = getRoutine();
   const progress = getProgress();
   const streak = getStreak();
+  const userId = getUserId();
   
   const currentHour = new Date().getHours();
   const timeOfDay = currentHour < 15 ? 'Pagi' : 'Malam';
@@ -23,16 +24,229 @@ export function renderHome() {
   if (totalSteps > 0) {
     progressPct = Math.round((completedSteps / totalSteps) * 100);
   }
-  
-  // Data UV is now handled inside fetchWeather
+
+  const totalProducts = (routine.morning || []).length + (routine.night || []).length;
+  const hasScanned = localStorage.getItem('bglow_has_scanned_' + userId) === '1';
+  const jenis_kulit = localStorage.getItem('bglow_skin_type_' + userId) || 'Normal';
+  const scorePercent = hasScanned ? 94 : 74;
+  const scoreLabel = hasScanned ? '94' : '74';
+  const compatibilityText = hasScanned 
+    ? `Cocok dengan kulit ${jenis_kulit} Anda` 
+    : 'Tambahkan produk Anda untuk melihat skor';
+
+  const activeMood = localStorage.getItem('bglow_skin_mood_' + userId) || '';
+
+  const brownBottleSvg = `
+  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 32px; height: 32px;">
+    <rect x="29" y="8" width="6" height="12" rx="1" fill="#1E293B"/>
+    <rect x="27" y="20" width="10" height="4" fill="#334155"/>
+    <rect x="30" y="24" width="4" height="4" fill="#94A3B8"/>
+    <rect x="20" y="28" width="24" height="28" rx="5" fill="#B45309" stroke="#451A03" stroke-width="1.8"/>
+    <rect x="23" y="36" width="18" height="14" rx="1.5" fill="#F8FAFC"/>
+    <line x1="26" y1="40" x2="38" y2="40" stroke="#94A3B8" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="26" y1="44" x2="32" y2="44" stroke="#94A3B8" stroke-width="1.5" stroke-linecap="round"/>
+  </svg>
+  `;
+
+  // Find first uncompleted step
+  const steps = routine[routineKey] || [];
+  const completedIndices = progress[routineKey] || [];
+  let firstUncompletedStep = null;
+  for (let i = 0; i < steps.length; i++) {
+    if (!completedIndices.includes(i)) {
+      firstUncompletedStep = steps[i];
+      break;
+    }
+  }
+
+  // Choose the thumbnail icon and background color dynamically
+  let activeIcon = brownBottleSvg;
+  let activeBg = '#FEF3C7';
+
+  if (totalSteps > 0 && completedSteps === totalSteps) {
+    activeIcon = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 28px; height: 28px;">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+    `;
+    activeBg = '#D1FAE5';
+  } else if (firstUncompletedStep) {
+    activeIcon = getStepIcon(firstUncompletedStep.label, firstUncompletedStep.emoji || '🧴', firstUncompletedStep.product);
+    activeBg = firstUncompletedStep.bg || '#E3F2FD';
+  }
+
+  // Custom premium 3D vectors for article guides
+  const skincarePumpSvg = `
+  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 52px; height: 52px;">
+    <rect x="18" y="22" width="28" height="34" rx="10" fill="url(#paint0_linear_bottle)" />
+    <rect x="29" y="16" width="6" height="6" fill="#fecdd3" />
+    <rect x="27" y="14" width="10" height="2" fill="#fda4af" />
+    <path d="M32 8C30 8 26 9 26 11V14H38V11C38 9 34 8 32 8Z" fill="#fecdd3" />
+    <path d="M26 11H20V13H26V11Z" fill="#fecdd3" />
+    <path d="M32 30C32 30 27 35 27 38C27 40.76 29.24 43 32 43C34.76 43 37 40.76 37 38C37 35 32 30 32 30Z" fill="#ffffff" opacity="0.9" />
+    <defs>
+      <linearGradient id="paint0_linear_bottle" x1="18" y1="22" x2="46" y2="56" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#ffe4e6" />
+        <stop offset="1" stop-color="#fda4af" />
+      </linearGradient>
+    </defs>
+  </svg>
+  `;
+
+  const flowerSvg = `
+  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 56px; height: 56px;">
+    <defs>
+      <linearGradient id="petalGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#ffd1dc" />
+        <stop offset="100%" stop-color="#ff8da1" />
+      </linearGradient>
+      <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+        <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#f43f5e" flood-opacity="0.3"/>
+      </filter>
+    </defs>
+    <g transform="translate(32, 32)" filter="url(#shadow)">
+      <path d="M 0 0 C -12 -28, 12 -28, 0 0" fill="url(#petalGrad)" />
+      <path d="M 0 0 C -12 -28, 12 -28, 0 0" fill="url(#petalGrad)" transform="rotate(72)" />
+      <path d="M 0 0 C -12 -28, 12 -28, 0 0" fill="url(#petalGrad)" transform="rotate(144)" />
+      <path d="M 0 0 C -12 -28, 12 -28, 0 0" fill="url(#petalGrad)" transform="rotate(216)" />
+      <path d="M 0 0 C -12 -28, 12 -28, 0 0" fill="url(#petalGrad)" transform="rotate(288)" />
+      <circle cx="0" cy="0" r="7" fill="#fff5f7" />
+      <circle cx="0" cy="0" r="5" fill="#ffccd5" />
+      <line x1="0" y1="0" x2="0" y2="-5" stroke="#fff" stroke-width="1.5" />
+      <circle cx="0" cy="-5" r="1.2" fill="#fff" />
+      <line x1="0" y1="0" x2="4.75" y2="-1.54" stroke="#fff" stroke-width="1.5" transform="rotate(72)" />
+      <circle cx="4.75" cy="-1.54" r="1.2" fill="#fff" transform="rotate(72)" />
+      <line x1="0" y1="0" x2="4.75" y2="-1.54" stroke="#fff" stroke-width="1.5" transform="rotate(144)" />
+      <circle cx="4.75" cy="-1.54" r="1.2" fill="#fff" transform="rotate(144)" />
+      <line x1="0" y1="0" x2="4.75" y2="-1.54" stroke="#fff" stroke-width="1.5" transform="rotate(216)" />
+      <circle cx="4.75" cy="-1.54" r="1.2" fill="#fff" transform="rotate(216)" />
+      <line x1="0" y1="0" x2="4.75" y2="-1.54" stroke="#fff" stroke-width="1.5" transform="rotate(288)" />
+      <circle cx="4.75" cy="-1.54" r="1.2" fill="#fff" transform="rotate(288)" />
+    </g>
+  </svg>
+  `;
+
+  const sunShieldSvg = `
+  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 52px; height: 52px;">
+    <circle cx="32" cy="32" r="14" fill="url(#sunGrad)" />
+    <path d="M32 6V12" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" />
+    <path d="M32 52V58" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" />
+    <path d="M6 32H12" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" />
+    <path d="M52 32H58" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" />
+    <path d="M13.6 13.6L17.8 17.8" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" />
+    <path d="M46.2 46.2L50.4 50.4" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" />
+    <path d="M13.6 50.4L17.8 46.2" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" />
+    <path d="M46.2 17.8L50.4 13.6" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" />
+    <path d="M22 28V34C22 40 32 46 32 46C32 46 42 40 42 34V28L32 24L22 28Z" fill="#3b82f6" fill-opacity="0.85" stroke="#ffffff" stroke-width="1.8" stroke-linejoin="round" />
+    <path d="M28 34L31 37L37 31" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+    <defs>
+      <linearGradient id="sunGrad" x1="18" y1="18" x2="46" y2="46">
+        <stop offset="0%" stop-color="#fbbf24" />
+        <stop offset="100%" stop-color="#f59e0b" />
+      </linearGradient>
+    </defs>
+  </svg>
+  `;
+
+  // Custom vector SVGs for mood tracker
+  const moodSvgs = {
+    bad: `
+      <svg viewBox="0 0 36 36" style="width: 32px; height: 32px;">
+        <circle cx="18" cy="18" r="16" fill="#FDBA74" />
+        <circle cx="13" cy="15" r="2" fill="#451A03" />
+        <circle cx="23" cy="15" r="2" fill="#451A03" />
+        <path d="M12 25 Q18 20 24 25" stroke="#451A03" stroke-width="2.5" fill="none" stroke-linecap="round" />
+      </svg>
+    `,
+    meh: `
+      <svg viewBox="0 0 36 36" style="width: 32px; height: 32px;">
+        <circle cx="18" cy="18" r="16" fill="#FCD34D" />
+        <circle cx="13" cy="16" r="2" fill="#451A03" />
+        <circle cx="23" cy="16" r="2" fill="#451A03" />
+        <line x1="12" y1="23" x2="24" y2="23" stroke="#451A03" stroke-width="2.5" stroke-linecap="round" />
+      </svg>
+    `,
+    okay: `
+      <svg viewBox="0 0 36 36" style="width: 32px; height: 32px;">
+        <circle cx="18" cy="18" r="16" fill="#FDE047" />
+        <circle cx="13" cy="15" r="2" fill="#451A03" />
+        <circle cx="23" cy="15" r="2" fill="#451A03" />
+        <path d="M13 22 Q18 25 23 22" stroke="#451A03" stroke-width="2" fill="none" stroke-linecap="round" />
+      </svg>
+    `,
+    good: `
+      <svg viewBox="0 0 36 36" style="width: 32px; height: 32px;">
+        <circle cx="18" cy="18" r="16" fill="#FBCFE8" />
+        <path d="M11 16 Q13 13 15 16" stroke="#9D174D" stroke-width="2" fill="none" stroke-linecap="round" />
+        <path d="M21 16 Q23 13 25 16" stroke="#9D174D" stroke-width="2" fill="none" stroke-linecap="round" />
+        <path d="M12 21 Q18 27 24 21" stroke="#9D174D" stroke-width="2.5" fill="none" stroke-linecap="round" />
+      </svg>
+    `,
+    great: `
+      <svg viewBox="0 0 36 36" style="width: 32px; height: 32px;">
+        <circle cx="18" cy="18" r="16" fill="#FBCFE8" />
+        <path d="M11 16 Q13 13 15 16" stroke="#9D174D" stroke-width="2" fill="none" stroke-linecap="round" />
+        <path d="M21 16 Q23 13 25 16" stroke="#9D174D" stroke-width="2" fill="none" stroke-linecap="round" />
+        <path d="M12 21 Q18 28 24 21 Z" fill="#ffffff" stroke="#9D174D" stroke-width="2" />
+      </svg>
+    `
+  };
 
   let userName = 'Glowers';
   const userStr = localStorage.getItem('bglow_user');
   if (userStr) {
     try {
       const user = JSON.parse(userStr);
-      if (user && user.name) userName = user.name.split(' ')[0]; // use first name
+      if (user && user.name) userName = user.name.split(' ')[0];
     } catch (e) {}
+  }
+
+  // Inject styles for home layout
+  if (!document.getElementById('home-custom-layout-styles')) {
+    const style = document.createElement('style');
+    style.id = 'home-custom-layout-styles';
+    style.textContent = `
+      .home-page {
+        background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 240px, var(--bg) 240px) !important;
+        padding-bottom: 120px;
+      }
+      .mood-tracker-btn {
+        flex: 1;
+        background: transparent;
+        border: 1px solid #cbd5e140;
+        border-radius: 20px;
+        padding: 12px 6px;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .mood-tracker-btn:hover {
+        background: #f8fafc;
+        transform: translateY(-2px);
+      }
+      .mood-tracker-btn:active {
+        transform: scale(0.95);
+      }
+      .mood-tracker-btn.selected {
+        background: #eff6ff !important;
+        border: 1.8px solid var(--primary) !important;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.12);
+      }
+      .articles-scroll::-webkit-scrollbar {
+        display: none;
+      }
+      .home-routine-thumb svg {
+        width: 32px;
+        height: 32px;
+      }
+      .home-routine-thumb {
+        font-size: 1.5rem;
+      }
+    `;
+    document.head.appendChild(style);
   }
 
   page.innerHTML = `
@@ -74,24 +288,75 @@ export function renderHome() {
       </div>
 
       <!-- Routine Summary Card -->
-      <div class="routine-summary-card anim-fade-in-up anim-delay-1">
-        <div class="rsc-header">
-          <h3 class="rsc-title">Rutinitas ${timeOfDay}</h3>
-          <span class="rsc-badge">${completedSteps}/${totalSteps} Selesai</span>
+      <div class="routine-summary-card anim-fade-in-up anim-delay-1" id="routine-summary-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h3 style="font-size:1.1rem; font-weight:800; color:#1e1b4b; margin:0; letter-spacing:-0.3px;">Rutinitasku</h3>
+          <span style="font-size:1.3rem; color:#94a3b8; font-weight:400; line-height:1;">&rsaquo;</span>
         </div>
-        <div class="rsc-progress-wrap">
-          <div class="rsc-progress-text">
-            <span>Progres</span>
-            <span>${progressPct}%</span>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+          <!-- Stats Left -->
+          <div style="display:flex; gap:28px;">
+            <div>
+              <div style="font-size:1.25rem; font-weight:800; color:#1e1b4b; line-height:1.2;">${completedSteps}/${totalSteps}</div>
+              <div style="font-size:0.75rem; color:#94a3b8; font-weight:600; margin-top:2px;">Target terpenuhi</div>
+            </div>
+            <div>
+              <div style="font-size:1.25rem; font-weight:800; color:#1e1b4b; line-height:1.2;">${totalProducts}</div>
+              <div style="font-size:0.75rem; color:#94a3b8; font-weight:600; margin-top:2px;">Produk</div>
+            </div>
           </div>
-          <div class="rsc-progress-bar">
-            <div class="rsc-progress-fill" style="width: ${progressPct}%"></div>
+          <!-- Thumbnail Right -->
+          <div class="home-routine-thumb" style="width:52px; height:52px; background:${activeBg}; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; transform:rotate(-5deg);">
+            ${activeIcon}
           </div>
         </div>
-        <button class="rsc-btn" id="btn-continue-routine">Lanjutkan Rutinitas</button>
+
+        <!-- Routine Compatibility Subcard -->
+        <div style="background:#F8FAFC; border-radius:16px; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; width:100%; box-sizing:border-box;">
+          <div style="text-align:left; flex:1; padding-right:8px;">
+            <h4 style="font-size:0.8rem; font-weight:800; color:#1e1b4b; margin:0 0 2px 0;">Kecocokan Rutinitas</h4>
+            <p style="font-size:0.75rem; color:#94a3b8; margin:0; line-height:1.3;">${compatibilityText}</p>
+          </div>
+          <!-- Circle Gauge progress -->
+          <div style="position:relative; width:44px; height:44px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <svg width="44" height="44" viewBox="0 0 36 36" style="transform: rotate(-90deg);">
+              <circle cx="18" cy="18" r="15" fill="none" stroke="#E2E8F0" stroke-width="3.5" />
+              <circle cx="18" cy="18" r="15" fill="none" stroke="#F59E0B" stroke-width="3.5" 
+                      stroke-dasharray="94.2" stroke-dashoffset="${94.2 - (94.2 * scorePercent / 100)}" 
+                      stroke-linecap="round" />
+            </svg>
+            <div style="position:absolute; font-size:12px; font-weight:800; color:#1E293B;">${scoreLabel}</div>
+          </div>
+        </div>
       </div>
 
-      <!-- Quick Actions -->
+      <!-- Skin Mood Tracker Card (Placed Below My Routine) -->
+      <div class="anim-fade-in-up anim-delay-1" id="mood-tracker-card" style="background:#ffffff; border-radius:var(--radius-xl); padding:20px; box-shadow:0 4px 20px rgba(0,0,0,0.05); border:1px solid var(--border-light); text-align:center;">
+        <h3 style="font-size:1.1rem; font-weight:800; color:#0f172a; margin:0 0 4px 0; text-align:left; letter-spacing:-0.3px;">Bagaimana kondisi kulitmu hari ini?</h3>
+        <p style="font-size:0.75rem; color:#94a3b8; margin:0 0 20px 0; text-align:left; font-weight:500;">Catat untuk melihat perkembangan kulitmu</p>
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+          ${[
+            { key: 'bad', label: 'buruk' },
+            { key: 'meh', label: 'biasa' },
+            { key: 'okay', label: 'cukup' },
+            { key: 'good', label: 'baik' },
+            { key: 'great', label: 'sangat baik' }
+          ].map(m => {
+            const isSelected = activeMood === m.key;
+            return `
+              <button class="mood-tracker-btn ${isSelected ? 'selected' : ''}" data-mood="${m.key}">
+                <div style="width:32px; height:32px; display:flex; align-items:center; justify-content:center; filter: grayscale(${isSelected ? 0 : 0.2}); transform: scale(${isSelected ? 1.1 : 1}); transition: all 0.2s ease;">
+                  ${moodSvgs[m.key]}
+                </div>
+                <span style="font-size:9.5px; font-weight:${isSelected ? 700 : 500}; color:${isSelected ? 'var(--primary)' : '#94a3b8'}; text-transform:lowercase; margin-top:2px;">${m.label}</span>
+              </button>
+            `;
+          }).join('')}
+        </div>
+      </div>
+
+      <!-- Quick Actions Grid -->
       <div class="quick-actions-section anim-fade-in-up anim-delay-2">
         <h3 class="section-title">Aksi Cepat</h3>
         <div class="quick-actions-grid">
@@ -144,16 +409,114 @@ export function renderHome() {
         </div>
       </div>
 
+      <!-- SkinLab Product Preview -->
+      <div class="skinlab-section anim-fade-in-up anim-delay-4" id="skinlab-widget">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- Trending Today Preview -->
+      <div class="trending-section anim-fade-in-up anim-delay-4" id="trending-widget">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- Skincare Guides Section (Get Smart) -->
+      <div class="anim-fade-in-up anim-delay-4" style="background:#ffffff; border-radius:var(--radius-xl); padding:20px; box-shadow:0 4px 20px rgba(0,0,0,0.05); border:1px solid var(--border-light); margin-top:12px;">
+        <h3 style="font-size:1.1rem; font-weight:800; color:#0f172a; margin:0 0 4px 0; text-align:left; letter-spacing:-0.3px;">Pintar Bersama B-Glow</h3>
+        <p style="font-size:0.75rem; color:#94a3b8; margin:0 0 20px 0; text-align:left; font-weight:500;">Bacaan singkat untuk membantumu mengambil keputusan terbaik</p>
+        
+        <div style="display:flex; gap:12px; overflow-x:auto; padding-bottom:8px; scrollbar-width:none;" class="articles-scroll">
+          <!-- Article 1 -->
+          <div class="article-card" style="flex:0 0 170px; cursor:pointer;" id="article-1">
+            <div style="width:100%; height:110px; background:linear-gradient(135deg, #ffedd5, #fee2e2); border-radius:18px; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; margin-bottom:8px;">
+              ${skincarePumpSvg}
+              <span style="position:absolute; bottom:8px; left:8px; background:rgba(255,255,255,0.85); backdrop-filter:blur(4px); font-size:9px; font-weight:700; color:#475569; padding:2px 8px; border-radius:20px;">⏱ 2 mnt</span>
+            </div>
+            <div style="font-size:11px; font-weight:700; color:#1e293b; text-align:left; line-height:1.4;">Apa penyebab kulit sensitif?</div>
+          </div>
+
+          <!-- Article 2 -->
+          <div class="article-card" style="flex:0 0 170px; cursor:pointer;" id="article-2">
+            <div style="width:100%; height:110px; background:linear-gradient(135deg, #f3e8ff, #fae8ff); border-radius:18px; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; margin-bottom:8px;">
+              ${flowerSvg}
+              <span style="position:absolute; bottom:8px; left:8px; background:rgba(255,255,255,0.85); backdrop-filter:blur(4px); font-size:9px; font-weight:700; color:#475569; padding:2px 8px; border-radius:20px;">⏱ 1 mnt</span>
+            </div>
+            <div style="font-size:11px; font-weight:700; color:#1e293b; text-align:left; line-height:1.4;">Apa itu kulit kusam?</div>
+          </div>
+
+          <!-- Article 3 -->
+          <div class="article-card" style="flex:0 0 170px; cursor:pointer;" id="article-3">
+            <div style="width:100%; height:110px; background:linear-gradient(135deg, #ecfdf5, #d1fae5); border-radius:18px; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; margin-bottom:8px;">
+              ${sunShieldSvg}
+              <span style="position:absolute; bottom:8px; left:8px; background:rgba(255,255,255,0.85); backdrop-filter:blur(4px); font-size:9px; font-weight:700; color:#475569; padding:2px 8px; border-radius:20px;">⏱ 3 mnt</span>
+            </div>
+            <div style="font-size:11px; font-weight:700; color:#1e293b; text-align:left; line-height:1.4;">Kenapa sunscreen wajib?</div>
+          </div>
+        </div>
+
+        <button id="btn-see-guides" style="width:100%; background:#1E1B4B; color:white; border:none; border-radius:20px; padding:12px; font-size:12px; font-weight:700; cursor:pointer; margin-top:16px; transition: all 0.2s ease;">Lihat panduan skincare lainnya</button>
+      </div>
+
     </section>
   `;
 
   // Attach Events
-  page.querySelectorAll('.rsc-btn, .qa-item').forEach(el => addRipple(el));
+  page.querySelectorAll('.routine-summary-card, .qa-item').forEach(el => addRipple(el));
 
-  const btnContinue = page.querySelector('#btn-continue-routine');
-  if (btnContinue) {
-    btnContinue.addEventListener('click', () => {
+  const routineCard = page.querySelector('#routine-summary-card');
+  if (routineCard) {
+    routineCard.addEventListener('click', () => {
       window.location.hash = '#/routine';
+    });
+  }
+
+  // Mood Tracker Smileys click listener
+  page.querySelectorAll('.mood-tracker-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const mood = btn.dataset.mood;
+      localStorage.setItem('bglow_skin_mood_' + userId, mood);
+      
+      // Update UI active state
+      page.querySelectorAll('.mood-tracker-btn').forEach(b => {
+        b.classList.remove('selected');
+      });
+      btn.classList.add('selected');
+
+      const { showCustomAlert } = await import('../utils/helpers.js');
+      showCustomAlert("Mood kulit Anda hari ini berhasil disimpan! Jaga kesehatan kulit Anda ya. ✨", "Mood Kulit Dicatat");
+    });
+  });
+
+  // Skincare Guides Articles click listeners
+  const art1 = page.querySelector('#article-1');
+  if (art1) {
+    art1.addEventListener('click', async () => {
+      const { showCustomAlert } = await import('../utils/helpers.js');
+      showCustomAlert("Kulit sensitif disebabkan oleh tipisnya lapisan pelindung kulit (skin barrier). Disarankan menggunakan kandungan Ceramide dan menghindari alkohol/fragrance.", "Apa Penyebab Kulit Sensitif?");
+    });
+  }
+
+  const art2 = page.querySelector('#article-2');
+  if (art2) {
+    art2.addEventListener('click', async () => {
+      const { showCustomAlert } = await import('../utils/helpers.js');
+      showCustomAlert("Kekusaman kulit terjadi akibat penumpukan sel kulit mati dan kurangnya hidrasi. Lakukan eksfoliasi lembut 1-2x seminggu dan gunakan pelembab secara rutin.", "Apa itu Kulit Kusam?");
+    });
+  }
+
+  const art3 = page.querySelector('#article-3');
+  if (art3) {
+    art3.addEventListener('click', async () => {
+      const { showCustomAlert } = await import('../utils/helpers.js');
+      showCustomAlert("Sunscreen wajib digunakan untuk melindungi kulit dari sinar UV yang dapat memicu penuaan dini, bintik hitam, dan merusak skin barrier kulit.", "Pentingnya Sunscreen");
+    });
+  }
+
+  const seeGuides = page.querySelector('#btn-see-guides');
+  if (seeGuides) {
+    seeGuides.addEventListener('click', async () => {
+      const { showCustomAlert } = await import('../utils/helpers.js');
+      showCustomAlert("Temukan panduan merawat kulit lebih lengkap di menu Jurnal Kulit Anda! ✨", "Edukasi Skincare");
     });
   }
 
@@ -197,5 +560,537 @@ export function renderHome() {
     }
   }).catch(err => console.error('Gagal memuat cuaca:', err));
 
+  // Load SkinLab widget data asynchronously
+  const widgetContainer = page.querySelector('#skinlab-widget');
+  if (widgetContainer) {
+    renderSkinLabWidget(widgetContainer, userId);
+  }
+
+  // Load Trending widget data asynchronously
+  const trendingContainer = page.querySelector('#trending-widget');
+  if (trendingContainer) {
+    renderTrendingWidget(trendingContainer, userId);
+  }
+
   return page;
+}
+
+async function renderSkinLabWidget(container, userId) {
+  const hasScanned = localStorage.getItem('bglow_has_scanned_' + userId) === '1';
+  
+  if (!hasScanned) {
+    container.innerHTML = `
+      <h3 class="skinlab-title">🔬 SkinLab Personal</h3>
+      <p class="skinlab-subtitle">Rekomendasi skincare yang dicocokkan khusus untuk kondisi kulit Anda.</p>
+      <div style="display:flex; flex-direction:column; align-items:center; padding: 24px; text-align:center; background:#faf5ff; border: 1px dashed #d8b4fe; border-radius:18px;">
+        <span style="font-size:2rem; margin-bottom:8px;">🔬</span>
+        <div style="font-weight:700; font-size:12px; color:#581c87; margin-bottom:4px;">Rekomendasi Terkunci</div>
+        <p style="font-size:11px; color:#6b21a8; margin:0 0 12px 0; line-height:1.4;">Lakukan Scan AI kulit wajah Anda terlebih dahulu untuk melihat preview produk yang cocok.</p>
+        <button class="btn btn-primary" id="skinlab-scan-btn" style="padding:8px 16px; font-size:11px; border-radius:8px; width:auto; font-weight:700;">Mulai Scan Kulit</button>
+      </div>
+    `;
+    container.querySelector('#skinlab-scan-btn').addEventListener('click', () => {
+      window.location.hash = '#/scan';
+    });
+    return;
+  }
+
+  // Inject styles for widget dynamically
+  if (!document.getElementById('skinlab-widget-styles')) {
+    const style = document.createElement('style');
+    style.id = 'skinlab-widget-styles';
+    style.textContent = `
+      .skinlab-section {
+        background: #ffffff;
+        border-radius: var(--radius-xl);
+        padding: var(--space-xl) var(--space-lg);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        border: 1px solid var(--border-light);
+        margin-top: 12px;
+      }
+      .skinlab-title {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #1e1b4b;
+        margin-bottom: 4px;
+        letter-spacing: -0.3px;
+      }
+      .skinlab-subtitle {
+        font-size: var(--font-xs);
+        color: var(--text-secondary);
+        margin-bottom: 20px;
+        line-height: 1.4;
+      }
+      .skinlab-category-title {
+        font-size: var(--font-sm);
+        font-weight: 700;
+        color: #1e1b4b;
+        margin-bottom: 12px;
+        margin-top: 16px;
+        text-align: left;
+      }
+      .skinlab-scroll-container {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        padding-bottom: 8px;
+        scrollbar-width: none;
+      }
+      .skinlab-scroll-container::-webkit-scrollbar {
+        display: none;
+      }
+      .skinlab-product-card {
+        flex: 0 0 160px;
+        background: #f8fafc;
+        border: 1px solid #cbd5e130;
+        border-radius: 16px;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        text-align: left;
+        box-sizing: border-box;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .skinlab-product-card:active {
+        transform: scale(0.97);
+      }
+      .skinlab-product-img {
+        width: 100%;
+        height: 120px;
+        background: #e3f2fd;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.2rem;
+        margin-bottom: 8px;
+        overflow: hidden;
+        position: relative;
+      }
+      .skinlab-product-match-badge {
+        position: absolute;
+        bottom: 8px;
+        left: 8px;
+        background: rgba(34, 197, 94, 0.9);
+        color: #fff;
+        font-size: 9px;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 6px;
+      }
+      .skinlab-product-name {
+        font-size: 11px;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.3;
+        margin-bottom: 4px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        height: 28px;
+      }
+      .skinlab-product-price {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--primary);
+      }
+      .skinlab-lock-card {
+        flex: 0 0 160px;
+        background: #ffffff;
+        border: 1.5px dashed var(--primary);
+        border-radius: 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        box-sizing: border-box;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .skinlab-lock-card:hover {
+        background: #eff6ff;
+        border-color: #2563eb;
+      }
+      .skinlab-lock-card:active {
+        transform: scale(0.97);
+      }
+      .skinlab-lock-title {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--primary);
+        line-height: 1.4;
+        margin-top: 8px;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  container.innerHTML = `
+    <h3 class="skinlab-title">🔬 SkinLab Personal</h3>
+    <p class="skinlab-subtitle">Rekomendasi skincare yang paling cocok dengan jenis kulitmu.</p>
+    <div style="height:120px; display:flex; align-items:center; justify-content:center; color:#94a3b8; font-size:0.85rem;">⏳ Menganalisis kecocokan...</div>
+  `;
+
+  // Fetch products
+  const jenis_kulit = localStorage.getItem('bglow_skin_type_' + userId) || 'Normal';
+  const prioritas = localStorage.getItem('bglow_journey_priority_' + userId);
+  const rawProblems = localStorage.getItem('bglow_skin_problems_' + userId) || '[]';
+  let permasalahan = [];
+  if (prioritas) {
+    permasalahan = [prioritas];
+  } else {
+    try {
+      const parsed = JSON.parse(rawProblems);
+      if (parsed.length > 0) permasalahan = [parsed[0].label || parsed[0]];
+    } catch (_) {}
+  }
+
+  const { RECOMMENDATIONS_API_URL } = await import('../config.js');
+  const { isPremium } = await import('../utils/store.js');
+  const premium = isPremium();
+
+  const fetchCat = async (cat) => {
+    try {
+      const resp = await fetch(RECOMMENDATIONS_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jenis_kulit, permasalahan: JSON.stringify(permasalahan), kategori: cat, limit: 10 })
+      });
+      if (!resp.ok) return [];
+      const data = await resp.json();
+      return data.products || [];
+    } catch (e) {
+      return [];
+    }
+  };
+
+  const [cleansers, moisturizers] = await Promise.all([
+    fetchCat('cleanser'),
+    fetchCat('moisturizer')
+  ]);
+
+  // Render preview
+  let cleansersHTML = '';
+  let moisturizersHTML = '';
+
+  const renderProdCard = (p) => {
+    const scorePct = Math.round(p.score * 100);
+    const imgTag = p.image_url && p.image_url !== 'nan'
+      ? `<img src="${p.image_url}" alt="${p.name}" style="width:100%; height:100%; object-fit:cover; border-radius:12px;" />`
+      : `<span style="font-size:1.8rem;">🧴</span>`;
+    
+    return `
+      <div class="skinlab-product-card" data-cat="${p.kategori}" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-img="${p.image_url}">
+        <div class="skinlab-product-img">
+          ${imgTag}
+          <div class="skinlab-product-match-badge">${scorePct}% Cocok</div>
+        </div>
+        <div class="skinlab-product-name">${p.name}</div>
+        <div class="skinlab-product-price">Rp${p.price.toLocaleString('id-ID')}</div>
+      </div>
+    `;
+  };
+
+  if (cleansers.length > 0) {
+    const showProds = cleansers.slice(0, 4);
+    const remainingCount = Math.max(0, cleansers.length - showProds.length) || 6;
+    cleansersHTML = `
+      <div class="skinlab-category-title">Pembersih Wajah yang Cocok</div>
+      <div class="skinlab-scroll-container">
+        ${showProds.map(p => renderProdCard(p)).join('')}
+        <div class="skinlab-lock-card" id="unlock-cleansers">
+          <span style="font-size:1.5rem;">${premium ? '🔓' : '🔒'}</span>
+          <span class="skinlab-lock-title">${premium ? 'Lihat Semua' : `Buka ${remainingCount}+ lainnya`}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  if (moisturizers.length > 0) {
+    const showProds = moisturizers.slice(0, 4);
+    const remainingCount = Math.max(0, moisturizers.length - showProds.length) || 11;
+    moisturizersHTML = `
+      <div class="skinlab-category-title">Pelembab untuk Kulitmu</div>
+      <div class="skinlab-scroll-container">
+        ${showProds.map(p => renderProdCard(p)).join('')}
+        <div class="skinlab-lock-card" id="unlock-moisturizers">
+          <span style="font-size:1.5rem;">${premium ? '🔓' : '🔒'}</span>
+          <span class="skinlab-lock-title">${premium ? 'Lihat Semua' : `Buka ${remainingCount}+ lainnya`}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  if (!cleansersHTML && !moisturizersHTML) {
+    container.innerHTML = `
+      <h3 class="skinlab-title">🔬 SkinLab Personal</h3>
+      <p class="skinlab-subtitle">Rekomendasi skincare yang paling cocok dengan jenis kulitmu.</p>
+      <div style="padding:20px; text-align:center; color:#64748b; font-size:0.8rem;">Tidak ada rekomendasi yang tersedia saat ini.</div>
+    `;
+    return;
+  }
+
+  container.innerHTML = `
+    <h3 class="skinlab-title">🔬 SkinLab Personal</h3>
+    <p class="skinlab-subtitle">Rekomendasi skincare yang paling cocok dengan jenis kulitmu.</p>
+    ${cleansersHTML}
+    ${moisturizersHTML}
+  `;
+
+  // Click handlers for unlock cards
+  const cleansersUnlock = container.querySelector('#unlock-cleansers');
+  if (cleansersUnlock) {
+    cleansersUnlock.addEventListener('click', () => {
+      window.location.hash = premium ? '#/recommendations?category=cleanser' : '#/subscription';
+    });
+  }
+
+  const moisturizersUnlock = container.querySelector('#unlock-moisturizers');
+  if (moisturizersUnlock) {
+    moisturizersUnlock.addEventListener('click', () => {
+      window.location.hash = premium ? '#/recommendations?category=moisturizer' : '#/subscription';
+    });
+  }
+
+  // Click handlers for product cards
+  container.querySelectorAll('.skinlab-product-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const name = card.dataset.name;
+      const price = parseInt(card.dataset.price);
+      const image = card.dataset.img;
+      const category = card.dataset.cat;
+      
+      const enriched = {
+        name,
+        brand: name.split(' ')[0] || name,
+        price,
+        emoji: category === 'cleanser' ? '🧴' : '💧',
+        bgColor: category === 'cleanser' ? '#E3F2FD' : '#E8F5E9',
+        rating: 4.5,
+        desc: `Produk ${category} yang terpilih khusus untuk jenis kulit Anda.`,
+        ingredients: [],
+        link: ''
+      };
+      sessionStorage.setItem('bglow_selected_product', JSON.stringify(enriched));
+      window.location.hash = '#/product-detail';
+    });
+  });
+}
+
+async function renderTrendingWidget(container, userId) {
+  const jenis_kulit = localStorage.getItem('bglow_skin_type_' + userId) || 'Normal';
+  
+  if (!document.getElementById('trending-widget-styles')) {
+    const style = document.createElement('style');
+    style.id = 'trending-widget-styles';
+    style.textContent = `
+      .trending-section {
+        background: #ffffff;
+        border-radius: var(--radius-xl);
+        padding: var(--space-xl) var(--space-lg);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        border: 1px solid var(--border-light);
+        margin-top: 12px;
+      }
+      .trending-title {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #1e1b4b;
+        margin-bottom: 4px;
+        letter-spacing: -0.3px;
+        text-align: left;
+      }
+      .trending-subtitle {
+        font-size: var(--font-xs);
+        color: var(--text-secondary);
+        margin-bottom: 20px;
+        line-height: 1.4;
+        text-align: left;
+      }
+      .trending-scroll-container {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        padding-bottom: 8px;
+        scrollbar-width: none;
+      }
+      .trending-scroll-container::-webkit-scrollbar {
+        display: none;
+      }
+      .trending-product-card {
+        flex: 0 0 160px;
+        background: #f8fafc;
+        border: 1px solid #cbd5e130;
+        border-radius: 16px;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        text-align: left;
+        box-sizing: border-box;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .trending-product-img {
+        width: 100%;
+        height: 110px;
+        background: #fff;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 8px;
+        overflow: hidden;
+      }
+      .trending-product-brand {
+        font-size: 10px;
+        font-weight: 600;
+        color: #94a3b8;
+        margin-bottom: 2px;
+        text-transform: uppercase;
+      }
+      .trending-product-name {
+        font-size: 11px;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.3;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        height: 28px;
+      }
+      .trending-love-btn {
+        position: absolute;
+        top: 18px;
+        right: 18px;
+        background: #ffffff99;
+        backdrop-filter: blur(4px);
+        border: none;
+        border-radius: 50%;
+        width: 26px;
+        height: 26px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 0.85rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  container.innerHTML = `
+    <h3 class="trending-title">🔥 Trending Hari Ini</h3>
+    <p class="trending-subtitle">Orang lain dengan kulit ${jenis_kulit} menyukai produk ini</p>
+    <div style="height:100px; display:flex; align-items:center; justify-content:center; color:#94a3b8; font-size:0.8rem;">⏳ Memuat tren terhangat...</div>
+  `;
+
+  const { RECOMMENDATIONS_API_URL } = await import('../config.js');
+  const { isPremium } = await import('../utils/store.js');
+  const premium = isPremium();
+
+  try {
+    const resp = await fetch(RECOMMENDATIONS_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jenis_kulit, permasalahan: '[]', kategori: 'sunscreen', limit: 10 })
+    });
+    if (!resp.ok) throw new Error();
+    const data = await resp.json();
+    const products = data.products || [];
+    if (products.length === 0) {
+      container.style.display = 'none';
+      return;
+    }
+
+    // Sort descending by match score / review highest
+    products.sort((a, b) => b.score - a.score);
+
+    const showProds = products.slice(0, 4);
+    const remainingCount = Math.max(0, products.length - showProds.length) || 6;
+
+    container.innerHTML = `
+      <h3 class="trending-title">🔥 Trending Hari Ini</h3>
+      <p class="trending-subtitle">Orang lain dengan kulit ${jenis_kulit} menyukai produk ini</p>
+      <div class="trending-scroll-container">
+        <!-- Trending Cards -->
+        ${showProds.map(p => {
+          const imgTag = p.image_url && p.image_url !== 'nan'
+            ? `<img src="${p.image_url}" alt="${p.name}" style="width:100%; height:100%; object-fit:cover; border-radius:12px;" />`
+            : `<span style="font-size:1.8rem;">🧴</span>`;
+          const scoreRating = (4.4 + (p.score * 0.6)).toFixed(1);
+          return `
+            <div class="trending-product-card" data-name="${p.name}" data-price="${p.price}" data-img="${p.image_url}" data-cat="${p.kategori}">
+              <div class="trending-product-img">
+                ${imgTag}
+              </div>
+              <button class="trending-love-btn">❤️</button>
+              <div style="display:flex; justify-content:space-between; align-items:center; width:100%; margin-bottom:4px;">
+                <div class="trending-product-brand">${p.name.split(' ')[0] || 'B-Glow'}</div>
+                <div style="font-size:10px; color:#F59E0B; font-weight:700; display:flex; align-items:center; gap:2px;">
+                  <span>★</span><span>${scoreRating}</span>
+                </div>
+              </div>
+              <div class="trending-product-name">${p.name}</div>
+            </div>
+          `;
+        }).join('')}
+
+        <!-- Lock Card -->
+        <div class="skinlab-lock-card" id="unlock-trending" style="flex: 0 0 160px; height: auto;">
+          <span style="font-size:1.5rem;">${premium ? '🔓' : '🔒'}</span>
+          <span class="skinlab-lock-title">${premium ? 'Lihat Semua' : `Buka ${remainingCount}+ lainnya`}</span>
+        </div>
+      </div>
+    `;
+
+    const unlockBtn = container.querySelector('#unlock-trending');
+    if (unlockBtn) {
+      unlockBtn.addEventListener('click', () => {
+        window.location.hash = premium ? '#/recommendations?category=trending' : '#/subscription';
+      });
+    }
+
+    // Click handlers for product cards
+    container.querySelectorAll('.trending-product-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const name = card.dataset.name;
+        const price = parseInt(card.dataset.price);
+        const image = card.dataset.img;
+        const category = card.dataset.cat;
+        
+        const enriched = {
+          name,
+          brand: name.split(' ')[0] || name,
+          price,
+          emoji: '☀️',
+          bgColor: '#FFFDE7',
+          rating: 4.6,
+          desc: `Produk trending terpilih yang sangat disukai oleh pengguna dengan jenis kulit ${jenis_kulit}.`,
+          ingredients: [],
+          link: ''
+        };
+        sessionStorage.setItem('bglow_selected_product', JSON.stringify(enriched));
+        window.location.hash = '#/product-detail';
+      });
+    });
+
+    // Click handlers for love buttons
+    container.querySelectorAll('.trending-love-btn').forEach(loveBtn => {
+      loveBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        loveBtn.innerHTML = loveBtn.innerHTML === '❤️' ? '🤍' : '❤️';
+      });
+    });
+
+  } catch (e) {
+    container.style.display = 'none';
+  }
 }

@@ -37,6 +37,7 @@
 .reco-cat.cat-serum { --cat-theme-color: #7C3AED; }
 .reco-cat.cat-sunscreen { --cat-theme-color: #D97706; }
 .reco-cat.cat-exfoliation { --cat-theme-color: #DB2777; }
+.reco-cat.cat-trending { --cat-theme-color: #EF4444; }
 
 /* Status aktif (terang & warna-warni) */
 .reco-cat.active {

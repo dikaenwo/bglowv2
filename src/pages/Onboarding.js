@@ -9,7 +9,7 @@ export function renderOnboarding() {
 
   // State
   let currentStep = 0;
-  const totalSteps = 11; // 0 to 10
+  const totalSteps = 12; // 0 to 11
   let cameraStream = null;
   let capturedImage = null;
   
@@ -19,8 +19,23 @@ export function renderOnboarding() {
     struggle: '',
     goals: [],
     age: '',
-    scanResult: null
+    scanResult: null,
+    knowsSkinType: '',
+    selectedManualSkinType: '',
+    selectedSkinProblems: []
   };
+
+  // SVGs for onboarding cards (replacing emojis)
+  const leafIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 3.5 1 9.8a7 7 0 0 1-9 8.2z"/><path d="M9 22v-4h4"/></svg>`;
+  const bookIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`;
+  const sparklesIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707-.707M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/></svg>`;
+
+  const targetIcon = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #ea4335;"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`;
+  const waveIcon = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #3b82f6;"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.5 0 2.5 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-5 2.5 0 2.5 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.5 0 2.5 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/></svg>`;
+  const poresIcon = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #8b5cf6;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 17V9h8M9 9l8 8"/></svg>`;
+  const sunIcon = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #f59e0b;"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>`;
+  const dropIcon = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #06b6d4;"><path d="M12 22a7 7 0 0 0 7-7c0-4.3-7-13-7-13S5 10.7 5 15a7 7 0 0 0 7 7z"/></svg>`;
+  const shieldIcon = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #10b981;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`;
 
   const skinGoalsList = [
     { id: 'breakouts', label: 'Mengurangi Jerawat', icon: '✨', bg: '#FEF3C7' },
@@ -189,40 +204,39 @@ export function renderOnboarding() {
         break;
 
       case 3:
-        // Q1: Struggle
+        // Q1: Skincare Familiarity
         isNextDisabled = !answers.struggle;
         html = `
-          <div class="ob-title-wrap">
-            <h1 class="ob-quiz-title">Apa masalah kulit terbesarmu saat ini?</h1>
-            <p class="ob-quiz-subtitle">Pilih satu masalah utama yang paling mengganggu Anda.</p>
+          <div class="ob-title-wrap" style="text-align: center; margin-bottom: 24px;">
+            <h1 class="ob-quiz-title" style="font-size: var(--font-xl); font-weight: 800; color: var(--text-primary); margin-bottom: 8px;">Seberapa paham Anda tentang skincare?</h1>
+            <p class="ob-quiz-subtitle" style="font-size: var(--font-xs); color: var(--text-secondary); line-height: 1.5; margin: 0;">Ini membantu kami menyesuaikan rekomendasi dan menjelaskan informasi pada tingkat yang tepat.</p>
           </div>
-          <div class="ob-options-list">
-            <div class="ob-option-card ${answers.struggle === 'wasting' ? 'active' : ''}" data-val="wasting">
-              <div class="ob-option-icon" style="background-color: #FEF3C7;">💸</div>
-              <div>
-                <div class="ob-option-text">Membuang uang untuk produk yang tidak cocok</div>
-                <div class="ob-option-desc">Membeli skincare mahal namun tidak ada hasil.</div>
+          <div class="ob-options-list" style="display: flex; flex-direction: column; gap: 12px;">
+            <div class="ob-option-card ${answers.struggle === 'beginner' ? 'active' : ''}" data-val="beginner" style="display: flex; align-items: center; gap: 16px; padding: var(--space-md); border: 1.5px solid var(--border-light); border-radius: var(--radius-lg); background: var(--bg-card); cursor: pointer; transition: all 0.2s ease;">
+              <div class="ob-option-icon" style="background-color: #ECFDF5; width: 44px; height: 44px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                ${leafIcon}
+              </div>
+              <div style="text-align: left;">
+                <div class="ob-option-text" style="font-weight: 700; font-size: var(--font-sm); color: var(--text-primary); margin-bottom: 4px;">Saya pemula</div>
+                <div class="ob-option-desc" style="font-size: var(--font-xs); color: var(--text-secondary); line-height: 1.4;">Saya ingin langkah sederhana dan panduan produk yang jelas</div>
               </div>
             </div>
-            <div class="ob-option-card ${answers.struggle === 'reactions' ? 'active' : ''}" data-val="reactions">
-              <div class="ob-option-icon" style="background-color: #FEE2E2;">⚠️</div>
-              <div>
-                <div class="ob-option-text">Reaksi negatif dan tidak tahu alasannya</div>
-                <div class="ob-option-desc">Kulit sering breakout, iritasi, atau gatal.</div>
+            <div class="ob-option-card ${answers.struggle === 'intermediate' ? 'active' : ''}" data-val="intermediate" style="display: flex; align-items: center; gap: 16px; padding: var(--space-md); border: 1.5px solid var(--border-light); border-radius: var(--radius-lg); background: var(--bg-card); cursor: pointer; transition: all 0.2s ease;">
+              <div class="ob-option-icon" style="background-color: #EFF6FF; width: 44px; height: 44px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                ${bookIcon}
+              </div>
+              <div style="text-align: left;">
+                <div class="ob-option-text" style="font-weight: 700; font-size: var(--font-sm); color: var(--text-primary); margin-bottom: 4px;">Paham dasar-dasar</div>
+                <div class="ob-option-desc" style="font-size: var(--font-xs); color: var(--text-secondary); line-height: 1.4;">Saya menggunakan beberapa produk, tapi masih butuh bantuan memilih</div>
               </div>
             </div>
-            <div class="ob-option-card ${answers.struggle === 'overwhelmed' ? 'active' : ''}" data-val="overwhelmed">
-              <div class="ob-option-icon" style="background-color: #FFEEDD;">🤯</div>
-              <div>
-                <div class="ob-option-text">Bingung dengan terlalu banyak produk</div>
-                <div class="ob-option-desc">Terlalu banyak tren skincare baru yang membingungkan.</div>
+            <div class="ob-option-card ${answers.struggle === 'advanced' ? 'active' : ''}" data-val="advanced" style="display: flex; align-items: center; gap: 16px; padding: var(--space-md); border: 1.5px solid var(--border-light); border-radius: var(--radius-lg); background: var(--bg-card); cursor: pointer; transition: all 0.2s ease;">
+              <div class="ob-option-icon" style="background-color: #F5F3FF; width: 44px; height: 44px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                ${sparklesIcon}
               </div>
-            </div>
-            <div class="ob-option-card ${answers.struggle === 'goals' ? 'active' : ''}" data-val="goals">
-              <div class="ob-option-icon" style="background-color: #E0F2FE;">🎯</div>
-              <div>
-                <div class="ob-option-text">Tidak kunjung mencapai target kulit sehat</div>
-                <div class="ob-option-desc">Punya goal tertentu tapi tidak tahu cara mencapainya.</div>
+              <div style="text-align: left;">
+                <div class="ob-option-text" style="font-weight: 700; font-size: var(--font-sm); color: var(--text-primary); margin-bottom: 4px;">Sangat paham skincare</div>
+                <div class="ob-option-desc" style="font-size: var(--font-xs); color: var(--text-secondary); line-height: 1.4;">Saya tahu rutinitas saya dan ingin cara lebih cerdas untuk mengoptimalkannya</div>
               </div>
             </div>
           </div>
@@ -230,38 +244,65 @@ export function renderOnboarding() {
         break;
 
       case 4:
-        // Q2: Goals
-        isNextDisabled = answers.goals.length === 0;
+        // Q2: Primary Skin Goal
+        isNextDisabled = !answers.goals || answers.goals.length === 0;
+        const goals = [
+          { id: 'breakouts', label: 'Mengatasi jerawat', icon: targetIcon, bg: '#FEE2E2' },
+          { id: 'texture', label: 'Memperbaiki tekstur kulit', icon: waveIcon, bg: '#EFF6FF' },
+          { id: 'pores', label: 'Mengecilkan pori-pori', icon: poresIcon, bg: '#F5F3FF' },
+          { id: 'darkspots', label: 'Mencerahkan noda hitam', icon: sunIcon, bg: '#FEF3C7' },
+          { id: 'hydration', label: 'Meningkatkan hidrasi', icon: dropIcon, bg: '#E0F7FA' },
+          { id: 'oiliness', label: 'Mengontrol minyak berlebih', icon: shieldIcon, bg: '#ECFDF5' }
+        ];
+
         html = `
-          <div class="ob-title-wrap">
-            <h1 class="ob-quiz-title">Apa target utama kulit Anda?</h1>
-            <p class="ob-quiz-subtitle">Pilih semua opsi yang ingin Anda capai.</p>
+          <div class="ob-title-wrap" style="text-align: center; margin-bottom: 24px;">
+            <h1 class="ob-quiz-title" style="font-size: var(--font-xl); font-weight: 800; color: var(--text-primary); margin-bottom: 8px;">Apa tujuan utama kulit Anda?</h1>
+            <p class="ob-quiz-subtitle" style="font-size: var(--font-xs); color: var(--text-secondary); line-height: 1.5; margin: 0;">Pilih salah satu yang paling penting bagi Anda.</p>
           </div>
-          <div class="ob-tags-grid">
-            ${skinGoalsList.map(item => `
-              <div class="ob-tag-card ${answers.goals.includes(item.id) ? 'active' : ''}" data-val="${item.id}">
-                <span class="ob-tag-icon" style="background-color: ${item.bg || '#f1f5f9'};">${item.icon}</span>
-                <span>${item.label}</span>
-              </div>
-            `).join('')}
+          <div class="ob-options-list" style="display: flex; flex-direction: column; gap: 10px;">
+            ${goals.map(g => {
+              const isActive = answers.goals && answers.goals.includes(g.id);
+              return `
+                <div class="ob-goal-option-card ${isActive ? 'active' : ''}" data-val="${g.id}" style="display: flex; align-items: center; gap: 14px; padding: 12px 16px; border: 1.5px solid var(--border-light); border-radius: var(--radius-lg); background: var(--bg-card); cursor: pointer; transition: all 0.2s ease;">
+                  <div style="background-color: ${g.bg}; width: 36px; height: 36px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    ${g.icon}
+                  </div>
+                  <div style="flex: 1; text-align: left; font-weight: 700; font-size: var(--font-sm); color: var(--text-primary);">
+                    ${g.label}
+                  </div>
+                  <div class="ob-checkbox-indicator" style="width: 20px; height: 20px; border-radius: 50%; border: 2px solid ${isActive ? 'var(--primary)' : 'var(--border)'}; display: flex; align-items: center; justify-content: center; background: ${isActive ? 'var(--primary)' : 'transparent'}; transition: all 0.2s ease;">
+                    ${isActive ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+                  </div>
+                </div>
+              `;
+            }).join('')}
           </div>
         `;
         break;
 
       case 5:
-        // Q3: Age
-        isNextDisabled = !answers.age;
+        // Q3: AI Scan Choice
+        isNextDisabled = !answers.knowsSkinType;
+        const isYesActive = answers.knowsSkinType === 'yes';
+        const isNoActive = answers.knowsSkinType === 'no';
+        
         html = `
-          <div class="ob-title-wrap">
-            <h1 class="ob-quiz-title">Berapa usia Anda?</h1>
-            <p class="ob-quiz-subtitle">Kebutuhan kulit berubah seiring bertambahnya usia.</p>
+          <div class="ob-title-wrap" style="text-align: center; margin-bottom: 32px;">
+            <h1 class="ob-quiz-title" style="font-size: var(--font-xl); font-weight: 800; color: var(--text-primary); margin-bottom: 8px;">Apakah kamu sudah tau jenis kulitmu dan goals kulitmu apa?</h1>
+            <p class="ob-quiz-subtitle" style="font-size: var(--font-xs); color: var(--text-secondary); line-height: 1.5; margin: 0;">Beri tahu kami jenis kulit Anda, atau gunakan AI untuk mendeteksinya.</p>
           </div>
-          <div class="ob-options-list">
-            ${['Di bawah 18 tahun', '18 - 24 tahun', '25 - 34 tahun', '35 - 44 tahun', '45 - 54 tahun', '55 tahun ke atas'].map(val => `
-              <div class="ob-option-card ${answers.age === val ? 'active' : ''}" data-val="${val}">
-                <div class="ob-option-text">${val}</div>
-              </div>
-            `).join('')}
+          
+          <div style="display: flex; flex-direction: column; gap: 16px;">
+            <div class="ob-choice-card ${isYesActive ? 'active' : ''}" data-val="yes" style="padding: 16px; border: 1.5px solid ${isYesActive ? 'var(--primary)' : 'var(--border)'}; border-radius: var(--radius-lg); background: ${isYesActive ? 'var(--bg-soft)' : 'var(--bg-card)'}; cursor: pointer; font-weight: 600; font-size: var(--font-sm); text-align: left; transition: all 0.2s ease; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm);">
+              <span style="color: ${isYesActive ? 'var(--primary)' : 'var(--text-primary)'};">Ya, saya sudah tahu</span>
+              ${isYesActive ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+            </div>
+            
+            <div class="ob-choice-card ${isNoActive ? 'active' : ''}" data-val="no" style="padding: 16px; border: 1.5px solid ${isNoActive ? 'var(--primary)' : 'var(--border)'}; border-radius: var(--radius-lg); background: ${isNoActive ? 'var(--bg-soft)' : 'var(--bg-card)'}; cursor: pointer; font-weight: 600; font-size: var(--font-sm); text-align: left; transition: all 0.2s ease; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm);">
+              <span style="color: ${isNoActive ? 'var(--primary)' : 'var(--text-primary)'};">Tidak, Scan dengan AI</span>
+              ${isNoActive ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+            </div>
           </div>
         `;
         break;
@@ -347,7 +388,7 @@ export function renderOnboarding() {
                 <div class="ob-particle"></div>
               </div>
             </div>
-            <h2 class="ob-quiz-title" style="font-size: var(--font-lg); margin-top: 10px; text-align: center;">Mengirim Data Ke Gemini AI</h2>
+            <h2 class="ob-quiz-title" style="font-size: var(--font-lg); margin-top: 10px; text-align: center;">Mengirim Data Ke AI B-Glow</h2>
             <p class="ob-quiz-subtitle" style="text-align: center;">Menyusun matriks profil kulit Anda...</p>
           </div>
 
@@ -459,6 +500,84 @@ export function renderOnboarding() {
           </div>
         `;
         break;
+
+      case 11: {
+        // Manual Skin Type + Skin Problems selection
+        isNextDisabled = !answers.selectedManualSkinType;
+
+        // SVG Icons with colors for each skin type
+        const skinTypeIcons = {
+          'Normal':    { color: '#F59E0B', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>` },
+          'Berminyak': { color: '#3B82F6', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-4.3-7-13-7-13S5 10.7 5 15a7 7 0 0 0 7 7z"/></svg>` },
+          'Kombinasi': { color: '#8B5CF6', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 2v20"/></svg>` },
+          'Kering':    { color: '#10B981', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 3.5 1 9.8a7 7 0 0 1-9 8.2z"/><path d="M9 22v-4h4"/></svg>` },
+          'Sensitif':  { color: '#EF4444', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>` }
+        };
+
+        // SVG Icons with colors for each skin problem
+        const skinProblemIcons = {
+          'Berjerawat': { color: '#EF4444', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="2.5"/><circle cx="7" cy="8" r="1"/><circle cx="16" cy="16" r="1"/></svg>` },
+          'PIE':        { color: '#EC4899', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EC4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2.5"/><circle cx="16" cy="10" r="2"/><circle cx="11" cy="16" r="1.5"/></svg>` },
+          'PIH':        { color: '#F97316', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9 9 9 0 0 0-9-9z"/><path d="M8 12h.01M12 8h.01M16 12h.01M12 16h.01"/></svg>` },
+          'Aging':      { color: '#8B5CF6', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2h14v4l-4 4 4 4v4H5v-4l4-4-4-4V2z"/><path d="M12 2v10l-3 3h6l-3-3V2z"/></svg>` },
+          'Kusam':      { color: '#9CA3AF', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 12h18M12 3c0 4.5 4.5 9 9 9M12 21c0-4.5 4.5-9 9-9M12 3c0 4.5-4.5 9-9 9M12 21c0-4.5-4.5-9-9-9"/></svg>` },
+          'Kemerahan':  { color: '#EF4444', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>` }
+        };
+
+        const manualSkinTypes = [
+          { id: 'Normal',    label: 'Normal' },
+          { id: 'Berminyak', label: 'Berminyak' },
+          { id: 'Kombinasi', label: 'Kombinasi' },
+          { id: 'Kering',    label: 'Kering' },
+          { id: 'Sensitif',  label: 'Sensitif' }
+        ];
+        const skinProblems = [
+          { id: 'Berjerawat', label: 'Berjerawat' },
+          { id: 'PIE',        label: 'PIE' },
+          { id: 'PIH',        label: 'PIH' },
+          { id: 'Aging',      label: 'Aging' },
+          { id: 'Kusam',      label: 'Kusam' },
+          { id: 'Kemerahan',  label: 'Kemerahan' }
+        ];
+
+        html = `
+          <div class="ob-title-wrap" style="text-align: center; margin-bottom: 24px;">
+            <h1 class="ob-quiz-title" style="font-size: var(--font-xl); font-weight: 800; color: var(--text-primary); margin-bottom: 8px;">Pilih Profil Kulit Anda</h1>
+            <p class="ob-quiz-subtitle" style="font-size: var(--font-xs); color: var(--text-secondary); line-height: 1.5; margin: 0;">Tentukan jenis dan masalah kulit yang Anda alami.</p>
+          </div>
+
+          <div class="ob-profile-section" style="margin-bottom: 24px;">
+            <div class="ob-profile-section-title">Jenis Kulit</div>
+            <div class="ob-skin-pill-grid">
+              ${manualSkinTypes.map(st => {
+                const isActive = answers.selectedManualSkinType === st.id;
+                const { icon, color } = skinTypeIcons[st.id];
+                return `<div class="ob-skin-pill ob-skin-type-pill ${isActive ? 'active' : ''}" data-skin-type="${st.id}" data-color="${color}">
+                  <span class="ob-pill-icon">${icon}</span>
+                  <span class="ob-pill-label">${st.label}</span>
+                </div>`;
+              }).join('')}
+            </div>
+          </div>
+
+          <div class="ob-profile-section">
+            <div class="ob-profile-section-title">Masalah Kulit <span style="font-weight:400; color:var(--text-tertiary);">(Bisa lebih dari 1)</span></div>
+            <div class="ob-skin-pill-grid">
+              ${skinProblems.map(p => {
+                const isActive = answers.selectedSkinProblems && answers.selectedSkinProblems.includes(p.id);
+                const { icon, color } = skinProblemIcons[p.id];
+                return `<div class="ob-skin-pill ob-skin-problem-pill ${isActive ? 'active' : ''}" data-problem="${p.id}" data-color="${color}">
+                  <span class="ob-pill-icon">${icon}</span>
+                  <span class="ob-pill-label">${p.label}</span>
+                </div>`;
+              }).join('')}
+            </div>
+          </div>
+        `;
+        break;
+      }
+
+
     }
 
     contentWrap.innerHTML = html;
@@ -469,6 +588,8 @@ export function renderOnboarding() {
 
     if (currentStep === 10) {
       footer.innerHTML = `<button class="ob-btn-primary" id="ob-submit-profile">Mulai Sekarang</button>`;
+    } else if (currentStep === 11) {
+      footer.innerHTML = `<button class="ob-btn-primary" id="ob-next" ${isNextDisabled ? 'disabled' : ''}>Selesai</button>`;
     } else if (currentStep === 6) {
       // Camera handles capture via internal camera button, no primary button needed
       footer.innerHTML = ``;
@@ -487,7 +608,7 @@ export function renderOnboarding() {
 
   // Bind Events for Active Step
   function attachStepEvents() {
-    // Standard option click (single select)
+    // Standard option click (single select) — Step 3 only
     const options = page.querySelectorAll('.ob-option-card');
     options.forEach(card => {
       card.addEventListener('click', () => {
@@ -498,7 +619,6 @@ export function renderOnboarding() {
         card.classList.add('active');
         
         if (currentStep === 3) answers.struggle = val;
-        else if (currentStep === 5) answers.age = val;
         
         // Enable next button dynamically
         const nextBtn = page.querySelector('#ob-next');
@@ -508,24 +628,102 @@ export function renderOnboarding() {
       });
     });
 
-    // Multi-select tags (goals)
-    const tags = page.querySelectorAll('.ob-tag-card');
-    tags.forEach(tag => {
-      tag.addEventListener('click', () => {
-        const val = tag.dataset.val;
-        if (answers.goals.includes(val)) {
-          answers.goals = answers.goals.filter(x => x !== val);
-          tag.classList.remove('active');
+    // Step 11: Skin Type pill single-select
+    const skinTypePills = page.querySelectorAll('[data-skin-type]');
+    skinTypePills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        const val = pill.dataset.skinType;
+        answers.selectedManualSkinType = val;
+        skinTypePills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        const nextBtn = page.querySelector('#ob-next');
+        if (nextBtn) nextBtn.disabled = false;
+      });
+    });
+
+    // Step 11: Skin Problems pill multi-select
+    const problemPills = page.querySelectorAll('[data-problem]');
+    problemPills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        const val = pill.dataset.problem;
+        if (!answers.selectedSkinProblems) answers.selectedSkinProblems = [];
+        const idx = answers.selectedSkinProblems.indexOf(val);
+        if (idx === -1) {
+          answers.selectedSkinProblems.push(val);
+          pill.classList.add('active');
         } else {
-          answers.goals.push(val);
-          tag.classList.add('active');
+          answers.selectedSkinProblems.splice(idx, 1);
+          pill.classList.remove('active');
+        }
+      });
+    });
+
+    // Single-select goals option click (Step 4)
+    const goalOptions = page.querySelectorAll('.ob-goal-option-card');
+    goalOptions.forEach(card => {
+      card.addEventListener('click', () => {
+        const val = card.dataset.val;
+        goalOptions.forEach(o => {
+          o.classList.remove('active');
+          const indicator = o.querySelector('.ob-checkbox-indicator');
+          if (indicator) {
+            indicator.style.borderColor = 'var(--border)';
+            indicator.style.backgroundColor = 'transparent';
+            indicator.innerHTML = '';
+          }
+        });
+        card.classList.add('active');
+        const indicator = card.querySelector('.ob-checkbox-indicator');
+        if (indicator) {
+          indicator.style.borderColor = 'var(--primary)';
+          indicator.style.backgroundColor = 'var(--primary)';
+          indicator.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+        }
+        answers.goals = [val];
+        const nextBtn = page.querySelector('#ob-next');
+        if (nextBtn) nextBtn.disabled = false;
+      });
+    });
+
+    // Choice cards for knowsSkinType (Step 5)
+    const choiceCards = page.querySelectorAll('.ob-choice-card');
+    choiceCards.forEach(card => {
+      card.addEventListener('click', () => {
+        const val = card.dataset.val;
+        answers.knowsSkinType = val;
+        
+        choiceCards.forEach(c => {
+          c.classList.remove('active');
+          c.style.borderColor = 'var(--border)';
+          c.style.backgroundColor = 'var(--bg-card)';
+          const label = c.querySelector('span');
+          if (label) label.style.color = 'var(--text-primary)';
+          const svg = c.querySelector('svg');
+          if (svg) svg.remove();
+        });
+        
+        card.classList.add('active');
+        card.style.borderColor = 'var(--primary)';
+        card.style.backgroundColor = 'var(--bg-soft)';
+        const label = card.querySelector('span');
+        if (label) label.style.color = 'var(--primary)';
+        
+        if (!card.querySelector('svg')) {
+          const svgMarkup = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+          svgMarkup.setAttribute("width", "18");
+          svgMarkup.setAttribute("height", "18");
+          svgMarkup.setAttribute("viewBox", "0 0 24 24");
+          svgMarkup.setAttribute("fill", "none");
+          svgMarkup.setAttribute("stroke", "var(--primary)");
+          svgMarkup.setAttribute("stroke-width", "3");
+          svgMarkup.setAttribute("stroke-linecap", "round");
+          svgMarkup.setAttribute("stroke-linejoin", "round");
+          svgMarkup.innerHTML = '<polyline points="20 6 9 17 4 12"/>';
+          card.appendChild(svgMarkup);
         }
         
-        // Enable next button if at least one goal is selected
         const nextBtn = page.querySelector('#ob-next');
-        if (nextBtn) {
-          nextBtn.disabled = answers.goals.length === 0;
-        }
+        if (nextBtn) nextBtn.disabled = false;
       });
     });
 
@@ -533,7 +731,28 @@ export function renderOnboarding() {
     const nextBtn = page.querySelector('#ob-next');
     if (nextBtn) {
       nextBtn.addEventListener('click', () => {
-        goToStep(currentStep + 1);
+        if (currentStep === 5) {
+          if (answers.knowsSkinType === 'yes') {
+            goToStep(11);
+          } else {
+            goToStep(6);
+          }
+        } else if (currentStep === 11) {
+          const selectedType = answers.selectedManualSkinType || 'Normal';
+          const selectedProblems = (answers.selectedSkinProblems || []).map(p => ({ label: p, confidence: 0.85 }));
+          answers.scanResult = {
+            jenis_kulit: selectedType,
+            jenis_kulit_desc: getSkinTypeDescription(selectedType),
+            acne_level: selectedProblems.some(p => p.label === 'Berjerawat') ? 'Ringan — Grade 1' : 'Bersih',
+            oil_level: selectedType === 'Berminyak' ? 'Tinggi' : selectedType === 'Kering' ? 'Rendah' : 'Normal',
+            pore_condition: 'Minimal',
+            skin_score: 90,
+            permasalahan: selectedProblems
+          };
+          goToStep(10);
+        } else {
+          goToStep(currentStep + 1);
+        }
       });
     }
 
@@ -872,7 +1091,11 @@ export function renderOnboarding() {
 
   // Header Nav Click handlers
   backBtn.addEventListener('click', () => {
-    goToStep(currentStep - 1);
+    if (currentStep === 11 || currentStep === 6) {
+      goToStep(5);
+    } else {
+      goToStep(currentStep - 1);
+    }
   });
 
   skipBtn.addEventListener('click', () => {

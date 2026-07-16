@@ -8,6 +8,8 @@ export function renderSunscreenAlarm() {
   page.className = 'page';
 
   const now = new Date();
+  const currentHourLocal = now.getHours();
+  const isNightTime = currentHourLocal >= 18 || currentHourLocal < 6;
 
   const userId = getUserId();
   let currentInterval = parseInt(localStorage.getItem('bglow_sunscreen_interval_' + userId)) || 2;
@@ -111,7 +113,7 @@ export function renderSunscreenAlarm() {
     </div>
     <div class="page-content">
       <!-- Dasbor UV -->
-      <div class="uv-dashboard anim-fade-in-up">
+      <div class="uv-dashboard ${isNightTime ? 'night-theme' : ''} anim-fade-in-up">
         <div class="uv-dash-header">
           <div class="uv-title">Indeks UV</div>
           <div class="uv-date">${now.toLocaleDateString('id-ID', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
@@ -431,16 +433,27 @@ export function renderSunscreenAlarm() {
     
     const levelText = page.querySelector('#uv-level-text');
     const levelDesc = page.querySelector('#uv-level-desc');
+    const currentHourLocal = new Date().getHours();
+    const isNightTimeVal = currentHourLocal >= 18 || currentHourLocal < 6;
     
     if (levelText) {
-      levelText.textContent = isHighUv ? 'Tinggi' : (uvIndex >= 3 ? 'Sedang' : 'Rendah');
-      levelText.style.color = isHighUv ? '#EF4444' : (uvIndex >= 3 ? '#F59E0B' : '#10B981');
+      if (isNightTimeVal) {
+        levelText.textContent = 'Malam Hari';
+        levelText.style.color = '#C7D2FE';
+      } else {
+        levelText.textContent = isHighUv ? 'Tinggi' : (uvIndex >= 3 ? 'Sedang' : 'Rendah');
+        levelText.style.color = isHighUv ? '#EF4444' : (uvIndex >= 3 ? '#F59E0B' : '#10B981');
+      }
     }
     
     if (levelDesc) {
-      levelDesc.textContent = isHighUv 
-        ? 'Perlindungan diperlukan. Gunakan sunscreen SPF 30+ setiap 2 jam.' 
-        : (uvIndex >= 3 ? 'Gunakan sunscreen jika beraktivitas di luar.' : 'Indeks UV aman. Perlindungan ringan cukup.');
+      if (isNightTimeVal) {
+        levelDesc.textContent = 'Sudah malam hari. Sunscreen tidak diperlukan saat ini. Selamat beristirahat!';
+      } else {
+        levelDesc.textContent = isHighUv 
+          ? 'Perlindungan diperlukan. Gunakan sunscreen SPF 30+ setiap 2 jam.' 
+          : (uvIndex >= 3 ? 'Gunakan sunscreen jika beraktivitas di luar.' : 'Indeks UV aman. Perlindungan ringan cukup.');
+      }
     }
 
     const fill = page.querySelector('#uv-gauge-fill');
@@ -450,12 +463,21 @@ export function renderSunscreenAlarm() {
       const offset = 251 - (251 * percent);
       fill.style.strokeDashoffset = offset;
       
-      if (isHighUv) {
+      if (isNightTimeVal) {
+        fill.style.stroke = '#38BDF8';
+      } else if (isHighUv) {
         fill.style.stroke = '#EF4444';
       } else if (uvIndex >= 3) {
         fill.style.stroke = '#F59E0B';
       } else {
         fill.style.stroke = '#10B981';
+      }
+
+      if (isNightTimeVal) {
+        const sunAnim = page.querySelector('.sun-animated');
+        if (sunAnim) {
+          sunAnim.style.display = 'none';
+        }
       }
 
       let current = 0;
@@ -470,14 +492,39 @@ export function renderSunscreenAlarm() {
 
   // Initialize countdown labels
   const nextTextEl = page.querySelector('#alarm-next-text');
+  const alarmHeaderSpan = page.querySelector('.alarm-card-header span');
+
   if (nextTextEl) {
-    nextTextEl.textContent = `Oles ulang sunscreen pukul ${initialSchedule.timeStr}${initialSchedule.isTomorrow ? ' (Besok)' : ''}`;
+    if (isNightTime) {
+      nextTextEl.textContent = `Kembali aktif pukul 07:00 besok pagi`;
+      if (alarmHeaderSpan) {
+        alarmHeaderSpan.innerHTML = 'Mode Malam Aktif';
+      }
+    } else {
+      nextTextEl.textContent = `Oles ulang sunscreen pukul ${initialSchedule.timeStr}${initialSchedule.isTomorrow ? ' (Besok)' : ''}`;
+    }
   }
 
   // Countdown timer
   const countdownEl = page.querySelector('#countdown');
   
   const timerInterval = setInterval(() => {
+    const curHour = new Date().getHours();
+    const curNight = curHour >= 18 || curHour < 6;
+    
+    if (curNight) {
+      if (countdownEl) {
+        countdownEl.textContent = 'MALAM';
+      }
+      if (nextTextEl) {
+        nextTextEl.textContent = `Kembali aktif pukul 07:00 besok pagi`;
+      }
+      if (alarmHeaderSpan) {
+        alarmHeaderSpan.innerHTML = 'Mode Malam Aktif';
+      }
+      return;
+    }
+
     if (seconds > 0) {
       seconds--;
       const h = Math.floor(seconds / 3600);

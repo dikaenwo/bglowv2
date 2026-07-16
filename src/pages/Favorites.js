@@ -67,8 +67,12 @@ export function renderFavorites() {
               <button class="remove-fav-btn" data-idx="${i}" style="position: absolute; top: 8px; right: 8px; background: white; border: none; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.1); cursor: pointer; color: #f43f5e; z-index: 10; padding: 0;">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" stroke="currentColor" stroke-width="0"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
               </button>
-              <div class="product-img" style="background:${p.bgColor || '#F1F5F9'}; height: 120px; display: flex; align-items: center; justify-content: center; font-size: 3rem;">
-                <div class="img-placeholder">${p.emoji || '🧴'}</div>
+              <div class="product-img" style="background:${p.bgColor || '#F1F5F9'}; height: 120px; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative;">
+                ${p.image_url && p.image_url !== 'nan'
+                  ? `<img src="${p.image_url}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+                     <div class="img-placeholder" style="display:none; font-size: 3rem;">${p.emoji || '🧴'}</div>`
+                  : `<div class="img-placeholder" style="font-size: 3rem;">${p.emoji || '🧴'}</div>`
+                }
               </div>
               <div class="product-info" style="padding: 12px; display: flex; flex-direction: column; flex-grow: 1;">
                 <div class="product-name" style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 34px;">${p.name}</div>

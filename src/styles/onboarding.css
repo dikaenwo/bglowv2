@@ -927,3 +927,225 @@
   50% { content: '75%'; opacity: 0.8; }
   100% { content: '100%'; opacity: 1; scale: 1.05; }
 }
+
+/* Custom list goal options and choice cards */
+.ob-goal-option-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border: 1.5px solid var(--border-light) !important;
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.ob-goal-option-card:hover {
+  border-color: var(--primary-light) !important;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+.ob-goal-option-card.active {
+  border-color: var(--primary) !important;
+  background: var(--bg-soft) !important;
+}
+
+.ob-choice-card {
+  padding: 16px;
+  border: 1.5px solid var(--border) !important;
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--font-sm);
+  text-align: left;
+  transition: all 0.2s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow-sm);
+}
+.ob-choice-card:hover {
+  border-color: var(--primary-light) !important;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+.ob-choice-card.active {
+  border-color: var(--primary) !important;
+  background: var(--bg-soft) !important;
+}
+
+/* ─── Unified Card Hover & Active States (Blue Pill style matching screenshot) ─── */
+.ob-option-card::before,
+.ob-goal-option-card::before,
+.ob-choice-card::before {
+  display: none !important;
+}
+
+.ob-option-card:hover,
+.ob-goal-option-card:hover,
+.ob-choice-card:hover,
+.ob-skin-pill:hover {
+  border-color: var(--primary) !important;
+  background: var(--bg-overlay) !important;
+  color: var(--primary-dark) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08) !important;
+}
+
+.ob-option-card.active,
+.ob-goal-option-card.active,
+.ob-choice-card.active,
+.ob-skin-pill.active {
+  border-color: var(--primary) !important;
+  background: var(--bg-overlay) !important;
+  color: var(--primary-dark) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 0 1px var(--primary-light), 0 4px 12px rgba(59, 130, 246, 0.12) !important;
+  transform: scale(1.01) !important;
+}
+
+/* Nested element color updates on Hover & Active */
+.ob-option-card:hover .ob-option-text,
+.ob-option-card.active .ob-option-text {
+  color: var(--primary-dark) !important;
+}
+.ob-option-card:hover .ob-option-desc,
+.ob-option-card.active .ob-option-desc {
+  color: var(--primary) !important;
+}
+
+.ob-goal-option-card:hover span,
+.ob-goal-option-card.active span,
+.ob-choice-card:hover span,
+.ob-choice-card.active span {
+  color: var(--primary-dark) !important;
+}
+
+/* ─── Skin Profile Step 11: Pill Grid Layout ─── */
+.ob-profile-section {
+  margin-bottom: 20px;
+}
+
+.ob-profile-section-title {
+  font-size: var(--font-sm);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.ob-skin-pill-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.ob-skin-pill {
+  padding: 11px 14px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-full);
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all var(--duration-fast) var(--ease-smooth);
+  user-select: none;
+}
+
+.ob-pill-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: inherit;
+  transition: color var(--duration-fast) var(--ease-smooth);
+}
+
+.ob-pill-icon svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 2.2px;
+  transition: all var(--duration-fast) var(--ease-smooth);
+}
+
+/* Custom premium colored icons for skin types */
+.ob-skin-type-pill[data-skin-type="Normal"] .ob-pill-icon svg {
+  stroke: #F59E0B !important;
+  fill: rgba(245, 158, 11, 0.12) !important;
+}
+.ob-skin-type-pill[data-skin-type="Berminyak"] .ob-pill-icon svg {
+  stroke: #3B82F6 !important;
+  fill: rgba(59, 130, 246, 0.12) !important;
+}
+.ob-skin-type-pill[data-skin-type="Kombinasi"] .ob-pill-icon svg {
+  stroke: #8B5CF6 !important;
+  fill: rgba(139, 92, 246, 0.12) !important;
+}
+.ob-skin-type-pill[data-skin-type="Kering"] .ob-pill-icon svg {
+  stroke: #10B981 !important;
+  fill: rgba(16, 185, 129, 0.12) !important;
+}
+.ob-skin-type-pill[data-skin-type="Sensitif"] .ob-pill-icon svg {
+  stroke: #EF4444 !important;
+  fill: rgba(239, 68, 68, 0.12) !important;
+}
+
+/* Custom premium colored icons for skin problems */
+.ob-skin-problem-pill[data-problem="Berjerawat"] .ob-pill-icon svg {
+  stroke: #EF4444 !important;
+  fill: rgba(239, 68, 68, 0.12) !important;
+}
+.ob-skin-problem-pill[data-problem="PIE"] .ob-pill-icon svg {
+  stroke: #EC4899 !important;
+  fill: rgba(236, 72, 153, 0.12) !important;
+}
+.ob-skin-problem-pill[data-problem="PIH"] .ob-pill-icon svg {
+  stroke: #F97316 !important;
+  fill: rgba(249, 115, 22, 0.12) !important;
+}
+.ob-skin-problem-pill[data-problem="Aging"] .ob-pill-icon svg {
+  stroke: #8B5CF6 !important;
+  fill: rgba(139, 92, 246, 0.12) !important;
+}
+.ob-skin-problem-pill[data-problem="Kusam"] .ob-pill-icon svg {
+  stroke: #9CA3AF !important;
+  fill: rgba(156, 163, 175, 0.12) !important;
+}
+.ob-skin-problem-pill[data-problem="Kemerahan"] .ob-pill-icon svg {
+  stroke: #EF4444 !important;
+  fill: rgba(239, 68, 68, 0.12) !important;
+}
+
+.ob-pill-label {
+  font-size: var(--font-sm);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.ob-skin-pill:hover {
+  border-color: var(--primary) !important;
+  color: var(--primary-dark) !important;
+  background: var(--bg-overlay) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08) !important;
+}
+
+.ob-skin-pill.active {
+  border-color: var(--primary) !important;
+  color: var(--primary-dark) !important;
+  background: var(--bg-overlay) !important;
+  font-weight: 700;
+  box-shadow: 0 0 0 1px var(--primary-light), 0 4px 12px rgba(59, 130, 246, 0.12) !important;
+}
+
+.ob-skin-pill.active .ob-pill-label {
+  font-weight: 700;
+}
+

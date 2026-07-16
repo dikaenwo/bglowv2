@@ -122,10 +122,13 @@ export function renderSubscription() {
 
   // CTA buttons
   page.querySelectorAll('.plan-cta-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
+    btn.addEventListener('click', async (e) => {
       e.stopPropagation();
       const planId = btn.dataset.plan;
       if (planId === 'basic') return;
+
+      const { setSubscriptionPlan } = await import('../utils/store.js');
+      setSubscriptionPlan(planId);
 
       // Show a simple confirmation toast
       const toast = document.createElement('div');
@@ -141,7 +144,11 @@ export function renderSubscription() {
       `;
       toast.textContent = planId === 'glow-plus' ? '✨ Mengaktifkan Glow Plus...' : '👑 Mengaktifkan Flawless...';
       document.body.appendChild(toast);
-      setTimeout(() => toast.remove(), 2500);
+      
+      setTimeout(() => {
+        toast.remove();
+        window.location.hash = '#/';
+      }, 1500);
     });
   });
 

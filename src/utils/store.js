@@ -340,3 +340,18 @@ export async function syncUserData(fields) {
     }
   }
 }
+
+export function getSubscriptionPlan() {
+  const userId = getUserId();
+  return localStorage.getItem('bglow_subscription_plan_' + userId) || 'basic';
+}
+
+export function isPremium() {
+  const plan = getSubscriptionPlan();
+  return plan === 'glow-plus' || plan === 'flawless';
+}
+
+export function setSubscriptionPlan(planId) {
+  const userId = getUserId();
+  localStorage.setItem('bglow_subscription_plan_' + userId, planId);
+}

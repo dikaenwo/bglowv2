@@ -23,6 +23,40 @@
   border-radius: 50%;
 }
 
+/* Night Blue Theme for UV Dashboard */
+.uv-dashboard.night-theme {
+  background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 50%, #3B82F6 100%);
+  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.2);
+}
+
+.uv-dashboard.night-theme::before {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.uv-dashboard.night-theme .uv-dash-header .uv-title {
+  color: #FFFFFF;
+}
+
+.uv-dashboard.night-theme .uv-dash-header .uv-date {
+  color: #BFDBFE;
+}
+
+.uv-dashboard.night-theme .gauge-bg {
+  stroke: rgba(255, 255, 255, 0.2);
+}
+
+.uv-dashboard.night-theme .gauge-number {
+  color: #FFFFFF;
+}
+
+.uv-dashboard.night-theme .gauge-label {
+  color: #BFDBFE;
+}
+
+.uv-dashboard.night-theme .uv-level-desc {
+  color: #E0F2FE;
+}
+
 .uv-dash-header {
   display: flex;
   align-items: center;

@@ -67,8 +67,14 @@ const exfoliationIcon = `
 </svg>
 `;
 
+const trendingIcon = `
+<svg viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 32px; height: 32px;">
+  <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+</svg>
+`;
+
 const categories = [
-  { id: 'cleanser',    label: 'Cleansers',  icon: cleanserIcon,    colorClass: 'cat-cleanser' },
+  { id: 'cleanser',    label: 'Pembersih',  icon: cleanserIcon,    colorClass: 'cat-cleanser' },
   { id: 'moisturizer', label: 'Pelembab',   icon: moisturizerIcon, colorClass: 'cat-moisturizer' },
   { id: 'serum',       label: 'Serum',      icon: serumIcon,       colorClass: 'cat-serum' },
   { id: 'sunscreen',   label: 'Sunscreen',  icon: sunscreenIcon,   colorClass: 'cat-sunscreen' },
@@ -188,7 +194,12 @@ export function renderRecommendations() {
     } catch (_) {}
   }
 
-  let currentCat  = 'cleanser';
+  // Parse query params from hash
+  const hashPart = window.location.hash.split('?')[1] || '';
+  const urlParams = new URLSearchParams(hashPart);
+  const initialCategory = urlParams.get('category');
+
+  let currentCat  = initialCategory || 'cleanser';
   let filterMin   = null;
   let filterMax   = null;
   let allProducts = [];
@@ -200,21 +211,53 @@ export function renderRecommendations() {
     renderShell(kategori, [], true);
 
     try {
-      const body = {
-        jenis_kulit,
-        permasalahan: JSON.stringify(permasalahan),
-        kategori,
-        limit: 50,
-      };
-      const resp = await fetch(RECOMMENDATIONS_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+      if (kategori === 'trending') {
+        const categoriesToFetch = ['sunscreen', 'cleanser', 'moisturizer', 'serum'];
+        const fetchPromises = categoriesToFetch.map(async (cat) => {
+          try {
+            const body = {
+              jenis_kulit,
+              permasalahan: JSON.stringify(permasalahan),
+              kategori: cat,
+              limit: 15,
+            };
+            const resp = await fetch(RECOMMENDATIONS_API_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
+            });
+            if (!resp.ok) return [];
+            const d = await resp.json();
+            return d.products || [];
+          } catch (e) {
+            return [];
+          }
+        });
 
-      if (!resp.ok) throw new Error(`Server error ${resp.status}`);
-      const data = await resp.json();
-      allProducts = data.products || [];
+        const results = await Promise.all(fetchPromises);
+        let merged = [].concat(...results);
+
+        // Sort descending by match score
+        merged.sort((a, b) => b.score - a.score);
+
+        allProducts = merged.slice(0, 20);
+      } else {
+        const body = {
+          jenis_kulit,
+          permasalahan: JSON.stringify(permasalahan),
+          kategori,
+          limit: 50,
+        };
+        const resp = await fetch(RECOMMENDATIONS_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+
+        if (!resp.ok) throw new Error(`Server error ${resp.status}`);
+        const data = await resp.json();
+        allProducts = data.products || [];
+      }
     } catch (err) {
       console.error('[Rekomendasi] Fetch error:', err);
       allProducts = [];
@@ -230,9 +273,11 @@ export function renderRecommendations() {
     if (filterMin !== null) filtered = filtered.filter(p => p.price >= filterMin);
     if (filterMax !== null) filtered = filtered.filter(p => p.price <= filterMax);
 
+    const titleText = kategori === 'trending' ? 'Trending Harian' : 'Rekomendasi ' + (categories.find(c => c.id === kategori)?.label || '');
+
     page.innerHTML = `
       <div class="page-header" style="margin-bottom: 8px; justify-content: center;">
-        <h1 style="text-align: center; width: 100%;">Rekomendasi ${categories.find(c => c.id === kategori)?.label || ''}</h1>
+        <h1 style="text-align: center; width: 100%;">${titleText}</h1>
       </div>
 
       <!-- Skin context banner (Removed) -->

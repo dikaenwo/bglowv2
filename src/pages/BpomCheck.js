@@ -1,5 +1,5 @@
 import { icons } from '../components/BottomNav.js';
-import { Html5Qrcode } from 'html5-qrcode';
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import { BPOM_API_URL, API_BASE_URL } from '../config.js';
 import { getUserId, getAuthHeaders } from '../utils/store.js';
 
@@ -210,7 +210,9 @@ export function renderBpomCheck() {
   }
 
   function startScanner() {
-    html5QrCode = new Html5Qrcode("reader");
+    html5QrCode = new Html5Qrcode("reader", {
+      formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ]
+    });
     const config = { fps: 10, qrbox: { width: 250, height: 250 } };
     
     html5QrCode.start({ facingMode: "environment" }, config,

@@ -110,14 +110,15 @@ const retinolIcon = `
 
 const eyeCreamIcon = `
 <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <g transform="translate(10, 48) rotate(-45)">
-    <path d="M0 0 L10 -36 L26 -36 L36 0 Z" fill="#ECFEFF" stroke="#0891B2" stroke-width="2.5" stroke-linejoin="round" />
-    <rect x="10" y="-42" width="16" height="6" fill="#67E8F9" stroke="#0891B2" stroke-width="2.5" />
-  </g>
-  <path d="M36 24 C40 18, 52 18, 56 24 C52 30, 40 30, 36 24 Z" fill="white" stroke="#0891B2" stroke-width="2" />
-  <circle cx="46" cy="24" r="3" fill="#67E8F9" stroke="#0891B2" stroke-width="1.8" />
+  <path d="M22 18 H42 L38 46 H26 Z" fill="#E0F7FA" stroke="#0891B2" stroke-width="2.5" stroke-linejoin="round" />
+  <path d="M27 46 H37 L35 54 H29 Z" fill="#67E8F9" stroke="#0891B2" stroke-width="2" stroke-linejoin="round" />
+  <path d="M26 30 C28 26, 36 26, 38 30 C36 34, 28 34, 26 30 Z" fill="white" stroke="#0891B2" stroke-width="2" stroke-linejoin="round" />
+  <circle cx="32" cy="30" r="2.5" fill="#67E8F9" stroke="#0891B2" stroke-width="1.5" />
+  <path d="M46 16 L49 19 L46 22 L43 19 Z" fill="#FCD34D" />
+  <path d="M14 24 L16 26 L14 28 L12 26 Z" fill="#FCD34D" />
 </svg>
 `;
+
 
 const lainnyaIcon = `
 <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -142,7 +143,7 @@ const stepTypes = [
   { label: 'Lainnya', icon: lainnyaIcon, emoji: '✨', bg: '#F5F5F5' },
 ];
 
-function getStepIcon(label, fallbackEmoji, productName = '') {
+export function getStepIcon(label, fallbackEmoji, productName = '') {
   let matchedLabel = label;
 
   const labelLower = (label || '').toLowerCase();
