@@ -168,6 +168,7 @@ export function renderLogin() {
         if (data.user.profile_photo) {
           localStorage.setItem('bglow_profile_photo_' + data.user.id, data.user.profile_photo);
         }
+        localStorage.setItem('bglow_onboarded', '1'); // Bypasses onboarding force for direct login
         if (data.user.skin_type) {
           localStorage.setItem('bglow_has_scanned_' + data.user.id, '1');
           localStorage.setItem('bglow_skin_type_' + data.user.id, data.user.skin_type);
@@ -175,9 +176,6 @@ export function renderLogin() {
           localStorage.setItem('bglow_oil_level_' + data.user.id, data.user.oil_level);
           localStorage.setItem('bglow_pore_condition_' + data.user.id, data.user.pore_condition);
           localStorage.setItem('bglow_skin_score_' + data.user.id, data.user.skin_score);
-          localStorage.setItem('bglow_onboarded', '1');
-        } else {
-          localStorage.removeItem('bglow_onboarded');
         }
         if (data.user.sunscreen_interval) {
           localStorage.setItem('bglow_sunscreen_interval_' + data.user.id, data.user.sunscreen_interval);
@@ -200,7 +198,7 @@ export function renderLogin() {
         if (data.user.routine_progress) {
           localStorage.setItem('bglow_routine_progress_' + data.user.id, data.user.routine_progress);
         }
-        window.location.hash = data.user.skin_type ? '#/' : '#/onboarding';
+        window.location.hash = '#/';
       } else {
         const detail = data.detail || '';
         if (detail.includes('Email tidak ditemukan')) {
@@ -243,6 +241,7 @@ export function renderLogin() {
         if (data.user.profile_photo) {
           localStorage.setItem('bglow_profile_photo_' + data.user.id, data.user.profile_photo);
         }
+        localStorage.setItem('bglow_onboarded', '1'); // Bypasses onboarding force for direct login
         if (data.user.skin_type) {
           localStorage.setItem('bglow_has_scanned_' + data.user.id, '1');
           localStorage.setItem('bglow_skin_type_' + data.user.id, data.user.skin_type);
@@ -250,9 +249,6 @@ export function renderLogin() {
           localStorage.setItem('bglow_oil_level_' + data.user.id, data.user.oil_level);
           localStorage.setItem('bglow_pore_condition_' + data.user.id, data.user.pore_condition);
           localStorage.setItem('bglow_skin_score_' + data.user.id, data.user.skin_score);
-          localStorage.setItem('bglow_onboarded', '1');
-        } else {
-          localStorage.removeItem('bglow_onboarded');
         }
         if (data.user.sunscreen_interval) {
           localStorage.setItem('bglow_sunscreen_interval_' + data.user.id, data.user.sunscreen_interval);
@@ -275,7 +271,7 @@ export function renderLogin() {
         if (data.user.routine_progress) {
           localStorage.setItem('bglow_routine_progress_' + data.user.id, data.user.routine_progress);
         }
-        window.location.hash = data.user.skin_type ? '#/' : '#/onboarding';
+        window.location.hash = '#/';
       } else {
         showCustomAlert(data.detail || "Social login gagal", "Autentikasi Gagal");
       }
