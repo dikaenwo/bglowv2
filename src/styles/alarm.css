@@ -41,6 +41,10 @@
   color: #BFDBFE;
 }
 
+.uv-dashboard.night-theme .uv-dash-header .uv-location {
+  color: #BFDBFE;
+}
+
 .uv-dashboard.night-theme .gauge-bg {
   stroke: rgba(255, 255, 255, 0.2);
 }
@@ -73,6 +77,16 @@
 .uv-dash-header .uv-date {
   font-size: var(--font-xs);
   color: #A16207;
+}
+
+.uv-dash-header .uv-location {
+  font-size: var(--font-xs);
+  color: #A16207;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  opacity: 0.85;
 }
 
 .uv-gauge-wrap {

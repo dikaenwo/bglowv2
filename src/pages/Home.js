@@ -580,7 +580,7 @@ async function renderSkinLabWidget(container, userId) {
   
   if (!hasScanned) {
     container.innerHTML = `
-      <h3 class="skinlab-title">🔬 SkinLab Personal</h3>
+      <h3 class="skinlab-title">🔬 Rekomendasi Produk</h3>
       <p class="skinlab-subtitle">Rekomendasi skincare yang dicocokkan khusus untuk kondisi kulit Anda.</p>
       <div style="display:flex; flex-direction:column; align-items:center; padding: 24px; text-align:center; background:#faf5ff; border: 1px dashed #d8b4fe; border-radius:18px;">
         <span style="font-size:2rem; margin-bottom:8px;">🔬</span>
@@ -731,7 +731,7 @@ async function renderSkinLabWidget(container, userId) {
   }
 
   container.innerHTML = `
-    <h3 class="skinlab-title">🔬 SkinLab Personal</h3>
+    <h3 class="skinlab-title">🔬 Rekomendasi Produk</h3>
     <p class="skinlab-subtitle">Rekomendasi skincare yang paling cocok dengan jenis kulitmu.</p>
     <div style="height:120px; display:flex; align-items:center; justify-content:center; color:#94a3b8; font-size:0.85rem;">⏳ Menganalisis kecocokan...</div>
   `;
@@ -828,7 +828,7 @@ async function renderSkinLabWidget(container, userId) {
 
   if (!cleansersHTML && !moisturizersHTML) {
     container.innerHTML = `
-      <h3 class="skinlab-title">🔬 SkinLab Personal</h3>
+      <h3 class="skinlab-title">🔬 Rekomendasi Produk</h3>
       <p class="skinlab-subtitle">Rekomendasi skincare yang paling cocok dengan jenis kulitmu.</p>
       <div style="padding:20px; text-align:center; color:#64748b; font-size:0.8rem;">Tidak ada rekomendasi yang tersedia saat ini.</div>
     `;
@@ -836,7 +836,7 @@ async function renderSkinLabWidget(container, userId) {
   }
 
   container.innerHTML = `
-    <h3 class="skinlab-title">🔬 SkinLab Personal</h3>
+    <h3 class="skinlab-title">🔬 Rekomendasi Produk</h3>
     <p class="skinlab-subtitle">Rekomendasi skincare yang paling cocok dengan jenis kulitmu.</p>
     ${cleansersHTML}
     ${moisturizersHTML}

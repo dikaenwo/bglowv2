@@ -115,7 +115,13 @@ export function renderSunscreenAlarm() {
       <!-- Dasbor UV -->
       <div class="uv-dashboard ${isNightTime ? 'night-theme' : ''} anim-fade-in-up">
         <div class="uv-dash-header">
-          <div class="uv-title">Indeks UV</div>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <div class="uv-title">Indeks UV</div>
+            <div class="uv-location" id="uv-location-text">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; flex-shrink: 0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              <span id="uv-location-val">Mendeteksi lokasi...</span>
+            </div>
+          </div>
           <div class="uv-date">${now.toLocaleDateString('id-ID', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
         </div>
         <div class="uv-gauge-wrap">
@@ -431,6 +437,11 @@ export function renderSunscreenAlarm() {
     const uvIndex = w.uvIndex;
     const isHighUv = uvIndex >= 6;
     
+    const locationValEl = page.querySelector('#uv-location-val');
+    if (locationValEl) {
+      locationValEl.textContent = w.locationName || 'Lokasi tidak diketahui';
+    }
+    
     const levelText = page.querySelector('#uv-level-text');
     const levelDesc = page.querySelector('#uv-level-desc');
     const currentHourLocal = new Date().getHours();
@@ -441,7 +452,8 @@ export function renderSunscreenAlarm() {
         levelText.textContent = 'Malam Hari';
         levelText.style.color = '#C7D2FE';
       } else {
-        levelText.textContent = isHighUv ? 'Tinggi' : (uvIndex >= 3 ? 'Sedang' : 'Rendah');
+        const baseLevel = isHighUv ? 'Tinggi' : (uvIndex >= 3 ? 'Sedang' : 'Rendah');
+        levelText.textContent = w.condition ? `${baseLevel} • ${w.condition}` : baseLevel;
         levelText.style.color = isHighUv ? '#EF4444' : (uvIndex >= 3 ? '#F59E0B' : '#10B981');
       }
     }
@@ -450,9 +462,31 @@ export function renderSunscreenAlarm() {
       if (isNightTimeVal) {
         levelDesc.textContent = 'Sudah malam hari. Sunscreen tidak diperlukan saat ini. Selamat beristirahat!';
       } else {
-        levelDesc.textContent = isHighUv 
-          ? 'Perlindungan diperlukan. Gunakan sunscreen SPF 30+ setiap 2 jam.' 
-          : (uvIndex >= 3 ? 'Gunakan sunscreen jika beraktivitas di luar.' : 'Indeks UV aman. Perlindungan ringan cukup.');
+        // Base protection advice
+        let baseAdvice = '';
+        if (isHighUv) {
+          baseAdvice = 'Perlindungan diperlukan. Gunakan sunscreen SPF 30+ setiap 2 jam.';
+        } else if (uvIndex >= 3) {
+          baseAdvice = 'Gunakan sunscreen jika beraktivitas di luar.';
+        } else {
+          baseAdvice = 'Indeks UV aman. Perlindungan ringan cukup.';
+        }
+        
+        // Dynamically customize advice depending on weather condition
+        if (w.condition) {
+          const condLower = w.condition.toLowerCase();
+          if (condLower.includes('hujan') || condLower.includes('badai')) {
+            levelDesc.textContent = `Cuaca sedang ${w.condition}. Meskipun mendung atau hujan, radiasi UV tetap menembus awan. ${baseAdvice}`;
+          } else if (condLower.includes('berawan') || condLower.includes('kabut')) {
+            levelDesc.textContent = `Cuaca sedang ${w.condition}. Sinar UV masih bisa menembus lapisan awan tipis. ${baseAdvice}`;
+          } else if (condLower.includes('cerah')) {
+            levelDesc.textContent = `Cuaca sedang ${w.condition} terik. Radiasi UV langsung terpancar. ${baseAdvice}`;
+          } else {
+            levelDesc.textContent = `Cuaca ${w.condition}. ${baseAdvice}`;
+          }
+        } else {
+          levelDesc.textContent = baseAdvice;
+        }
       }
     }
 

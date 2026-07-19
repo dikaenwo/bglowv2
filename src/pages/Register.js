@@ -1,6 +1,7 @@
 import { icons } from '../components/BottomNav.js';
 import { showCustomAlert } from '../utils/helpers.js';
 import { API_BASE_URL } from '../config.js';
+import { clearUserData } from '../utils/store.js';
 
 export function renderRegister() {
   const page = document.createElement('div');
@@ -126,9 +127,40 @@ export function renderRegister() {
       const data = await response.json();
       
       if (response.ok) {
-        showCustomAlert("Pendaftaran berhasil! Silakan masuk.", "Pendaftaran Sukses", () => {
-          window.location.hash = '#/login';
-        });
+        // Auto-login the user immediately to clear previous session and go straight to onboarding
+        try {
+          const loginRes = await fetch(`${API_BASE_URL}/api/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+          const loginData = await loginRes.json();
+          if (loginRes.ok) {
+            clearUserData();
+            localStorage.setItem('bglow_auth', '1');
+            if (loginData.token) {
+              localStorage.setItem('bglow_token', loginData.token);
+            }
+            localStorage.setItem('bglow_user', JSON.stringify({ 
+              id: loginData.user.id,
+              name: loginData.user.name, 
+              email: loginData.user.email 
+            }));
+            localStorage.removeItem('bglow_onboarded');
+            
+            showCustomAlert("Pendaftaran berhasil! Memulai kuis onboarding Anda...", "Pendaftaran Sukses", () => {
+              window.location.hash = '#/onboarding';
+            });
+          } else {
+            showCustomAlert("Pendaftaran berhasil! Silakan masuk.", "Pendaftaran Sukses", () => {
+              window.location.hash = '#/login';
+            });
+          }
+        } catch (e) {
+          showCustomAlert("Pendaftaran berhasil! Silakan masuk.", "Pendaftaran Sukses", () => {
+            window.location.hash = '#/login';
+          });
+        }
       } else {
         const detail = data.detail || '';
         if (detail.includes('Email sudah terdaftar')) {
