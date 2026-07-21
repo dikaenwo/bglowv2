@@ -136,6 +136,7 @@
   line-height: 1.7;
   margin: 0 auto;
   max-width: 280px;
+  text-align: center;
   animation: introTextFade 0.5s var(--ease-out) 0.25s both;
 }
 
