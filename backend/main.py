@@ -24,6 +24,13 @@ if os.path.exists(_env_path):
 else:
     load_dotenv()
 
+# Auto-initialize database tables if missing
+try:
+    from init_db import init_database
+    init_database()
+except Exception as db_init_err:
+    print(f"[WARN] Gagal melakukan inisialisasi database otomatis: {db_init_err}")
+
 app = Flask(__name__)
 
 # ─── CORS ───────────────────────────────────────────────────────────────────
