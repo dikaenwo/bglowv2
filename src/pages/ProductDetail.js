@@ -55,10 +55,9 @@ const STATUS_CONFIG = {
 
 // ─── WSM Criteria Labels ──────────────────────────────────────────────────────
 const WSM_CRITERIA = [
-  { key: 'C1', label: 'Kecocokan Jenis Kulit', weight: 0.25 },
-  { key: 'C2', label: 'Kecocokan Masalah Kulit', weight: 0.30 },
-  { key: 'C3', label: 'Posisi Ingredien', weight: 0.20 },
-  { key: 'C4', label: 'Keamanan Ingredien', weight: 0.25 },
+  { key: 'C1', label: 'Kecocokan Jenis Kulit', weight: 0.3333 },
+  { key: 'C2', label: 'Kecocokan Masalah Kulit', weight: 0.4000 },
+  { key: 'C3', label: 'Posisi Ingredien', weight: 0.2667 },
 ];
 
 const fallbackBottleIcon = `<svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.6;"><path d="M12 2v4M8 6h8v14a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2V6z"/></svg>`;
@@ -235,7 +234,7 @@ export function renderProductDetail() {
 
             <!-- WSM Criteria Breakdown -->
             <div class="wsm-criteria-section">
-              <div class="wsm-criteria-title">Breakdown 4 Kriteria</div>
+              <div class="wsm-criteria-title">Breakdown 3 Kriteria</div>
               ${criteriaHtml}
               <div class="wsm-criteria-row wsm-total-row">
                 <div class="wsm-criteria-label">
@@ -282,7 +281,7 @@ export function renderProductDetail() {
         <div class="pd-section">
           <h3 class="pd-section-title">Tentang Penilaian WSM</h3>
           <p class="pd-text-sm" style="line-height:1.6;">
-            Skor dihitung menggunakan <strong>Weighted Sum Model (WSM)</strong> dengan 4 kriteria tertimbang.
+            Skor dihitung menggunakan <strong>Weighted Sum Model (WSM)</strong> dengan 3 kriteria tertimbang.
             Setiap ingredien dianalisis terhadap database 10.000+ bahan aktif skincare.
             Posisi ingredien di dalam daftar komposisi (<em>ingredients order</em>) juga diperhitungkan — ingredien di posisi awal memiliki konsentrasi lebih tinggi.
           </p>

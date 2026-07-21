@@ -63,9 +63,10 @@
 
 .uv-dash-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   margin-bottom: var(--space-lg);
+  gap: var(--space-sm);
 }
 
 .uv-dash-header .uv-title {
@@ -76,7 +77,12 @@
 
 .uv-dash-header .uv-date {
   font-size: var(--font-xs);
+  font-weight: 600;
   color: #A16207;
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-align: right;
+  margin-top: 2px;
 }
 
 .uv-dash-header .uv-location {
@@ -94,33 +100,6 @@
 
 .uv-dash-header .uv-location:hover {
   opacity: 1;
-}
-
-.uv-location-action-btn {
-  margin-left: 6px;
-  font-size: 9px;
-  padding: 2px 8px;
-  background: rgba(120, 53, 15, 0.1);
-  border-radius: var(--radius-sm);
-  color: #78350F;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  transition: all 0.2s ease;
-}
-
-.uv-location-action-btn:hover {
-  background: rgba(120, 53, 15, 0.2);
-}
-
-.uv-dashboard.night-theme .uv-location-action-btn {
-  background: rgba(255, 255, 255, 0.15);
-  color: #FFFFFF;
-}
-
-.uv-dashboard.night-theme .uv-location-action-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
 }
 
 

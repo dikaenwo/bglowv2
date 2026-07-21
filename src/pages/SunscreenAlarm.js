@@ -120,7 +120,6 @@ export function renderSunscreenAlarm() {
             <div class="uv-location" id="uv-location-text" title="Klik untuk memperbarui lokasi">
               <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; flex-shrink: 0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
               <span id="uv-location-val">Mendeteksi lokasi...</span>
-              <span class="uv-location-action-btn" id="uv-location-action-btn" style="display: none;">Aktifkan GPS</span>
             </div>
           </div>
           <div class="uv-date">${now.toLocaleDateString('id-ID', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
@@ -441,18 +440,6 @@ export function renderSunscreenAlarm() {
     const locationValEl = page.querySelector('#uv-location-val');
     if (locationValEl) {
       locationValEl.textContent = w.locationName || 'Lokasi tidak diketahui';
-    }
-
-    // Toggle the GPS action button or refresh action depending on whether it is default location
-    const actionBtnEl = page.querySelector('#uv-location-action-btn');
-    if (actionBtnEl) {
-      if (w.isDefaultLocation) {
-        actionBtnEl.textContent = 'Aktifkan GPS';
-        actionBtnEl.style.display = 'inline-flex';
-      } else {
-        actionBtnEl.textContent = 'Perbarui';
-        actionBtnEl.style.display = 'inline-flex';
-      }
     }
     
     const levelText = page.querySelector('#uv-level-text');

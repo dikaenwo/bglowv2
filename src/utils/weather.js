@@ -21,7 +21,11 @@ export async function fetchWeather(customLat = null, customLon = null) {
     } else {
       try {
         const pos = await new Promise((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 3000 });
+          navigator.geolocation.getCurrentPosition(resolve, reject, { 
+            enableHighAccuracy: true,
+            timeout: 8000,
+            maximumAge: 60000 
+          });
         });
         lat = pos.coords.latitude;
         lon = pos.coords.longitude;
