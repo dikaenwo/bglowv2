@@ -87,7 +87,42 @@
   gap: 4px;
   font-weight: 600;
   opacity: 0.85;
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 0.2s ease;
 }
+
+.uv-dash-header .uv-location:hover {
+  opacity: 1;
+}
+
+.uv-location-action-btn {
+  margin-left: 6px;
+  font-size: 9px;
+  padding: 2px 8px;
+  background: rgba(120, 53, 15, 0.1);
+  border-radius: var(--radius-sm);
+  color: #78350F;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  transition: all 0.2s ease;
+}
+
+.uv-location-action-btn:hover {
+  background: rgba(120, 53, 15, 0.2);
+}
+
+.uv-dashboard.night-theme .uv-location-action-btn {
+  background: rgba(255, 255, 255, 0.15);
+  color: #FFFFFF;
+}
+
+.uv-dashboard.night-theme .uv-location-action-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
 
 .uv-gauge-wrap {
   display: flex;

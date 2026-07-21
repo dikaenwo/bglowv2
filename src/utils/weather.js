@@ -1,20 +1,39 @@
 // Kunci API OpenWeatherMap — Silakan isi dengan API Key Anda agar data UV Index terhubung secara langsung
 const OPENWEATHER_API_KEY = 'YOUR_OPENWEATHER_API_KEY';
 
-export async function fetchWeather() {
+export async function fetchWeather(customLat = null, customLon = null) {
   let lat = -6.2088; // Default Jakarta
   let lon = 106.8456;
   let isDefaultLocation = true;
   
-  try {
-    const pos = await new Promise((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
-    });
-    lat = pos.coords.latitude;
-    lon = pos.coords.longitude;
+  if (customLat !== null && customLon !== null) {
+    lat = customLat;
+    lon = customLon;
     isDefaultLocation = false;
-  } catch(e) {
-    console.warn("Geolocation tidak diizinkan atau timeout:", e);
+  } else {
+    // Check localStorage first to speed up load time
+    const storedLat = localStorage.getItem('bglow_user_lat');
+    const storedLon = localStorage.getItem('bglow_user_lon');
+    if (storedLat && storedLon) {
+      lat = parseFloat(storedLat);
+      lon = parseFloat(storedLon);
+      isDefaultLocation = false;
+    } else {
+      try {
+        const pos = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 3000 });
+        });
+        lat = pos.coords.latitude;
+        lon = pos.coords.longitude;
+        isDefaultLocation = false;
+        
+        // Cache coordinates
+        localStorage.setItem('bglow_user_lat', lat);
+        localStorage.setItem('bglow_user_lon', lon);
+      } catch(e) {
+        console.warn("Geolocation tidak diizinkan atau timeout:", e);
+      }
+    }
   }
 
   // Reverse geocoding to get location name (Kelurahan & Kecamatan) in real-time
@@ -179,6 +198,7 @@ export async function fetchWeather() {
     icon,
     uvIndex,
     humidity,
-    locationName
+    locationName,
+    isDefaultLocation
   };
 }

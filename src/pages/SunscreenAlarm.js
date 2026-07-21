@@ -117,9 +117,10 @@ export function renderSunscreenAlarm() {
         <div class="uv-dash-header">
           <div style="display: flex; flex-direction: column; gap: 4px;">
             <div class="uv-title">Indeks UV</div>
-            <div class="uv-location" id="uv-location-text">
+            <div class="uv-location" id="uv-location-text" title="Klik untuk memperbarui lokasi">
               <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; flex-shrink: 0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
               <span id="uv-location-val">Mendeteksi lokasi...</span>
+              <span class="uv-location-action-btn" id="uv-location-action-btn" style="display: none;">Aktifkan GPS</span>
             </div>
           </div>
           <div class="uv-date">${now.toLocaleDateString('id-ID', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
@@ -431,8 +432,8 @@ export function renderSunscreenAlarm() {
     });
   });
 
-  // Fetch real weather and animate gauge
-  fetchWeather().then(w => {
+  // Helper to update the weather UI components
+  function updateWeatherUI(w) {
     if (!w) return;
     const uvIndex = w.uvIndex;
     const isHighUv = uvIndex >= 6;
@@ -440,6 +441,18 @@ export function renderSunscreenAlarm() {
     const locationValEl = page.querySelector('#uv-location-val');
     if (locationValEl) {
       locationValEl.textContent = w.locationName || 'Lokasi tidak diketahui';
+    }
+
+    // Toggle the GPS action button or refresh action depending on whether it is default location
+    const actionBtnEl = page.querySelector('#uv-location-action-btn');
+    if (actionBtnEl) {
+      if (w.isDefaultLocation) {
+        actionBtnEl.textContent = 'Aktifkan GPS';
+        actionBtnEl.style.display = 'inline-flex';
+      } else {
+        actionBtnEl.textContent = 'Perbarui';
+        actionBtnEl.style.display = 'inline-flex';
+      }
     }
     
     const levelText = page.querySelector('#uv-level-text');
@@ -512,6 +525,11 @@ export function renderSunscreenAlarm() {
         if (sunAnim) {
           sunAnim.style.display = 'none';
         }
+      } else {
+        const sunAnim = page.querySelector('.sun-animated');
+        if (sunAnim) {
+          sunAnim.style.display = 'block';
+        }
       }
 
       let current = 0;
@@ -522,7 +540,100 @@ export function renderSunscreenAlarm() {
         num.textContent = Math.round(current);
       }, 40);
     }
-  }).catch(err => console.error('Gagal memuat UV:', err));
+  }
+
+  // Function to show location permission guide modal
+  function showLocationPermissionDeniedModal() {
+    const existing = document.querySelector('.location-guide-overlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'diary-modal-overlay location-guide-overlay';
+    overlay.innerHTML = `
+      <div class="diary-modal location-guide-modal anim-fade-in-up" style="max-width: 340px; padding: 24px; text-align: center; border-radius: var(--radius-lg); background: white;">
+        <div class="modal-handle" style="width: 40px; height: 4px; background: var(--border-light); border-radius: var(--radius-full); margin: 0 auto 16px auto;"></div>
+        <div style="font-size: 3rem; margin-bottom: 12px; animation: pulse 1s infinite alternate;">🔒</div>
+        <h3 style="margin-bottom: 8px; font-weight: 700; color: var(--text-primary); font-size: 1.25rem;">Izin Lokasi Diblokir</h3>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 20px; line-height: 1.5; text-align: left;">
+          B-Glow mendeteksi perizinan lokasi diblokir oleh browser Anda. Silakan ikuti langkah berikut untuk mengaktifkannya:
+          <br><br>
+          <strong>1. Chrome/Edge/Safari:</strong> Klik ikon gembok 🔒 atau info ℹ️ di bilah alamat browser Anda.
+          <br>
+          <strong>2. Perizinan:</strong> Cari opsi <strong>Lokasi (Location)</strong> dan ubah menjadi <strong>Izinkan (Allow)</strong>.
+          <br>
+          <strong>3. Selesai:</strong> Refresh halaman ini atau klik tombol perbarui lokasi kembali.
+        </p>
+        <button class="btn btn-primary" id="btn-location-guide-ok" style="width: 100%; padding: 12px; font-size: 0.9rem; font-weight: 600; border-radius: var(--radius-md); cursor: pointer; background: var(--primary); color: white; border: none;">Mengerti</button>
+      </div>
+    `;
+
+    overlay.querySelector('#btn-location-guide-ok').addEventListener('click', () => {
+      overlay.remove();
+    });
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) overlay.remove();
+    });
+
+    document.body.appendChild(overlay);
+  }
+
+  // Request actual user geolocation
+  function requestUserLocation() {
+    const locationValEl = page.querySelector('#uv-location-val');
+    if (locationValEl) {
+      locationValEl.textContent = 'Mendeteksi koordinat...';
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+
+        // Cache coordinates to localStorage
+        localStorage.setItem('bglow_user_lat', lat);
+        localStorage.setItem('bglow_user_lon', lon);
+
+        if (locationValEl) {
+          locationValEl.textContent = 'Menghubungkan satelit cuaca...';
+        }
+
+        try {
+          const w = await fetchWeather(lat, lon);
+          updateWeatherUI(w);
+          showCustomAlert("Lokasi Anda berhasil diperbarui secara akurat!", "Lokasi Aktif");
+        } catch (err) {
+          console.error("Gagal memuat cuaca lokasi baru:", err);
+          showCustomAlert("Gagal memuat data cuaca untuk lokasi baru Anda.", "Koneksi Bermasalah");
+        }
+      },
+      (error) => {
+        console.error("Gagal mendeteksi lokasi:", error);
+        
+        // Restore previous UI location name
+        fetchWeather().then(updateWeatherUI);
+
+        if (error.code === 1) { // PERMISSION_DENIED
+          showLocationPermissionDeniedModal();
+        } else {
+          showCustomAlert(`Gagal mendeteksi lokasi (${error.message || 'Timeout/Error'}). Pastikan GPS aktif.`, "Gagal Deteksi");
+        }
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+    );
+  }
+
+  // Fetch real weather and animate gauge
+  fetchWeather().then(updateWeatherUI).catch(err => console.error('Gagal memuat UV:', err));
+
+  // Click handler to refresh or activate GPS location
+  const uvLocTextEl = page.querySelector('#uv-location-text');
+  if (uvLocTextEl) {
+    uvLocTextEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      requestUserLocation();
+    });
+  }
 
   // Initialize countdown labels
   const nextTextEl = page.querySelector('#alarm-next-text');
