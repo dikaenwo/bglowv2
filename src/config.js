@@ -2,7 +2,7 @@
 
 // URL Backend — ganti sesuai kebutuhan:
 // export const API_BASE_URL = 'http://192.168.1.4:5050'; // 🔧 LOCAL (HP / Wi-Fi)
-export const API_BASE_URL = 'https://bglow.store';      // 🌐 VPS Production (aktif sekarang)
+export const API_BASE_URL = 'http://103.247.8.169';      // 🌐 VPS Production (aktif sekarang)
 
 // Endpoint BPOM Scan (live scraping via backend)
 export const BPOM_API_URL = `${API_BASE_URL}/api/scan-bpom`;
