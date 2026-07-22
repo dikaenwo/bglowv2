@@ -401,18 +401,15 @@ export function renderRecommendations() {
       <div class="product-card" data-idx="${i}">
         <div class="product-img" style="background:${display.bgColor}">
           ${imgTag}
-          <div class="product-match-badge" style="background:${wsmStyle.bg};color:${wsmStyle.color};border:1px solid ${wsmStyle.border};font-weight:700;">${scorePercent}%</div>
         </div>
         <div class="product-info">
           <div class="product-name">${p.name}</div>
           <div class="product-brand" style="font-size:var(--font-xs);color:var(--text-tertiary);margin-bottom:4px;">${p.kategori}</div>
 
-          <!-- WSM Category Badge -->
-          ${wsmBadge}
-
-          <!-- Ingredient Badges (Removed) -->
-
-          <!-- WSM Score Bar -->
+          <!-- WSM Score Bar & Percentage -->
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px; margin-top: 2px;">
+            <span style="font-size: 10.5px; font-weight: 700; color: ${barColor};">Kecocokan ${scorePercent}%</span>
+          </div>
           <div class="wsm-score-bar-wrap">
             <div class="wsm-score-bar" style="width:${scorePercent}%;background:${barColor};"></div>
           </div>

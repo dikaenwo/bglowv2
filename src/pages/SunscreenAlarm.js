@@ -2,6 +2,7 @@ import { icons } from '../components/BottomNav.js';
 import { fetchWeather } from '../utils/weather.js';
 import { getUserId, syncUserData } from '../utils/store.js';
 import { showCustomAlert } from '../utils/helpers.js';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 export function renderSunscreenAlarm() {
   const page = document.createElement('div');
@@ -14,38 +15,148 @@ export function renderSunscreenAlarm() {
   const userId = getUserId();
   let currentInterval = parseInt(localStorage.getItem('bglow_sunscreen_interval_' + userId)) || 2;
   
-  let activeAudioCtx = null;
-  let activeAlarmInterval = null;
+  let activeAlarmAudio = null;
 
-  // Request notification permission on mount
-  if (typeof window !== 'undefined' && 'Notification' in window) {
-    if (Notification.permission === 'default') {
-      Notification.requestPermission().then(permission => {
-        if (permission === 'granted') {
-          console.log("Izin notifikasi diberikan.");
-        }
-      });
+  // Request notification permission on mount (Capacitor Local Notifications)
+  async function requestNotificationPermission() {
+    try {
+      const permStatus = await LocalNotifications.checkPermissions();
+      if (permStatus.display !== 'granted') {
+        const result = await LocalNotifications.requestPermissions();
+        console.log('Notification permission result:', result.display);
+      } else {
+        console.log('Notification permission already granted.');
+      }
+    } catch (e) {
+      console.warn('LocalNotifications not available (web fallback):', e);
     }
   }
+  requestNotificationPermission();
 
-  // Helper to send system notification
-  function sendNotification(title, body) {
-    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+  // Helper to send native push notification via Capacitor
+  async function sendNotification(title, body, delayMs = 1000) {
+    try {
+      // Cancel previous scheduled notifications to avoid duplicate stack
       try {
-        new Notification(title, {
-          body: body,
-          icon: '/pagi.png',
-          tag: 'sunscreen-reminder',
-          renotify: true
-        });
-      } catch (e) {
-        console.error("Gagal mengirim notifikasi:", e);
+        await LocalNotifications.cancel({ notifications: [{ id: 1001 }] });
+      } catch (_) {}
+
+      await LocalNotifications.schedule({
+        notifications: [
+          {
+            title: title,
+            body: body,
+            id: 1001,
+            schedule: { 
+              at: new Date(Date.now() + delayMs),
+              allowWhileIdle: true
+            },
+            sound: 'alarm.mp3',
+            smallIcon: 'ic_launcher',
+            largeIcon: 'ic_launcher',
+            channelId: 'sunscreen-alarm-v2',
+            extra: { type: 'sunscreen-alarm' }
+          }
+        ]
+      });
+      console.log('Push notification scheduled successfully for +', delayMs, 'ms');
+    } catch (e) {
+      console.error('Gagal mengirim notifikasi:', e);
+      if ('Notification' in window && Notification.permission === 'granted') {
+        try {
+          setTimeout(() => {
+            new Notification(title, { body, icon: '/pagi.png', tag: 'sunscreen-reminder', renotify: true });
+          }, delayMs);
+        } catch (e2) {
+          console.error('Web Notification fallback failed:', e2);
+        }
       }
     }
   }
 
-  // Helper to calculate schedules dynamically
+  // Schedule native push notification for the next upcoming sunscreen alarm slot
+  async function scheduleNextNativeNotification() {
+    const curH = new Date().getHours();
+    if (curH >= 18 || curH < 6) return;
+    const next = getNextSchedule();
+    const secRemaining = getSecondsRemaining(next);
+    if (secRemaining > 0) {
+      const delayMs = secRemaining * 1000;
+      await sendNotification(
+        "Waktunya Re-apply! ☀️",
+        `Saatnya oles ulang sunscreen Anda (${next.label} pukul ${next.timeStr}) untuk menjaga kulit dari sinar UV.`,
+        delayMs
+      );
+      console.log(`Native push notification scheduled for ${next.timeStr} (in ${secRemaining}s).`);
+    }
+  }
+
+  // Create notification channel for Android (required for Android 8+)
+  // IMPORTANT: Using new channel ID because Android caches channel settings permanently.
+  // Once a channel is created, its sound CANNOT be changed — must use a new channel ID.
+  async function createNotificationChannel() {
+    try {
+      // Delete old channel that was created with default sound
+      try {
+        await LocalNotifications.deleteChannel({ id: 'sunscreen-reminder' });
+      } catch (_) { /* ignore if doesn't exist */ }
+
+      await LocalNotifications.createChannel({
+        id: 'sunscreen-alarm-v2',
+        name: 'Alarm Sunscreen B-Glow',
+        description: 'Notifikasi pengingat re-apply sunscreen dengan suara alarm kustom',
+        importance: 5, // MAX importance — shows heads-up notification
+        visibility: 1, // PUBLIC — visible on lock screen
+        vibration: true,
+        sound: 'alarm.mp3',
+        lights: true,
+        lightColor: '#FF6B35'
+      });
+      console.log('Notification channel sunscreen-alarm-v2 created with custom sound.');
+    } catch (e) {
+      console.warn('createChannel not available (web):', e);
+    }
+  }
+  createNotificationChannel();
+
+  // Today key for completed slots persistence
+  const getTodayKey = () => new Date().toISOString().slice(0, 10);
+
+  function getCompletedSlots() {
+    try {
+      return JSON.parse(localStorage.getItem(`bglow_sunscreen_completed_${userId}_${getTodayKey()}`)) || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function toggleCompletedSlot(timeStr) {
+    let list = getCompletedSlots();
+    if (list.includes(timeStr)) {
+      list = list.filter(t => t !== timeStr);
+      showCustomAlert(`Status re-apply pukul ${timeStr} dibatalkan.`, "Dibatalkan ℹ️");
+    } else {
+      list.push(timeStr);
+      showCustomAlert(`Berhasil ditandai: Sudah re-apply sunscreen pukul ${timeStr}! ✨`, "Sudah Re-apply ✅");
+    }
+    localStorage.setItem(`bglow_sunscreen_completed_${userId}_${getTodayKey()}`, JSON.stringify(list));
+    renderTimeline();
+  }
+
+  // Helper to calculate schedules dynamically based on interval and start time
   function getSchedulesForInterval(intervalHrs) {
+    const startTimeStr = localStorage.getItem('bglow_sunscreen_start_time_' + userId);
+    let startH = 7;
+    let startM = 0;
+
+    if (startTimeStr) {
+      const parts = startTimeStr.split(':').map(Number);
+      if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+        startH = parts[0];
+        startM = parts[1];
+      }
+    }
+
     const schedules = [];
     const labels = [
       'Pemakaian Pagi',
@@ -56,24 +167,29 @@ export function renderSunscreenAlarm() {
       'Oles Ulang Kelima',
       'Oles Ulang Keenam',
       'Oles Ulang Ketujuh',
-      'Oles Ulang Kedelapan',
-      'Oles Ulang Kesembilan',
-      'Oles Ulang Kesepuluh',
-      'Oles Ulang Kesebelas',
-      'Oles Ulang Kedua Belas'
+      'Oles Ulang Kedelapan'
     ];
-    let currentHour = 7;
+
+    let currentMinsTotal = startH * 60 + startM;
+    const endMinsTotal = 19 * 60; // Max up to 19:00
     let labelIdx = 0;
-    while (currentHour <= 18) {
-      const hStr = String(currentHour).padStart(2, '0');
+
+    while (currentMinsTotal <= endMinsTotal && labelIdx < labels.length) {
+      const h = Math.floor(currentMinsTotal / 60);
+      const m = currentMinsTotal % 60;
+      const hStr = String(h).padStart(2, '0');
+      const mStr = String(m).padStart(2, '0');
+      
       schedules.push({
-        timeStr: `${hStr}:00`,
-        label: labelIdx === 0 ? labels[0] : (labels[labelIdx] || 'Oles Ulang Berikutnya'),
-        mins: currentHour * 60
+        timeStr: `${hStr}:${mStr}`,
+        label: labelIdx === 0 ? labels[0] : labels[labelIdx],
+        mins: currentMinsTotal
       });
-      currentHour += intervalHrs;
+
+      currentMinsTotal += intervalHrs * 60;
       labelIdx++;
     }
+
     return schedules;
   }
 
@@ -169,8 +285,8 @@ export function renderSunscreenAlarm() {
         </div>
         <div class="alarm-countdown" id="countdown">--:--:--</div>
         <div class="alarm-next-text" id="alarm-next-text">Menghitung jadwal...</div>
-        <button class="btn btn-outline" id="btn-test-alarm" style="margin-top: 12px; width: 100%; border-color: rgba(255,255,255,0.4); color: white; padding: 8px; font-size: 0.85rem; border-radius: var(--radius-md); background: rgba(255,255,255,0.1); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
-          🔔 Tes Bunyi Alarm
+        <button class="btn btn-outline" id="btn-set-start-time" style="margin-top: 14px; width: 100%; border-color: rgba(255,255,255,0.4); color: white; padding: 10px; font-size: 0.85rem; font-weight: 600; border-radius: var(--radius-md); background: rgba(255,255,255,0.18); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;">
+          ${isNightTime ? '🌙 Mode Malam Aktif' : `⚙️ Atur Jam Mulai & Ulangi (${localStorage.getItem('bglow_sunscreen_start_time_' + userId) || '07:00'})`}
         </button>
       </div>
     </div>
@@ -187,7 +303,122 @@ export function renderSunscreenAlarm() {
     window.location.hash = '#/';
   });
 
-  // Render timeline dynamically based on current time
+  // Action button: Setel / Atur Jam Mulai Pengingat
+  page.querySelector('#btn-set-start-time')?.addEventListener('click', () => {
+    const curH = new Date().getHours();
+    const curIsNight = curH >= 18 || curH < 6;
+
+    if (curIsNight) {
+      showCustomAlert(
+        "Mode Malam Aktif 🌙\nPengingat sunscreen tidak dapat diaktifkan pada malam hari (18:00 - 06:00). Pengingat akan otomatis aktif besok pagi pukul 07:00.",
+        "Mode Malam Aktif 🌙"
+      );
+      return;
+    }
+
+    showSetStartTimeModal();
+  });
+
+  // Helper to show Custom Start Time and Repeat Daily Modal
+  function showSetStartTimeModal() {
+    const existing = document.querySelector('.custom-start-time-overlay');
+    if (existing) existing.remove();
+
+    const d = new Date();
+    const nowH = String(d.getHours()).padStart(2, '0');
+    const nowM = String(d.getMinutes()).padStart(2, '0');
+    const nowTimeStr = `${nowH}:${nowM}`;
+    const currentSavedTime = localStorage.getItem('bglow_sunscreen_start_time_' + userId) || '07:00';
+    const isRepeat = localStorage.getItem('bglow_sunscreen_repeat_daily_' + userId) !== 'false';
+
+    const overlay = document.createElement('div');
+    overlay.className = 'diary-modal-overlay custom-start-time-overlay';
+    overlay.innerHTML = `
+      <div class="diary-modal custom-start-time-modal anim-fade-in-up" style="max-width: 330px; padding: 24px; text-align: center; border-radius: var(--radius-lg); background: white;">
+        <div class="modal-handle" style="width: 40px; height: 4px; background: var(--border-light); border-radius: var(--radius-full); margin: 0 auto 16px auto;"></div>
+        <div style="font-size: 2.5rem; margin-bottom: 12px; animation: bounce 2s infinite;">⏰</div>
+        <h3 style="margin-bottom: 6px; font-weight: 700; color: var(--text-primary); font-size: 1.2rem;">Atur Jam Mulai Pengingat</h3>
+        <p style="color: var(--text-secondary); font-size: 0.82rem; margin-bottom: 16px; line-height: 1.4;">
+          Jadwal re-apply berikutnya akan dihitung otomatis setiap <strong>${currentInterval} jam</strong> dari jam mulai yang Anda tentukan.
+        </p>
+
+        <div style="margin-bottom: 16px; text-align: left;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);">Jam Mulai Pemakaian:</label>
+            <button id="btn-use-now" style="background: none; border: none; color: var(--primary); font-size: 0.75rem; font-weight: 600; cursor: pointer; text-decoration: underline;">
+              Jam Sekarang (${nowTimeStr})
+            </button>
+          </div>
+          <input type="time" id="start-time-picker" class="auth-input" value="${currentSavedTime}" style="font-size: 1.3rem; font-weight: 700; text-align: center; padding: 10px; width: 100%; box-sizing: border-box; border-radius: var(--radius-md); border: 1.5px solid var(--border-light); color: var(--primary);" />
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #F8FAFC; border-radius: var(--radius-md); margin-bottom: 20px; border: 1px solid var(--border-light);">
+          <div style="text-align: left;">
+            <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-primary);">🔄 Ulangi Setiap Hari</div>
+            <div style="font-size: 0.75rem; color: var(--text-tertiary);">Otomatis aktifkan jadwal ini tiap pagi</div>
+          </div>
+          <input type="checkbox" id="repeat-daily-check" ${isRepeat ? 'checked' : ''} style="width: 20px; height: 20px; accent-color: var(--primary); cursor: pointer;" />
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button class="btn btn-outline" id="btn-cancel-start-time" style="flex:1; padding: 12px; font-weight: 600; border-radius: var(--radius-md);">Batal</button>
+          <button class="btn btn-primary" id="btn-save-start-time" style="flex:1; padding: 12px; font-weight: 600; border-radius: var(--radius-md); background: var(--primary); color: white; border: none;">Simpan</button>
+        </div>
+      </div>
+    `;
+
+    overlay.querySelector('#btn-use-now').addEventListener('click', () => {
+      overlay.querySelector('#start-time-picker').value = nowTimeStr;
+    });
+
+    overlay.querySelector('#btn-cancel-start-time').addEventListener('click', () => {
+      overlay.remove();
+    });
+
+    overlay.querySelector('#btn-save-start-time').addEventListener('click', () => {
+      const selectedTime = overlay.querySelector('#start-time-picker').value;
+      const isChecked = overlay.querySelector('#repeat-daily-check').checked;
+
+      if (!selectedTime) {
+        showCustomAlert("Mohon pilih jam mulai yang valid!", "Validasi Gagal");
+        return;
+      }
+
+      localStorage.setItem('bglow_sunscreen_start_time_' + userId, selectedTime);
+      localStorage.setItem('bglow_sunscreen_repeat_daily_' + userId, isChecked ? 'true' : 'false');
+      
+      overlay.remove();
+
+      const setBtnEl = page.querySelector('#btn-set-start-time');
+      if (setBtnEl) {
+        setBtnEl.textContent = `⚙️ Atur Jam Mulai & Ulangi (${selectedTime})`;
+      }
+
+      renderTimeline();
+      const next = getNextSchedule();
+      seconds = getSecondsRemaining(next);
+      
+      const nextTextEl = page.querySelector('#alarm-next-text');
+      if (nextTextEl) {
+        nextTextEl.textContent = `Oles ulang sunscreen pukul ${next.timeStr}${next.isTomorrow ? ' (Besok)' : ''}`;
+      }
+
+      scheduleNextNativeNotification();
+
+      showCustomAlert(
+        `Pengingat sunscreen di-setel mulai pukul ${selectedTime} (tiap ${currentInterval} jam). ${isChecked ? 'Ulangi setiap hari aktif.' : ''}`,
+        "Pengingat Aktif ⏰"
+      );
+    });
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) overlay.remove();
+    });
+
+    document.body.appendChild(overlay);
+  }
+
+  // Render timeline dynamically with interactive checklist
   function renderTimeline() {
     const container = page.querySelector('#timeline-container');
     if (!container) return;
@@ -197,19 +428,21 @@ export function renderSunscreenAlarm() {
     const currentMins = d.getHours() * 60 + d.getMinutes();
     
     const schedules = getSchedulesForInterval(currentInterval);
+    const completedList = getCompletedSlots();
 
     let foundCurrent = false;
     schedules.forEach(item => {
-      let status, state;
-      if (item.mins <= currentMins) {
-        status = 'applied';
+      const isCompleted = completedList.includes(item.timeStr);
+      let state;
+
+      if (isCompleted) {
         state = 'done';
+      } else if (item.mins <= currentMins) {
+        state = 'current';
       } else if (!foundCurrent) {
-        status = 'pending';
         state = 'current';
         foundCurrent = true;
       } else {
-        status = 'upcoming';
         state = 'upcoming';
       }
 
@@ -218,8 +451,16 @@ export function renderSunscreenAlarm() {
       el.innerHTML = `
         <div class="tl-time">${item.timeStr}</div>
         <div class="tl-label">${item.label}</div>
-        ${status !== 'upcoming' ? `<div class="tl-status ${status}">${status === 'applied' ? '✓ Sudah' : '⏳ Menunggu'}</div>` : ''}
+        <button class="tl-check-btn ${isCompleted ? 'checked' : 'unchecked'}" data-time="${item.timeStr}">
+          ${isCompleted ? '✓ Sudah Re-apply' : '+ Tandai Sudah Re-apply'}
+        </button>
       `;
+
+      el.querySelector('.tl-check-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleCompletedSlot(item.timeStr);
+      });
+
       container.appendChild(el);
     });
   }
@@ -227,93 +468,34 @@ export function renderSunscreenAlarm() {
   // Initial timeline render
   renderTimeline();
 
-  // Web Audio API Alarm sound synthesizer (Retro Digital Alarm Sound)
+  // Custom alarm sound using alarm.mp3
   function playAlarmSound() {
     stopAlarmSound(); // stop any existing sound first
     
     try {
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      activeAudioCtx = audioCtx;
-      
-      const interval = setInterval(() => {
-        if (audioCtx.state === 'closed') return;
-        
-        // Dual beep helper
-        const playBeep = (delay) => {
-          const osc = audioCtx.createOscillator();
-          const gain = audioCtx.createGain();
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
-          
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(880.00, audioCtx.currentTime + delay); // A5 note
-          
-          gain.gain.setValueAtTime(0, audioCtx.currentTime + delay);
-          gain.gain.linearRampToValueAtTime(0.25, audioCtx.currentTime + delay + 0.02);
-          gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + delay + 0.15);
-          
-          osc.start(audioCtx.currentTime + delay);
-          osc.stop(audioCtx.currentTime + delay + 0.18);
-        };
-        
-        playBeep(0);
-        playBeep(0.18);
-      }, 800);
-      
-      activeAlarmInterval = interval;
+      const audio = new Audio('/alarm.mp3');
+      audio.loop = true;
+      audio.volume = 1.0;
+      audio.play().catch(e => console.error('Gagal memutar alarm.mp3:', e));
+      activeAlarmAudio = audio;
     } catch (e) {
       console.error("Gagal memutar suara alarm:", e);
     }
   }
 
   function stopAlarmSound() {
-    if (activeAlarmInterval) {
-      clearInterval(activeAlarmInterval);
-      activeAlarmInterval = null;
-    }
-    if (activeAudioCtx) {
+    if (activeAlarmAudio) {
       try {
-        if (activeAudioCtx.state !== 'closed') {
-          activeAudioCtx.close();
-        }
+        activeAlarmAudio.pause();
+        activeAlarmAudio.currentTime = 0;
       } catch (e) {
-        console.error("Gagal menutup audio context:", e);
+        console.error("Gagal menghentikan audio alarm:", e);
       }
-      activeAudioCtx = null;
+      activeAlarmAudio = null;
     }
   }
 
-  function showTestAlarmPopup() {
-    // Prevent duplicate overlays
-    const existing = document.querySelector('.test-alarm-popup-overlay');
-    if (existing) existing.remove();
 
-    const overlay = document.createElement('div');
-    overlay.className = 'diary-modal-overlay test-alarm-popup-overlay';
-    overlay.innerHTML = `
-      <div class="diary-modal" style="text-align:center; max-width: 320px; padding: 24px; border-radius: var(--radius-lg); background: white;">
-        <div class="modal-handle" style="width: 40px; height: 4px; background: var(--border-light); border-radius: var(--radius-full); margin: 0 auto 16px auto;"></div>
-        <div style="font-size: 3.5rem; margin-bottom: 15px; animation: pulse 1s infinite alternate;">🔔</div>
-        <h2 style="margin-bottom: 10px; color: var(--primary); font-weight: 700; font-size: 1.25rem;">Uji Coba Alarm</h2>
-        <p style="color: var(--text-secondary); margin-bottom: 20px; line-height: 1.5; font-size: 0.85rem;">Alarm sedang berbunyi untuk menguji sistem pengingat sunscreen Anda.</p>
-        <button class="btn btn-primary" id="btn-stop-test-alarm" style="width: 100%; padding: 12px; font-weight: 600; border-radius: var(--radius-md); background: var(--primary); color: white; border: none; cursor: pointer;">Matikan Alarm</button>
-      </div>
-    `;
-
-    overlay.querySelector('#btn-stop-test-alarm').addEventListener('click', () => {
-      overlay.remove();
-      stopAlarmSound();
-    });
-
-    document.body.appendChild(overlay);
-  }
-
-  // Test alarm button listener
-  page.querySelector('#btn-test-alarm').addEventListener('click', (e) => {
-    e.stopPropagation();
-    playAlarmSound();
-    showTestAlarmPopup();
-  });
 
   // Helper to show a custom interval popup modal instead of browser prompt
   function showCustomIntervalModal(callback) {
@@ -402,6 +584,7 @@ export function renderSunscreenAlarm() {
             if (nextTextEl) {
               nextTextEl.textContent = `Oles ulang sunscreen pukul ${next.timeStr}${next.isTomorrow ? ' (Besok)' : ''}`;
             }
+            scheduleNextNativeNotification();
           }
         });
       } else {
@@ -427,6 +610,7 @@ export function renderSunscreenAlarm() {
         if (nextTextEl) {
           nextTextEl.textContent = `Oles ulang sunscreen pukul ${next.timeStr}${next.isTomorrow ? ' (Besok)' : ''}`;
         }
+        scheduleNextNativeNotification();
       }
     });
   });
@@ -637,6 +821,9 @@ export function renderSunscreenAlarm() {
     }
   }
 
+  // Schedule native push notification for the next upcoming slot automatically
+  scheduleNextNativeNotification();
+
   // Countdown timer
   const countdownEl = page.querySelector('#countdown');
   
@@ -710,6 +897,7 @@ export function renderSunscreenAlarm() {
       const next = getNextSchedule();
       seconds = getSecondsRemaining(next);
       renderTimeline();
+      scheduleNextNativeNotification();
     });
     
     overlay.querySelector('#btn-snooze').addEventListener('click', () => {

@@ -53,12 +53,7 @@ const STATUS_CONFIG = {
   'netral':   { color: '#6b7280', bg: 'rgba(107,114,128,0.08)', border: 'rgba(107,114,128,0.15)', icon: '·', label: 'Netral' },
 };
 
-// ─── WSM Criteria Labels ──────────────────────────────────────────────────────
-const WSM_CRITERIA = [
-  { key: 'C1', label: 'Kecocokan Jenis Kulit', weight: 0.3333 },
-  { key: 'C2', label: 'Kecocokan Masalah Kulit', weight: 0.4000 },
-  { key: 'C3', label: 'Posisi Ingredien', weight: 0.2667 },
-];
+
 
 const fallbackBottleIcon = `<svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.6;"><path d="M12 2v4M8 6h8v14a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2V6z"/></svg>`;
 
@@ -148,24 +143,7 @@ export function renderProductDetail() {
   const wsmBadgeBg = wsmPercent >= 75 ? 'rgba(34,197,94,0.12)' : wsmPercent >= 50 ? 'rgba(251,191,36,0.12)' : 'rgba(239,68,68,0.1)';
   const wsmBadgeColor = wsmPercent >= 75 ? '#16a34a' : wsmPercent >= 50 ? '#d97706' : '#dc2626';
 
-  // Build WSM criteria bars
-  const criteriaHtml = WSM_CRITERIA.map(c => {
-    const val = wsmDetail[c.key] || 0;
-    const pct = Math.round(val * 100);
-    const color = pct >= 75 ? '#22c55e' : pct >= 50 ? '#eab308' : '#ef4444';
-    return `
-      <div class="wsm-criteria-row">
-        <div class="wsm-criteria-label">
-          <span class="wsm-criteria-name">${c.label}</span>
-          <span class="wsm-criteria-weight">(${(c.weight * 100).toFixed(0)}%)</span>
-        </div>
-        <div class="wsm-criteria-bar-wrap">
-          <div class="wsm-criteria-bar" style="width:${pct}%;background:${color};"></div>
-        </div>
-        <span class="wsm-criteria-value" style="color:${color};">${val.toFixed(2)}</span>
-      </div>
-    `;
-  }).join('');
+
 
   // Build ingredients analysis rows
   function renderIngRow(a) {
@@ -218,38 +196,6 @@ export function renderProductDetail() {
           <div class="pd-brand">${p.brand}</div>
         </div>
 
-        <!-- WSM Score Overview -->
-        <div class="pd-section">
-          <div class="wsm-overview-card" style="border: 1px solid ${wsmBadgeColor}22;">
-            <div class="wsm-overview-top">
-              <div class="wsm-score-circle" style="border-color:${wsmBarColor};">
-                <span class="wsm-score-num">${wsmPercent}</span>
-                <span class="wsm-score-pct">%</span>
-              </div>
-              <div class="wsm-overview-info">
-                <div class="wsm-overview-badge" style="background:${wsmBadgeBg};color:${wsmBadgeColor};">${kategoriRek}</div>
-                <div class="wsm-overview-subtitle">Skor WSM (Weighted Sum Model)</div>
-              </div>
-            </div>
-
-            <!-- WSM Criteria Breakdown -->
-            <div class="wsm-criteria-section">
-              <div class="wsm-criteria-title">Breakdown 3 Kriteria</div>
-              ${criteriaHtml}
-              <div class="wsm-criteria-row wsm-total-row">
-                <div class="wsm-criteria-label">
-                  <span class="wsm-criteria-icon">Σ</span>
-                  <span class="wsm-criteria-name" style="font-weight:700;">Skor WSM Final</span>
-                </div>
-                <div class="wsm-criteria-bar-wrap">
-                  <div class="wsm-criteria-bar" style="width:${wsmPercent}%;background:${wsmBarColor};"></div>
-                </div>
-                <span class="wsm-criteria-value" style="color:${wsmBarColor};font-weight:700;">${wsmScore.toFixed(2)}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div class="pd-section">
           <h3 class="pd-section-title">Deskripsi</h3>
           <p class="pd-text">${p.desc}</p>
@@ -276,16 +222,6 @@ export function renderProductDetail() {
           <p class="pd-text-sm">Tidak ada data analisis ingredien untuk produk ini.</p>
         </div>
         `}
-
-        <!-- Penjelasan Metode WSM -->
-        <div class="pd-section">
-          <h3 class="pd-section-title">Tentang Penilaian WSM</h3>
-          <p class="pd-text-sm" style="line-height:1.6;">
-            Skor dihitung menggunakan <strong>Weighted Sum Model (WSM)</strong> dengan 3 kriteria tertimbang.
-            Setiap ingredien dianalisis terhadap database 10.000+ bahan aktif skincare.
-            Posisi ingredien di dalam daftar komposisi (<em>ingredients order</em>) juga diperhitungkan — ingredien di posisi awal memiliki konsentrasi lebih tinggi.
-          </p>
-        </div>
 
         <!-- Review Section -->
         <div class="pd-section reviews-section" style="border-top: 1px solid var(--border-light); padding-top: var(--space-lg); margin-top: var(--space-lg);">

@@ -292,6 +292,40 @@
   font-weight: 500;
 }
 
+/* ─── Timeline Interactive Checklist ─── */
+.tl-check-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  font-family: inherit;
+}
+
+.tl-check-btn.checked {
+  background: #DCFCE7;
+  color: #15803D;
+  border: 1px solid #86EFAC;
+}
+
+.tl-check-btn.unchecked {
+  background: #F1F5F9;
+  color: #475569;
+  border: 1px solid #CBD5E1;
+}
+
+.tl-check-btn.unchecked:hover {
+  background: #EFF6FF;
+  color: #2563EB;
+  border-color: #2563EB;
+}
+
 .tl-label {
   font-size: var(--font-sm);
   color: var(--text-primary);
