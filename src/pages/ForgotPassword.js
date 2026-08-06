@@ -79,7 +79,7 @@ export function renderForgotPassword() {
             userEmail = email;
             mockOtp = data.otp || '1234';
             currentPhase = 'otp';
-            showCustomAlert(`Kode OTP Anda adalah: ${mockOtp} (Simulasi)`, "OTP Terkirim", () => {
+            showCustomAlert(`Kode OTP pemulihan telah berhasil dikirim ke ${userEmail}.\n\nSilakan periksa kotak masuk (inbox) atau folder spam email Anda.`, "OTP Terkirim", () => {
               render();
             });
           } else {
@@ -115,7 +115,7 @@ export function renderForgotPassword() {
 
           <div class="auth-field">
             <label>Kode OTP</label>
-            <input class="auth-input" type="text" id="otp-code" maxlength="4" placeholder="1234" style="text-align: center; letter-spacing: 8px; font-weight: bold; font-size: var(--font-xl);" />
+            <input class="auth-input" type="text" id="otp-code" maxlength="4" placeholder="••••" style="text-align: center; letter-spacing: 8px; font-weight: bold; font-size: var(--font-xl);" />
             <div class="auth-error-text" id="otp-error" style="display: none;"></div>
           </div>
 
@@ -154,7 +154,7 @@ export function renderForgotPassword() {
           render();
         } else {
           otpInput.classList.add('error');
-          otpError.textContent = 'Kode OTP salah! Gunakan kode: ' + mockOtp;
+          otpError.textContent = 'Kode OTP salah atau telah kadaluarsa. Silakan periksa kembali email Anda.';
           otpError.style.display = 'block';
         }
       });

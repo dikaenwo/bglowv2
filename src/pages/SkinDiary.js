@@ -277,7 +277,6 @@ export function renderSkinDiary() {
         <!-- Tabs -->
         <div class="diary-tabs">
           <button class="diary-tab ${activeTab === 'journey' ? 'active' : ''}" data-tab="journey">Journey</button>
-          <button class="diary-tab ${activeTab === 'glowup' ? 'active' : ''}" data-tab="glowup">Glow-Up</button>
           <button class="diary-tab ${activeTab === 'foto' ? 'active' : ''}" data-tab="foto">Foto</button>
           <button class="diary-tab ${activeTab === 'progress' ? 'active' : ''}" data-tab="progress">Grafik</button>
         </div>
@@ -293,8 +292,6 @@ export function renderSkinDiary() {
     const tabContent = page.querySelector('#tab-content');
     if (activeTab === 'journey') {
       renderJourneyTab(tabContent);
-    } else if (activeTab === 'glowup') {
-      renderGlowUpTab(tabContent);
     } else if (activeTab === 'foto') {
       renderPhotoTab(tabContent);
     } else {
@@ -501,78 +498,7 @@ export function renderSkinDiary() {
 
   }
 
-  // ─── GLOW-UP TAB (Daily Missions) ──────────────────────────────
-  function renderGlowUpTab(container) {
-    const uid = getUserId();
-    const steps = buildJourneySteps(uid);
-    let state = getJourneyState(uid);
-    const completedLabels = state?.completedLabels || [];
-    const activeStep = steps.find(s => !completedLabels.includes(s.label)) || null;
 
-    if (!activeStep) {
-      container.innerHTML = `
-        <div class="je-empty">
-          <div class="je-empty-icon">✨</div>
-          <div class="je-empty-title">Semua Journey Selesai!</div>
-          <div class="je-empty-desc">Kulit kamu sedang dalam kondisi prima. Tetap jaga pola hidup sehat ya!</div>
-        </div>
-      `;
-      return;
-    }
-
-    const info = JOURNEY_INFO_DIARY[activeStep.label] || {};
-    const col = JOURNEY_COLORS[activeStep.label] || { hex: '#8B5CF6', bg: '#F5F3FF' };
-
-    // Build full mission list to calculate total
-    const allMissions = [
-      ...(info.good_foods || []).map((f, i) => ({ id: `good_${activeStep.label}_${i}`, icon: '🥑', category: 'Konsumsi', text: f })),
-      ...(info.avoid_foods || []).map((f, i) => ({ id: `avoid_${activeStep.label}_${i}`, icon: '🚫', category: 'Hindari', text: f })),
-      ...(info.exercises || []).map((f, i) => ({ id: `ex_${activeStep.label}_${i}`, icon: '🏃‍♀️', category: 'Olahraga', text: f })),
-      ...(info.lifestyle || []).map((f, i) => ({ id: `life_${activeStep.label}_${i}`, icon: '🛌', category: 'Gaya Hidup', text: f })),
-    ];
-    const todayStr = new Date().toISOString().split('T')[0];
-    const totalMissions = allMissions.length;
-    const doneMissions = allMissions.filter(m => localStorage.getItem(`bglow_gup_${uid}_${todayStr}_${m.id}`) === 'true').length;
-    const donePct = totalMissions > 0 ? Math.round(100 * doneMissions / totalMissions) : 0;
-
-    const missionsHTML = allMissions.map(m => `
-      <label class="gup-check-item">
-        <input type="checkbox" class="gup-checkbox" data-gup-id="${m.id}">
-        <div class="gup-check-box"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
-        <div class="gup-check-text">
-          <span class="gup-check-icon">${m.icon}</span>
-          <span><span class="gup-cat-pill">${m.category}</span> <strong>${m.text}</strong></span>
-        </div>
-      </label>
-    `).join('');
-
-    container.innerHTML = `
-      <div class="gut-wrapper">
-        <div class="gut-header" style="background: linear-gradient(135deg, ${col.hex}18, ${col.hex}08); border-color: ${col.hex}25;">
-          <div class="gut-header-top">
-            <div>
-              <div class="gut-header-title">Daily Glow-Up Missions ⭐</div>
-              <div class="gut-header-focus">Fokus: <strong style="color:${col.hex};">${activeStep.label}</strong></div>
-            </div>
-            <div class="gut-ring">
-              <svg viewBox="0 0 36 36">
-                <circle cx="18" cy="18" r="15.5" fill="none" stroke="#E5E7EB" stroke-width="2.5"/>
-                <circle cx="18" cy="18" r="15.5" fill="none" stroke="${col.hex}" stroke-width="2.5"
-                  stroke-dasharray="${(97.4 * doneMissions / totalMissions).toFixed(1)} 97.4"
-                  stroke-linecap="round" transform="rotate(-90 18 18)"/>
-              </svg>
-              <span style="color:${col.hex};">${donePct}%</span>
-            </div>
-          </div>
-          <div class="gut-progress-bar">
-            <div class="gut-progress-fill" style="width:${donePct}%; background: ${col.hex};"></div>
-          </div>
-          <div class="gut-progress-label">${doneMissions} dari ${totalMissions} misi selesai hari ini</div>
-        </div>
-        <div class="gup-list">${missionsHTML}</div>
-      </div>
-    `;
-  }
 
 
   // ─── FOTO TAB (folder per periode journey) ──────────────────────
@@ -761,6 +687,21 @@ export function renderSkinDiary() {
               if (!photos[label]) photos[label] = [];
               photos[label].unshift({ url, date: dateStr, notes, conditions: selectedConditions });
               saveJourneyPhotos(uid, photos);
+
+              // Auto-sync to diary entries as well
+              try {
+                const dEntries = getDiaryEntries();
+                dEntries.unshift({
+                  date: dateStr,
+                  mood: selectedConditions.some(c => c.type === 'bad') ? '😟' : '😊',
+                  conditions: selectedConditions,
+                  products: label,
+                  notes: notes || `Foto perkembangan: ${label}`,
+                  image: url
+                });
+                saveDiaryEntries(dEntries);
+              } catch (e) { console.warn("Sync diary entry error:", e); }
+
               modal.remove();
               renderFolderDetail(label);
             });
@@ -820,7 +761,12 @@ export function renderSkinDiary() {
     if (isFutureDate) {
       container.innerHTML = `
         <div class="empty-state anim-fade-in" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding: 40px 20px; text-align:center; background: var(--bg-card); border-radius: 16px; border: 1px dashed var(--border-light); margin: 16px 0;">
-          <div style="font-size:3.5rem; margin-bottom:16px;">🔒</div>
+          <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(99, 102, 241, 0.12); color: var(--primary); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
           <h3 style="color:var(--text-secondary); font-size:0.95rem; font-weight:500; line-height: 1.5;">Belum dapat mengisi catatan dan perkembangan</h3>
         </div>
       `;
@@ -922,12 +868,21 @@ export function renderSkinDiary() {
     const entries = getDiaryEntries();
     const photos = getJourneyPhotos(uid);
 
+    // Scan history for skin score progress chart
+    const scanHistory = (() => {
+      try {
+        return JSON.parse(localStorage.getItem('bglow_scan_history_' + uid) || '[]');
+      } catch { return []; }
+    })();
+    // Oldest first for the chart
+    const scanChronological = [...scanHistory].reverse();
+
     let allPhotos = [];
     Object.keys(photos).forEach(label => {
       allPhotos = allPhotos.concat(photos[label]);
     });
 
-    // Build per-day sentiment data from diary entries (last 14 days)
+    // Build per-day sentiment data from diary entries + journey photos (last 14 days)
     const today = new Date();
     const days = [];
     for (let i = 13; i >= 0; i--) {
@@ -938,40 +893,137 @@ export function renderSkinDiary() {
 
     const monthShort = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 
-    function dateToStr(d) {
-      return `${d.getDate()} ${monthShort[d.getMonth()]} ${d.getFullYear()}`;
+    function getDayMonthYearKey(input) {
+      if (!input) return '';
+      if (input instanceof Date) {
+        return `${input.getFullYear()}-${input.getMonth() + 1}-${input.getDate()}`;
+      }
+      if (typeof input === 'number') {
+        const d = new Date(input);
+        return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+      }
+
+      const str = String(input).trim().toLowerCase();
+      if (!str) return '';
+
+      let month = 0;
+      if (str.includes('jan')) month = 1;
+      else if (str.includes('feb')) month = 2;
+      else if (str.includes('mar')) month = 3;
+      else if (str.includes('apr')) month = 4;
+      else if (str.includes('mei') || str.includes('may')) month = 5;
+      else if (str.includes('jun')) month = 6;
+      else if (str.includes('jul')) month = 7;
+      else if (str.includes('ag') || str.includes('au')) month = 8;
+      else if (str.includes('sep')) month = 9;
+      else if (str.includes('okt') || str.includes('oct')) month = 10;
+      else if (str.includes('nov')) month = 11;
+      else if (str.includes('des') || str.includes('dec')) month = 12;
+
+      const nums = str.match(/\d+/g);
+      if (!nums || nums.length === 0) return '';
+
+      let day = 0, year = 0;
+
+      if (month > 0) {
+        if (nums.length >= 2) {
+          if (nums[0].length === 4) {
+            year = parseInt(nums[0]); day = parseInt(nums[1]);
+          } else {
+            day = parseInt(nums[0]); year = parseInt(nums[1]);
+            if (year < 100) year += 2000;
+          }
+        } else {
+          day = parseInt(nums[0]); year = new Date().getFullYear();
+        }
+      } else {
+        if (nums.length >= 3) {
+          if (nums[0].length === 4) {
+            year = parseInt(nums[0]); month = parseInt(nums[1]); day = parseInt(nums[2]);
+          } else {
+            day = parseInt(nums[0]); month = parseInt(nums[1]); year = parseInt(nums[2]);
+            if (year < 100) year += 2000;
+          }
+        } else if (nums.length === 2) {
+          day = parseInt(nums[0]); month = parseInt(nums[1]); year = new Date().getFullYear();
+        } else {
+          day = parseInt(nums[0]); month = new Date().getMonth() + 1; year = new Date().getFullYear();
+        }
+      }
+
+      return `${year}-${month}-${day}`;
     }
 
-    // Score: good=+1, warn=0, bad=-1 → normalized 0-100
+    // Build synthetic entries from journey photo conditions so they appear in the chart
+    const photoEntries = allPhotos
+      .filter(p => p.conditions && p.conditions.length > 0 && p.date)
+      .map(p => ({ date: p.date, conditions: p.conditions }));
+
+    // Merge diary entries + photo entries for chart calculations
+    const allConditionEntries = [...entries, ...photoEntries];
+
+    // Score: good=85%, warn=55%, bad=35% → clear visible levels for all logged conditions
     const scoreByDay = days.map(d => {
-      const ds = dateToStr(d);
-      const dayEntries = entries.filter(e => e.date === ds);
+      const targetKey = getDayMonthYearKey(d);
+      const dayEntries = allConditionEntries.filter(e => getDayMonthYearKey(e.date) === targetKey);
       if (dayEntries.length === 0) return null;
-      let score = 0, count = 0;
+      let totalScore = 0, count = 0;
       dayEntries.forEach(e => {
         (e.conditions || []).forEach(c => {
-          if (c.type === 'good') score += 1;
-          else if (c.type === 'bad') score -= 1;
+          if (c.type === 'good') totalScore += 85;
+          else if (c.type === 'warn') totalScore += 55;
+          else if (c.type === 'bad') totalScore += 35;
+          else totalScore += 55;
           count++;
         });
       });
-      return count > 0 ? Math.max(0, Math.min(100, Math.round((score / count + 1) * 50))) : null;
+      return count > 0 ? Math.round(totalScore / count) : 35;
     });
+
+    // Fail-safe: if allConditionEntries has data but no day matched in scoreByDay, assign to latest day
+    if (allConditionEntries.length > 0 && scoreByDay.every(v => v === null)) {
+      let totalScore = 0, count = 0;
+      allConditionEntries.forEach(e => {
+        (e.conditions || []).forEach(c => {
+          if (c.type === 'good') totalScore += 85;
+          else if (c.type === 'warn') totalScore += 55;
+          else if (c.type === 'bad') totalScore += 35;
+          else totalScore += 55;
+          count++;
+        });
+      });
+      if (count > 0) {
+        scoreByDay[scoreByDay.length - 1] = Math.round(totalScore / count);
+      }
+    }
 
     // Build SVG line chart
     function buildLineChart(data, labelDays) {
-      const W = 340, H = 150, PAD_L = 32, PAD_R = 12, PAD_T = 14, PAD_B = 28;
+      const W = 340, H = 160, PAD_L = 36, PAD_R = 16, PAD_T = 24, PAD_B = 28;
       const cW = W - PAD_L - PAD_R;
       const cH = H - PAD_T - PAD_B;
 
-      // Only use days that have data for connecting lines
+      // Clamped Y position so score=0 (or 0%) stays 8px above bottom line and doesn't get clipped
+      const yForScore = (v) => PAD_T + (1 - Math.max(v, 6) / 100) * cH;
+
+      // Map days with data to coordinates
       const points = data.map((v, i) => {
         const x = PAD_L + (i / (data.length - 1)) * cW;
-        const y = v !== null ? PAD_T + (1 - v / 100) * cH : null;
+        const y = v !== null ? yForScore(v) : null;
         return { x, y, v, i };
       }).filter(p => p.y !== null);
 
       if (points.length === 0) return `<text x="${W/2}" y="${H/2}" text-anchor="middle" fill="var(--text-tertiary)" font-size="12">Belum ada data</text>`;
+
+      // If only 1 data point, create a baseline starting point from day 0 at 50% height so a line connects across
+      let linePoints = [...points];
+      if (points.length === 1) {
+        const firstX = PAD_L;
+        const firstY = yForScore(50);
+        if (points[0].i > 0) {
+          linePoints = [{ x: firstX, y: firstY, v: 50, isBaseline: true }, points[0]];
+        }
+      }
 
       // Smooth bezier path
       function bezier(pts) {
@@ -979,40 +1031,41 @@ export function renderSkinDiary() {
         let d = `M ${pts[0].x} ${pts[0].y}`;
         for (let i = 0; i < pts.length - 1; i++) {
           const cpX = (pts[i].x + pts[i+1].x) / 2;
-          d += ` C ${cpX} ${pts[i].y}, ${cpX} ${pts[i+1].y}, ${pts[i+1].x} ${pts[i+1].y}`;
+          d += ` C ${cpX} ${pts[i].y}, ${cpX} ${pts[i+1].y}, ${pts[i+1].x} ${pts[i+1].x ? pts[i+1].y : pts[i].y}`;
         }
         return d;
       }
 
-      const linePath = bezier(points);
-
-      // Area fill (close path to bottom)
-      const areaPath = linePath + ` L ${points[points.length-1].x} ${PAD_T + cH} L ${points[0].x} ${PAD_T + cH} Z`;
+      const linePath = bezier(linePoints);
+      const areaPath = linePath + ` L ${linePoints[linePoints.length-1].x} ${PAD_T + cH} L ${linePoints[0].x} ${PAD_T + cH} Z`;
 
       // Y axis labels
       const yLabels = ['Buruk', '50%', 'Baik'];
       const yLabelYs = [PAD_T + cH, PAD_T + cH/2, PAD_T + 4];
 
-      // X axis ticks — show every ~3-4 days
+      // X axis ticks — show every 3-4 days + ALWAYS show the last day (today)
       const xTicks = data.map((_, i) => {
-        if (i === 0 || i === 6 || i === 13 || (i % 4 === 0)) {
+        if (i === 0 || i === data.length - 1 || (i % 3 === 0)) {
           const d = labelDays[i];
           return { x: PAD_L + (i / (data.length - 1)) * cW, label: `${d.getDate()}/${d.getMonth()+1}` };
         }
         return null;
       }).filter(Boolean);
 
-      // Data point dots
+      // Data point dots + score text labels
       const dots = points.map(p => {
         const color = p.v >= 60 ? '#10B981' : p.v >= 35 ? '#F59E0B' : '#EF4444';
-        return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="${color}" stroke="white" stroke-width="2"/>`;
+        const labelY = p.y - 8;
+        return `
+          <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="6" fill="${color}" stroke="white" stroke-width="2.5"/>
+          <text x="${p.x.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" font-size="9" font-weight="800" fill="${color}" font-family="inherit">${p.v}%</text>`;
       }).join('');
 
       return `
         <defs>
           <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.25"/>
-            <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0"/>
+            <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#3B82F6" stop-opacity="0"/>
           </linearGradient>
         </defs>
         <!-- Grid lines -->
@@ -1023,17 +1076,17 @@ export function renderSkinDiary() {
         ${xTicks.map(t => `<text x="${t.x.toFixed(1)}" y="${PAD_T + cH + 16}" text-anchor="middle" font-size="9" fill="var(--text-tertiary)" font-family="inherit">${t.label}</text>`).join('')}
         <!-- Area fill -->
         <path d="${areaPath}" fill="url(#areaGrad)"/>
-        <!-- Line -->
-        <path d="${linePath}" fill="none" stroke="#8B5CF6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <!-- Dots -->
+        <!-- Thick Line (Excel style) -->
+        <path d="${linePath}" fill="none" stroke="#2563EB" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- Dots and score text -->
         ${dots}
       `;
     }
 
-    // Sentiment totals
+    // Sentiment totals — from diary entries + journey photo conditions combined
     let totalGood = 0, totalWarn = 0, totalBad = 0;
     const conditionCounts = {};
-    entries.forEach(e => {
+    allConditionEntries.forEach(e => {
       (e.conditions || []).forEach(c => {
         conditionCounts[c.label] = (conditionCounts[c.label] || 0) + 1;
         if (c.type === 'good') totalGood++;
@@ -1077,7 +1130,124 @@ export function renderSkinDiary() {
     }
 
     const topConditions = Object.entries(conditionCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
-    const hasEntries = entries.length > 0;
+    const hasEntries = allConditionEntries.length > 0;
+
+    // Build skin score progress bar chart from scan history
+    function buildScoreBarChart(scans) {
+      if (scans.length === 0) {
+        return `<div class="chart-empty" style="margin-top:8px;">Belum ada riwayat scan AI. Lakukan scan untuk melihat grafik kenaikan skor kulit.</div>`;
+      }
+      const maxScore = 100;
+      const barW = Math.min(36, Math.floor(280 / scans.length));
+      const gap = Math.max(6, Math.floor((280 - barW * scans.length) / (scans.length + 1)));
+      const chartH = 140;
+      const labelH = 32;
+      const totalW = Math.max(280, scans.length * (barW + gap) + gap);
+
+      let bars = '', xLabels = '', deltas = '';
+      scans.forEach((s, i) => {
+        const score = s.skin_score || 0;
+        const x = gap + i * (barW + gap);
+        const barH = Math.max(12, Math.round((score / maxScore) * chartH));
+        const y = chartH - barH;
+
+        let color = '#10B981';
+        if (i === 0) {
+          color = score >= 80 ? '#10B981' : score >= 60 ? '#F59E0B' : '#EF4444';
+        } else {
+          const prev = scans[i - 1].skin_score || 0;
+          if (score > prev) {
+            color = '#10B981'; // Green for positive increase (Kenaikan)!
+          } else if (score === prev) {
+            color = '#3B82F6';
+          } else {
+            color = '#EF4444';
+          }
+        }
+        const lightColor = color === '#10B981' ? 'rgba(16,185,129,0.18)' : color === '#3B82F6' ? 'rgba(59,130,246,0.18)' : 'rgba(239,68,68,0.15)';
+
+        // Bar with rounded top
+        bars += `
+          <rect x="${x}" y="${y}" width="${barW}" height="${barH}" rx="6" ry="6" fill="${lightColor}"/>
+          <rect x="${x}" y="${y}" width="${barW}" height="${Math.min(barH, 8)}" rx="4" ry="4" fill="${color}"/>
+          <rect x="${x}" y="${y + 4}" width="${barW}" height="${Math.max(0, barH - 4)}" rx="0" ry="0" fill="${color}" opacity="0.85"/>
+          <text x="${x + barW/2}" y="${y - 4}" text-anchor="middle" font-size="9" font-weight="800" fill="${color}" font-family="inherit">${score}</text>`;
+
+        // X label: short date
+        const dateParts = (s.date || '').split(' ');
+        const shortDate = dateParts.length >= 2 ? `${dateParts[0]} ${dateParts[1]}` : (s.date || '');
+        xLabels += `<text x="${x + barW/2}" y="${chartH + 14}" text-anchor="middle" font-size="8" fill="var(--text-tertiary)" font-family="inherit">${shortDate}</text>`;
+
+        // Delta arrow between bars
+        if (i > 0) {
+          const prev = scans[i - 1].skin_score || 0;
+          const diff = score - prev;
+          if (diff !== 0) {
+            const midX = x - gap / 2;
+            const midY = chartH - Math.round(((score + prev) / 2 / maxScore) * chartH) - 14;
+            const arrow = diff > 0 ? '▲' : '▼';
+            const dColor = diff > 0 ? '#10B981' : '#EF4444';
+            deltas += `<text x="${midX}" y="${midY}" text-anchor="middle" font-size="8" font-weight="700" fill="${dColor}" font-family="inherit">${arrow}${Math.abs(diff)}</text>`;
+          }
+        }
+      });
+
+      // Grid lines
+      const grids = [0, 25, 50, 75, 100].map(v => {
+        const gy = chartH - Math.round((v / 100) * chartH);
+        return `<line x1="0" y1="${gy}" x2="${totalW}" y2="${gy}" stroke="var(--border-light)" stroke-width="1" stroke-dasharray="3 3"/>
+                <text x="${-4}" y="${gy + 3}" text-anchor="end" font-size="8" fill="var(--text-tertiary)" font-family="inherit">${v}</text>`;
+      }).join('');
+
+      return `
+        <div style="overflow-x:auto; padding-bottom:4px;">
+          <svg viewBox="0 ${-8} ${totalW + 18} ${chartH + labelH + 8}" width="100%" style="min-width:${Math.min(totalW, 280)}px; display:block; overflow:visible;">
+            <g transform="translate(18,8)">
+              ${grids}
+              ${bars}
+              ${deltas}
+              ${xLabels}
+            </g>
+          </svg>
+        </div>`;
+    }
+
+    // Summary: first vs latest score delta
+    let scoreDeltaHTML = '';
+    if (scanChronological.length >= 2) {
+      const first = scanChronological[0].skin_score || 0;
+      const latest = scanChronological[scanChronological.length - 1].skin_score || 0;
+      const diff = latest - first;
+      const dColor = diff > 0 ? '#10B981' : diff < 0 ? '#EF4444' : '#6b7280';
+      const iconBg = diff > 0 ? 'rgba(16,185,129,0.12)' : diff < 0 ? 'rgba(239,68,68,0.12)' : 'rgba(107,114,128,0.12)';
+      const iconSvg = diff > 0
+        ? `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`
+        : `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>`;
+
+      scoreDeltaHTML = `
+        <div style="display:flex; align-items:center; gap:12px; margin-top:12px; padding:12px 14px; background:var(--bg-soft); border-radius:12px;">
+          <div style="width:40px; height:40px; border-radius:10px; background:${iconBg}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            ${iconSvg}
+          </div>
+          <div>
+            <div style="font-size:11px; color:var(--text-tertiary); font-weight:500;">Perubahan skor sejak scan pertama</div>
+            <div style="font-size:1.05rem; font-weight:800; color:${dColor};">${diff >= 0 ? '+' : ''}${diff} poin · ${latest}/100</div>
+          </div>
+        </div>`;
+    } else if (scanChronological.length === 1) {
+      const score = scanChronological[0].skin_score || 0;
+      const color = score >= 80 ? '#10B981' : score >= 60 ? '#F59E0B' : '#EF4444';
+      scoreDeltaHTML = `
+        <div style="display:flex; align-items:center; gap:12px; margin-top:12px; padding:12px 14px; background:var(--bg-soft); border-radius:12px;">
+          <div style="width:40px; height:40px; border-radius:10px; background:rgba(99,102,241,0.12); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:1.3rem;">
+            🩺
+          </div>
+          <div>
+            <div style="font-size:11px; color:var(--text-tertiary); font-weight:500;">Skor scan terakhirmu</div>
+            <div style="font-size:1.05rem; font-weight:800; color:${color};">${score}/100</div>
+          </div>
+        </div>`;
+    }
 
     container.innerHTML = `
       <div class="progress-section">
@@ -1141,7 +1311,7 @@ export function renderSkinDiary() {
         <!-- Stats row -->
         <div class="stats-row">
           <div class="stat-mini">
-            <div class="stat-mini-val">${entries.length}</div>
+            <div class="stat-mini-val">${allConditionEntries.length}</div>
             <div class="stat-mini-label">Catatan</div>
           </div>
           <div class="stat-mini">

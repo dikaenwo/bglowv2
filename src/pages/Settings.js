@@ -50,6 +50,11 @@ export function renderSettings() {
           <span class="mi-text">Profil Kulit</span>
           <span class="mi-arrow">${icons.chevronRight}</span>
         </div>
+        <div class="menu-item anim-fade-in-up anim-delay-5" id="menu-location-gps" style="cursor:pointer;">
+          <div class="mi-icon amber" style="background:#FEF3C7; color:#D97706; display:flex; align-items:center; justify-content:center; font-size:16px;">📍</div>
+          <span class="mi-text">Akurasi Lokasi & GPS</span>
+          <span class="mi-arrow">${icons.chevronRight}</span>
+        </div>
       </div>
 
       <div class="menu-section">
@@ -69,6 +74,11 @@ export function renderSettings() {
           <span class="mi-text" style="color:var(--danger);">Keluar</span>
           <span class="mi-arrow"></span>
         </div>
+        <div class="menu-item anim-fade-in-up anim-delay-8" id="menu-delete-account" style="cursor:pointer;">
+          <div class="mi-icon red" style="background:#FEE2E2; color:#DC2626; display:flex; align-items:center; justify-content:center; font-size:16px;">🗑️</div>
+          <span class="mi-text" style="color:var(--danger); font-weight:600;">Hapus Akun Permanen</span>
+          <span class="mi-arrow"></span>
+        </div>
       </div>
     </div>
     <div class="profile-version">B-Glow v1.0.0</div>
@@ -79,9 +89,20 @@ export function renderSettings() {
     const logoutBtn = page.querySelector('#logout-btn');
     const editProfileBtn = page.querySelector('#menu-edit-profile');
     const skinProfileBtn = page.querySelector('#menu-skin-profile');
+    const locationGpsBtn = page.querySelector('#menu-location-gps');
     const privacyBtn = page.querySelector('#menu-privacy');
     const rateBtn = page.querySelector('#menu-rate-bglow');
     const helpBtn = page.querySelector('#menu-help');
+
+    if (locationGpsBtn) {
+      locationGpsBtn.addEventListener('click', async () => {
+        const { requestLocationWithPermission: reqLoc } = await import('../utils/geolocation.js');
+        const pos = await reqLoc({ silent: false });
+        if (pos && pos.lat !== null && pos.lon !== null) {
+          showCustomAlert("Akurasi Lokasi dan GPS Anda berhasil diaktifkan secara otomatis! 📍", "Lokasi Aktif");
+        }
+      });
+    }
 
     if (logoutBtn) {
       logoutBtn.addEventListener('click', () => {
@@ -117,12 +138,56 @@ export function renderSettings() {
       });
     }
 
+    const deleteAccountBtn = page.querySelector('#menu-delete-account');
+
     if (helpBtn) {
       helpBtn.addEventListener('click', () => {
         openHelpModal();
       });
     }
+
+    if (deleteAccountBtn) {
+      deleteAccountBtn.addEventListener('click', () => {
+        openDeleteAccountModal();
+      });
+    }
   }, 0);
+
+  function openDeleteAccountModal() {
+    const userId = getUserId();
+    if (!userId || userId === 'guest') {
+      showCustomAlert("Akun guest tidak tersimpan di server.", "Informasi");
+      return;
+    }
+
+    showCustomConfirm(
+      "Apakah Anda yakin ingin menghapus akun B-Glow Anda secara permanen? Seluruh data riwayat kulit, diary, dan favorit Anda akan dihapus dari server dan tidak dapat dikembalikan.",
+      async () => {
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/user/${userId}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+          });
+          const data = await res.json();
+          if (res.ok) {
+            clearUserData();
+            localStorage.setItem('bglow_auth', '0');
+            localStorage.removeItem('bglow_user');
+            localStorage.removeItem('bglow_token');
+            showCustomAlert("Akun Anda telah berhasil dihapus secara permanen.", "Akun Dihapus", () => {
+              window.location.hash = '#/login';
+            });
+          } else {
+            showCustomAlert(data.detail || "Gagal menghapus akun.", "Gagal Hapus Akun");
+          }
+        } catch (err) {
+          console.error(err);
+          showCustomAlert("Terjadi kesalahan jaringan saat menghapus akun.", "Koneksi Bermasalah");
+        }
+      },
+      "⚠️ Hapus Akun Permanen"
+    );
+  }
 
   function openEditProfileModal() {
     const userId = getUserId();
@@ -223,7 +288,7 @@ export function renderSettings() {
     const userId = getUserId();
     
     const skinType = localStorage.getItem('bglow_skin_type_' + userId) || 'Kombinasi';
-    const acneLevel = localStorage.getItem('bglow_acne_level_' + userId) || 'Ringan — Grade 1';
+    const acneLevel = (localStorage.getItem('bglow_acne_level_' + userId) || 'Jerawat').replace(/ — Grade \d+/, '');
     const oilLevel = localStorage.getItem('bglow_oil_level_' + userId) || 'Sedang — T-Zone';
     const poreCond = localStorage.getItem('bglow_pore_condition_' + userId) || 'Baik — Minimal';
     const skinScore = localStorage.getItem('bglow_skin_score_' + userId) || '65';
@@ -247,12 +312,10 @@ export function renderSettings() {
         </div>
         
         <div class="modal-field">
-          <label>Level Jerawat</label>
+          <label>Kondisi Jerawat</label>
           <select id="acne-level" class="auth-input premium-select" style="border: 1.5px solid var(--border); border-radius: var(--radius-md); padding: 12px; width: 100%; box-sizing: border-box; background: white;">
-            <option value="Bersih" ${acneLevel === 'Bersih' ? 'selected' : ''}>Bersih (None)</option>
-            <option value="Ringan — Grade 1" ${acneLevel === 'Ringan — Grade 1' ? 'selected' : ''}>Ringan (Mild — Grade 1)</option>
-            <option value="Sedang — Grade 2" ${acneLevel === 'Sedang — Grade 2' ? 'selected' : ''}>Sedang (Moderate — Grade 2)</option>
-            <option value="Parah" ${acneLevel === 'Parah' ? 'selected' : ''}>Parah (Severe)</option>
+            <option value="Bersih" ${acneLevel.includes('Bersih') || acneLevel.includes('Tidak') ? 'selected' : ''}>Bersih (Tidak Ada)</option>
+            <option value="Jerawat" ${!acneLevel.includes('Bersih') && !acneLevel.includes('Tidak') ? 'selected' : ''}>Jerawat (Ada Jerawat)</option>
           </select>
         </div>
         

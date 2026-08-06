@@ -238,9 +238,12 @@ export function showCustomAlert(message, title = 'B-Glow', callback = null) {
   const existing = document.querySelector('.custom-alert-overlay');
   if (existing) existing.remove();
 
+  const safeTitle = typeof title === 'string' ? title : (title ? String(title) : 'B-Glow');
+  const safeMsg = typeof message === 'string' ? message : (message ? String(message) : '');
+
   // Determine icon type based on title/message
-  const title_lower = (title || '').toLowerCase();
-  const msg_lower = (message || '').toLowerCase();
+  const title_lower = safeTitle.toLowerCase();
+  const msg_lower = safeMsg.toLowerCase();
   
   let icon_type = 'info';
   let icon_char = '🔔';
@@ -260,7 +263,7 @@ export function showCustomAlert(message, title = 'B-Glow', callback = null) {
   overlay.className = 'custom-popup-overlay custom-alert-overlay';
   
   // Use subheader if custom title, otherwise default title
-  const displayTitle = title && title !== 'B-Glow' ? title : 'Info';
+  const displayTitle = safeTitle && safeTitle !== 'B-Glow' ? safeTitle : 'Info';
 
   overlay.innerHTML = `
     <div class="custom-popup-modal ${icon_type}">
@@ -268,7 +271,7 @@ export function showCustomAlert(message, title = 'B-Glow', callback = null) {
         <span>${icon_char}</span>
       </div>
       <h3 class="custom-popup-title">${displayTitle}</h3>
-      <div class="custom-popup-message">${message}</div>
+      <div class="custom-popup-message">${safeMsg}</div>
       <div class="custom-popup-actions">
         <button class="custom-btn-ok" id="btn-alert-ok">OK</button>
       </div>
@@ -277,7 +280,7 @@ export function showCustomAlert(message, title = 'B-Glow', callback = null) {
 
   const closeAlert = () => {
     overlay.remove();
-    if (callback) callback();
+    if (typeof callback === 'function') callback();
   };
 
   overlay.querySelector('#btn-alert-ok').addEventListener('click', closeAlert);
@@ -293,9 +296,16 @@ export function showCustomConfirm(message, callback, title = 'Konfirmasi') {
   const existing = document.querySelector('.custom-confirm-overlay');
   if (existing) existing.remove();
 
+  // Handle case where title and callback might be swapped or title omitted
+  let realCallback = typeof callback === 'function' ? callback : (typeof title === 'function' ? title : () => {});
+  let realTitle = typeof title === 'string' ? title : (typeof callback === 'string' ? callback : 'Konfirmasi');
+
+  const safeTitle = String(realTitle || 'Konfirmasi');
+  const safeMsg = typeof message === 'string' ? message : (message ? String(message) : '');
+
   // Determine icon type based on title/message
-  const title_lower = (title || '').toLowerCase();
-  const msg_lower = (message || '').toLowerCase();
+  const title_lower = safeTitle.toLowerCase();
+  const msg_lower = safeMsg.toLowerCase();
   
   let icon_type = 'info';
   let icon_char = '❓';
@@ -315,8 +325,8 @@ export function showCustomConfirm(message, callback, title = 'Konfirmasi') {
       <div class="custom-popup-icon-wrapper ${icon_type}">
         <span>${icon_char}</span>
       </div>
-      <h3 class="custom-popup-title">${title}</h3>
-      <div class="custom-popup-message">${message}</div>
+      <h3 class="custom-popup-title">${safeTitle}</h3>
+      <div class="custom-popup-message">${safeMsg}</div>
       <div class="custom-popup-actions">
         <button class="custom-btn-cancel" id="btn-confirm-cancel">Batal</button>
         <button class="custom-btn-ok" id="btn-confirm-ok">OK</button>
@@ -330,7 +340,7 @@ export function showCustomConfirm(message, callback, title = 'Konfirmasi') {
 
   overlay.querySelector('#btn-confirm-ok').addEventListener('click', () => {
     overlay.remove();
-    callback();
+    realCallback();
   });
 
   overlay.addEventListener('click', (e) => {
@@ -338,4 +348,53 @@ export function showCustomConfirm(message, callback, title = 'Konfirmasi') {
   });
 
   document.body.appendChild(overlay);
+}
+
+// ─── Floating Toast Notification ───
+export function showToast(message, duration = 2000) {
+  const existing = document.querySelector('.custom-toast-notification');
+  if (existing) existing.remove();
+
+  const toast = document.createElement('div');
+  toast.className = 'custom-toast-notification';
+  toast.innerHTML = `<span>${message}</span>`;
+  toast.style.cssText = `
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.88);
+    backdrop-filter: blur(8px);
+    color: #ffffff;
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    z-index: 999999;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    animation: toastFadeIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    pointer-events: none;
+    text-align: center;
+    white-space: nowrap;
+  `;
+
+  if (!document.getElementById('toast-styles')) {
+    const style = document.createElement('style');
+    style.id = 'toast-styles';
+    style.textContent = `
+      @keyframes toastFadeIn {
+        from { opacity: 0; transform: translate(-50%, 15px); }
+        to { opacity: 1; transform: translate(-50%, 0); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s ease';
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
 }

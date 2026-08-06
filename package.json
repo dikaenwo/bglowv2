@@ -1,6 +1,6 @@
 {
   "name": "b-glow",
-  "version": "0.0.0",
+  "version": "1.0.2",
   "private": true,
   "type": "module",
   "scripts": {
@@ -13,9 +13,14 @@
   },
   "dependencies": {
     "@capacitor/android": "^8.2.0",
+    "@capacitor/app": "^8.1.1",
     "@capacitor/cli": "^8.2.0",
     "@capacitor/core": "^8.2.0",
+    "@capacitor/geolocation": "^8.2.0",
     "@capacitor/local-notifications": "^8.2.1",
+    "capacitor-native-settings": "^8.1.0",
+    "cordova-plugin-purchase": "^13.18.0",
+    "cordova-plugin-request-location-accuracy": "^2.3.0",
     "html5-qrcode": "^2.3.8"
   }
 }

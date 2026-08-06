@@ -16,6 +16,7 @@ import './styles/routine.css';
 import './styles/subscription.css';
 import './styles/product-detail.css';
 import './styles/scan-history.css';
+
 import { createBottomNav } from './components/BottomNav.js';
 import { renderIntro } from './pages/Intro.js';
 import { renderHome } from './pages/Home.js';
@@ -35,8 +36,21 @@ import { renderSubscription } from './pages/Subscription.js';
 import { renderProductDetail } from './pages/ProductDetail.js';
 import { renderFavorites } from './pages/Favorites.js';
 import { renderScanHistory } from './pages/ScanHistory.js';
+import { requestLocationWithPermission } from './utils/geolocation.js';
+import { App } from '@capacitor/app';
+import { showToast } from './utils/helpers.js';
+
+import { initBilling } from './utils/billing.js';
 
 const app = document.querySelector('#app');
+
+// Saat app start untuk user yang sudah login: minta perizinan & aktifkan GPS via Google Native System Dialog
+if (localStorage.getItem('bglow_auth') === '1') {
+  requestLocationWithPermission({ silent: false }).catch(err => console.warn('Startup geolocation check:', err));
+}
+
+// Inisialisasi Google Play Billing sedini mungkin agar plugin siap saat user buka halaman Subscription
+initBilling();
 
 // ─── No-nav routes (intro, onboarding, auth) ───
 const noNavRoutes = ['intro', 'onboarding', 'login', 'register', 'subscription', 'product-detail', 'forgot-password'];
@@ -67,7 +81,6 @@ function handleRoute() {
 
   // 0. If intro not seen yet, show intro first (before login)
   if (isIntroSeen !== '1' && route !== 'intro') {
-    // Auto-skip intro if they are somehow already authenticated
     if (isAuth === '1') {
       localStorage.setItem('bglow_intro_seen', '1');
     } else {
@@ -126,6 +139,47 @@ function handleRoute() {
     app.appendChild(createBottomNav(activeTab));
   }
 }
+
+// ─── Capacitor Android System Hardware Back Button Handler ───
+let lastTimeBackButton = 0;
+
+App.addListener('backButton', () => {
+  // 1. Close active modals/overlays if present first
+  const activeOverlay = document.querySelector('.custom-popup-overlay, .diary-modal-overlay, .social-login-overlay');
+  if (activeOverlay) {
+    activeOverlay.remove();
+    return;
+  }
+
+  const hash = window.location.hash.slice(2) || '';
+  const route = hash.split('?')[0];
+
+  // 2. If on any sub-page, return to Home page instead of exiting app
+  if (route && route !== '' && route !== 'home') {
+    if (route === 'login' || route === 'intro') {
+      const now = Date.now();
+      if (now - lastTimeBackButton < 2000) {
+        App.exitApp();
+      } else {
+        lastTimeBackButton = now;
+        showToast("Tekan sekali lagi untuk keluar dari B-Glow");
+      }
+      return;
+    }
+
+    window.location.hash = '#/';
+    return;
+  }
+
+  // 3. If on Home page: double-tap within 2s required to exit app
+  const now = Date.now();
+  if (now - lastTimeBackButton < 2000) {
+    App.exitApp();
+  } else {
+    lastTimeBackButton = now;
+    showToast("Tekan sekali lagi untuk keluar dari B-Glow");
+  }
+});
 
 window.addEventListener('hashchange', handleRoute);
 handleRoute();

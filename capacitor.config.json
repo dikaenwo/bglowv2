@@ -3,7 +3,7 @@
   "appName": "B-Glow",
   "webDir": "dist",
   "server": {
-    "cleartext": true,
-    "androidScheme": "http"
+    "cleartext": false,
+    "androidScheme": "https"
   }
 }

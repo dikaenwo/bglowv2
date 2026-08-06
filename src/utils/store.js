@@ -354,4 +354,5 @@ export function isPremium() {
 export function setSubscriptionPlan(planId) {
   const userId = getUserId();
   localStorage.setItem('bglow_subscription_plan_' + userId, planId);
+  syncUserData({ subscription_plan: planId });
 }

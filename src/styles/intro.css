@@ -20,11 +20,21 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 0 var(--space-xl) var(--space-xl);
+  justify-content: space-between;
+  padding: var(--space-xl);
   min-height: 100dvh;
   box-sizing: border-box;
   animation: introFadeUp 0.4s var(--ease-out) forwards;
+}
+
+.intro-main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding-top: var(--space-xl);
 }
 
 /* ─── Visual: Ring + Circle + Floating Dots ─── */
@@ -117,7 +127,6 @@
 .intro-text-wrap {
   text-align: center;
   padding: 0 var(--space-sm);
-  margin-bottom: auto;
 }
 
 .intro-title {

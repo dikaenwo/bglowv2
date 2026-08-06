@@ -3,6 +3,7 @@ import { fetchWeather } from '../utils/weather.js';
 import { getUserId, syncUserData } from '../utils/store.js';
 import { showCustomAlert } from '../utils/helpers.js';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { requestLocationWithPermission, isLocationPermissionGranted, openLocationSettings, openAppSettings } from '../utils/geolocation.js';
 
 export function renderSunscreenAlarm() {
   const page = document.createElement('div');
@@ -722,21 +723,25 @@ export function renderSunscreenAlarm() {
     overlay.className = 'diary-modal-overlay location-guide-overlay';
     overlay.innerHTML = `
       <div class="diary-modal location-guide-modal anim-fade-in-up" style="max-width: 340px; padding: 24px; text-align: center; border-radius: var(--radius-lg); background: white;">
-        <div class="modal-handle" style="width: 40px; height: 4px; background: var(--border-light); border-radius: var(--radius-full); margin: 0 auto 16px auto;"></div>
-        <div style="font-size: 3rem; margin-bottom: 12px; animation: pulse 1s infinite alternate;">🔒</div>
+        <div style="width: 54px; height: 54px; border-radius: 50%; background: rgba(239, 68, 68, 0.12); color: #EF4444; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
         <h3 style="margin-bottom: 8px; font-weight: 700; color: var(--text-primary); font-size: 1.25rem;">Izin Lokasi Diblokir</h3>
-        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 20px; line-height: 1.5; text-align: left;">
-          B-Glow mendeteksi perizinan lokasi diblokir oleh browser Anda. Silakan ikuti langkah berikut untuk mengaktifkannya:
-          <br><br>
-          <strong>1. Chrome/Edge/Safari:</strong> Klik ikon gembok 🔒 atau info ℹ️ di bilah alamat browser Anda.
-          <br>
-          <strong>2. Perizinan:</strong> Cari opsi <strong>Lokasi (Location)</strong> dan ubah menjadi <strong>Izinkan (Allow)</strong>.
-          <br>
-          <strong>3. Selesai:</strong> Refresh halaman ini atau klik tombol perbarui lokasi kembali.
+        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 20px; line-height: 1.5;">
+          Perizinan lokasi diblokir oleh sistem HP. Tekan tombol di bawah untuk membuka halaman izin aplikasi secara langsung.
         </p>
-        <button class="btn btn-primary" id="btn-location-guide-ok" style="width: 100%; padding: 12px; font-size: 0.9rem; font-weight: 600; border-radius: var(--radius-md); cursor: pointer; background: var(--primary); color: white; border: none;">Mengerti</button>
+        <button class="btn btn-primary" id="btn-open-app-settings" style="width: 100%; padding: 13px; font-size: 0.9rem; font-weight: 700; border-radius: var(--radius-md); cursor: pointer; background: var(--primary); color: white; border: none; margin-bottom: 8px;">⚙️ Buka Pengaturan Izin</button>
+        <button class="btn btn-outline" id="btn-location-guide-ok" style="width: 100%; padding: 10px; font-size: 0.85rem; font-weight: 600; border-radius: var(--radius-md); cursor: pointer;">Batal</button>
       </div>
     `;
+
+    overlay.querySelector('#btn-open-app-settings').addEventListener('click', () => {
+      overlay.remove();
+      openAppSettings();
+    });
 
     overlay.querySelector('#btn-location-guide-ok').addEventListener('click', () => {
       overlay.remove();
@@ -749,60 +754,101 @@ export function renderSunscreenAlarm() {
     document.body.appendChild(overlay);
   }
 
-  // Request actual user geolocation
-  function requestUserLocation() {
+  // Function to show GPS OFF guide modal when app permission is granted but phone GPS is off
+  function showGpsOffModal() {
+    const existing = document.querySelector('.gps-off-guide-overlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'diary-modal-overlay gps-off-guide-overlay';
+    overlay.innerHTML = `
+      <div class="diary-modal gps-off-guide-modal anim-fade-in-up" style="max-width: 340px; padding: 24px; text-align: center; border-radius: var(--radius-lg); background: white;">
+        <div class="modal-handle" style="width: 40px; height: 4px; background: var(--border-light); border-radius: var(--radius-full); margin: 0 auto 16px auto;"></div>
+        <div style="font-size: 3rem; margin-bottom: 12px; animation: pulse 1s infinite alternate;">📍</div>
+        <h3 style="margin-bottom: 8px; font-weight: 700; color: #EF4444; font-size: 1.2rem;">GPS HP Masih Non-Aktif</h3>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 20px; line-height: 1.5;">
+          Izin lokasi sudah <strong>Di-ACC ✅</strong>, tapi <strong>GPS HP masih MATI (OFF)</strong>.
+          <br><br>
+          Tekan tombol di bawah untuk langsung membuka halaman pengaturan GPS HP Anda.
+        </p>
+        <button class="btn btn-primary" id="btn-open-gps-settings" style="width: 100%; padding: 13px; font-size: 0.9rem; font-weight: 700; border-radius: var(--radius-md); cursor: pointer; background: #EF4444; color: white; border: none; margin-bottom: 8px;">📍 Aktifkan GPS Sekarang</button>
+        <button class="btn btn-outline" id="btn-gps-off-ok" style="width: 100%; padding: 10px; font-size: 0.85rem; font-weight: 600; border-radius: var(--radius-md); cursor: pointer;">Nanti Saja</button>
+      </div>
+    `;
+
+    overlay.querySelector('#btn-open-gps-settings').addEventListener('click', () => {
+      overlay.remove();
+      openLocationSettings();
+    });
+
+    overlay.querySelector('#btn-gps-off-ok').addEventListener('click', () => {
+      overlay.remove();
+    });
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) overlay.remove();
+    });
+
+    document.body.appendChild(overlay);
+  }
+
+  // Request actual user geolocation via Capacitor native plugin
+  async function requestUserLocation(silent = false) {
     const locationValEl = page.querySelector('#uv-location-val');
     if (locationValEl) {
       locationValEl.textContent = 'Mendeteksi koordinat...';
     }
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const lat = position.coords.latitude;
-        const lon = position.coords.longitude;
+    try {
+      const pos = await requestLocationWithPermission({
+        silent: silent,
+        timeout: 12000,
+        maxRetries: 1
+      });
 
-        // Cache coordinates to localStorage
-        localStorage.setItem('bglow_user_lat', lat);
-        localStorage.setItem('bglow_user_lon', lon);
-
+      if (pos && pos.lat !== null && pos.lon !== null) {
         if (locationValEl) {
           locationValEl.textContent = 'Menghubungkan satelit cuaca...';
         }
 
-        try {
-          const w = await fetchWeather(lat, lon);
-          updateWeatherUI(w);
-          showCustomAlert("Lokasi Anda berhasil diperbarui secara akurat!", "Lokasi Aktif");
-        } catch (err) {
-          console.error("Gagal memuat cuaca lokasi baru:", err);
-          showCustomAlert("Gagal memuat data cuaca untuk lokasi baru Anda.", "Koneksi Bermasalah");
+        const w = await fetchWeather(pos.lat, pos.lon);
+        updateWeatherUI(w);
+        if (!silent) {
+          showCustomAlert("Lokasi Anda berhasil diperbarui secara akurat!", "Lokasi Aktif 📍");
         }
-      },
-      (error) => {
-        console.error("Gagal mendeteksi lokasi:", error);
-        
-        // Restore previous UI location name
+      } else if (pos && pos.error === 'PERMISSION_DENIED') {
         fetchWeather().then(updateWeatherUI);
-
-        if (error.code === 1) { // PERMISSION_DENIED
-          showLocationPermissionDeniedModal();
-        } else {
-          showCustomAlert(`Gagal mendeteksi lokasi (${error.message || 'Timeout/Error'}). Pastikan GPS aktif.`, "Gagal Deteksi");
-        }
-      },
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
-    );
+        showLocationPermissionDeniedModal();
+      } else {
+        fetchWeather().then(updateWeatherUI);
+      }
+    } catch (err) {
+      console.error("Gagal mendeteksi lokasi:", err);
+      fetchWeather().then(updateWeatherUI);
+    }
   }
 
-  // Fetch real weather and animate gauge
-  fetchWeather().then(updateWeatherUI).catch(err => console.error('Gagal memuat UV:', err));
+  // Fetch real weather and animate gauge — then auto-request location (silent agar tidak double popup dgn main.js)
+  fetchWeather().then(async (w) => {
+    updateWeatherUI(w);
+    await requestUserLocation(true);
+  }).catch(err => console.error('Gagal memuat UV:', err));
+
+  // Auto-retry lokasi saat user kembali dari halaman Settings GPS
+  function onVisibilityChange() {
+    if (document.visibilityState === 'visible') {
+      // User kembali ke app (mungkin habis dari GPS settings), retry silent
+      requestUserLocation(true);
+    }
+  }
+  document.addEventListener('visibilitychange', onVisibilityChange);
 
   // Click handler to refresh or activate GPS location
   const uvLocTextEl = page.querySelector('#uv-location-text');
   if (uvLocTextEl) {
     uvLocTextEl.addEventListener('click', (e) => {
       e.stopPropagation();
-      requestUserLocation();
+      requestUserLocation(false);
     });
   }
 
@@ -914,6 +960,7 @@ export function renderSunscreenAlarm() {
   page.remove = function() {
     clearInterval(timerInterval);
     stopAlarmSound();
+    document.removeEventListener('visibilitychange', onVisibilityChange);
     originalRemove.call(this);
   };
 

@@ -310,11 +310,18 @@ export function renderOnboarding() {
       case 6:
         // AI Face Scan Camera Feed / Upload
         html = `
-          <div class="ob-title-wrap">
+          <div class="ob-title-wrap" style="margin-bottom: 12px;">
             <h1 class="ob-quiz-title">Uji Coba AI Face Scan</h1>
             <p class="ob-quiz-subtitle">Posisikan wajah di tengah kamera untuk analisis kulit instan.</p>
           </div>
           
+          <div style="margin: 0 auto 14px auto; max-width: 320px; padding: 10px 12px; background: #FFFDF5; border: 1.5px solid #FEF3C7; border-radius: 12px; display: flex; gap: 8px; align-items: flex-start; text-align: left;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 1px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <div style="font-size: 10.5px; color: #B45309; line-height: 1.35;">
+              <strong>Disclaimer:</strong> Analisis AI bersifat referensi pendukung dan tidak 100% akurat. Jangan dijadikan acuan medis mutlak.
+            </div>
+          </div>
+
           <div class="ob-scan-camera">
             <div class="ob-camera-feed">
               <video id="ob-webcam" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover; display: none; transform: scaleX(-1); position: absolute; top: 0; left: 0; z-index: 1;"></video>
@@ -404,6 +411,8 @@ export function renderOnboarding() {
       case 9:
         // Display Results
         const res = answers.scanResult;
+        const rawAcne = (res.acne_level || 'Bersih').replace(/ — Grade \d+/, '');
+        const cleanAcneLevel = (rawAcne === 'Bersih' || rawAcne === 'Tidak Ada') ? 'Bersih' : 'Jerawat';
         const skinTypeEmoji = {
           'Berminyak': '💦',
           'Kombinasi': '🌓',
@@ -439,9 +448,20 @@ export function renderOnboarding() {
         }).join('');
 
         html = `
-          <div class="ob-title-wrap" style="text-align: center; margin-bottom: 20px;">
+          <div class="ob-title-wrap" style="text-align: center; margin-bottom: 14px;">
             <h1 class="ob-quiz-title" style="font-size: var(--font-2xl); font-weight: 800; margin-bottom: 6px;">Hasil Analisis Kulit AI</h1>
             <p class="ob-quiz-subtitle" style="font-size: var(--font-sm); color: var(--text-secondary); margin: 0;">Berikut kondisi kulit wajah Anda yang terdeteksi.</p>
+          </div>
+
+          <!-- AI Medical Disclaimer Alert Banner -->
+          <div style="margin: 0 auto 16px auto; max-width: 340px; padding: 10px 14px; background: #FFFDF5; border: 1.5px solid #FEF3C7; border-radius: 12px; display: flex; gap: 10px; align-items: flex-start; text-align: left;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 1px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <div>
+              <div style="font-weight: 700; font-size: 11px; color: #B45309; margin-bottom: 2px;">⚠️ Catatan Penting</div>
+              <div style="font-size: 10.5px; color: #B45309; line-height: 1.4;">
+                Hasil analisis AI B-Glow bersifat referensi pendukung dan tidak 100% akurat. Harap jangan dijadikan acuan medis mutlak. Konsultasikan dengan dokter spesialis kulit untuk diagnosis resmi.
+              </div>
+            </div>
           </div>
 
           <div style="text-align: center; margin-bottom: 20px;">
@@ -457,7 +477,7 @@ export function renderOnboarding() {
             </div>
             <div class="ob-result-stat-item" style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 10px;">
               <div class="ob-result-stat-label" style="font-size: 10px; color: var(--text-tertiary); margin-bottom: 4px; font-weight: 600;">Jerawat</div>
-              <div class="ob-result-stat-val" style="font-size: var(--font-sm); font-weight: 700; color: ${res.acne_level.toLowerCase().includes('bersih') ? '#22c55e' : '#ef4444'};">${res.acne_level}</div>
+              <div class="ob-result-stat-val" style="font-size: var(--font-sm); font-weight: 700; color: ${cleanAcneLevel.toLowerCase().includes('bersih') ? '#22c55e' : '#ef4444'};">${cleanAcneLevel}</div>
             </div>
             <div class="ob-result-stat-item" style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 10px;">
               <div class="ob-result-stat-label" style="font-size: 10px; color: var(--text-tertiary); margin-bottom: 4px; font-weight: 600;">Minyak Wajah</div>
@@ -743,7 +763,7 @@ export function renderOnboarding() {
           answers.scanResult = {
             jenis_kulit: selectedType,
             jenis_kulit_desc: getSkinTypeDescription(selectedType),
-            acne_level: selectedProblems.some(p => p.label === 'Berjerawat') ? 'Ringan — Grade 1' : 'Bersih',
+            acne_level: selectedProblems.some(p => p.label === 'Berjerawat') ? 'Jerawat' : 'Bersih',
             oil_level: selectedType === 'Berminyak' ? 'Tinggi' : selectedType === 'Kering' ? 'Rendah' : 'Normal',
             pore_condition: 'Minimal',
             skin_score: 90,
@@ -969,7 +989,7 @@ export function renderOnboarding() {
     if (answers.struggle === 'reactions') score -= 8;
 
     let acne = 'Bersih';
-    if (answers.goals.includes('breakouts')) acne = 'Ringan — Grade 1';
+    if (answers.goals.includes('breakouts')) acne = 'Jerawat';
 
     let oil = 'Normal';
     if (type === 'Berminyak') oil = 'Tinggi';

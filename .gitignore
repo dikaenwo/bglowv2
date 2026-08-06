@@ -34,3 +34,7 @@ __pycache__/
 # Backend environment secrets — JANGAN commit!
 backend/.env
 .env
+
+# Keystores — JANGAN commit!
+*.jks
+*.keystore

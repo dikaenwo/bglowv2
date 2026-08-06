@@ -1,6 +1,10 @@
 import os
 import jwt
 import secrets
+import random
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import base64
 from typing import Optional
 from datetime import datetime, timezone, timedelta
@@ -16,6 +20,10 @@ from bs4 import BeautifulSoup
 import re
 from urllib.parse import unquote
 from recommender import score_products
+import io
+from PIL import Image
+from google import genai
+from google.genai import types
 
 # Muat .env jika ada (untuk development lokal)
 _env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
@@ -36,7 +44,7 @@ app = Flask(__name__)
 # ─── CORS ───────────────────────────────────────────────────────────────────
 # Di production, ganti dengan origin spesifik via env var CORS_ORIGINS
 _cors_origins = os.environ.get('CORS_ORIGINS', '*')
-CORS(app, resources={r"/api/*": {"origins": _cors_origins}})
+CORS(app, resources={r"/api/*": {"origins": _cors_origins, "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"], "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"]}})
 
 # ─── JWT Config ─────────────────────────────────────────────────────────────
 # Di production, WAJIB set JWT_SECRET_KEY di environment variable VPS!
@@ -236,6 +244,44 @@ def fetch_extra_user_data(cursor, user_id):
 
 # ─── Public Endpoints (tidak butuh token) ───────────────────────────────────
 
+@app.route("/api/register-otp", methods=["POST"])
+def send_register_otp():
+    data = request.get_json()
+    if not data or 'email' not in data:
+        return jsonify({"detail": "Email wajib diisi"}), 400
+
+    email = data['email'].strip()
+
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"detail": "Database connection failed"}), 500
+
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+        existing_user = cursor.fetchone()
+        if existing_user:
+            return jsonify({"detail": "Email sudah terdaftar"}), 400
+
+        # Generate 4-digit OTP
+        otp_code = str(random.randint(1000, 9999))
+
+        # Send OTP email via SMTP
+        sent = send_otp_email(email, otp_code)
+
+        return jsonify({
+            "message": "Kode OTP pendaftaran telah dikirim",
+            "otp": otp_code,
+            "email": email,
+            "email_sent": sent
+        }), 200
+    except Exception as e:
+        return jsonify({"detail": str(e)}), 500
+    finally:
+        if conn.is_connected():
+            cursor.close()
+            conn.close()
+
 @app.route("/api/register", methods=["POST"])
 def register_user():
     data = request.get_json()
@@ -318,6 +364,7 @@ def login_user():
                 "pore_condition": db_user.get('pore_condition'),
                 "skin_score": db_user.get('skin_score', 0),
                 "sunscreen_interval": db_user.get('sunscreen_interval', 2),
+                "subscription_plan": db_user.get('subscription_plan', 'basic'),
                 "favorites": extra["favorites"],
                 "diary_entries": extra["diary_entries"],
                 "routine": extra["routine"],
@@ -335,13 +382,78 @@ def login_user():
             conn.close()
 
 
+def send_otp_email(to_email: str, otp_code: str) -> bool:
+    """Kirim email OTP asli via SMTP (Gmail / SMTP Server)."""
+    smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+    smtp_port = int(os.getenv("SMTP_PORT", 587))
+    smtp_user = os.getenv("SMTP_EMAIL", "").strip()
+    smtp_pass = os.getenv("SMTP_PASSWORD", "").strip()
+
+    if not smtp_user or not smtp_pass:
+        print(f"[SMTP WARN] SMTP credentials (SMTP_EMAIL, SMTP_PASSWORD) belum diatur di .env. Kode OTP untuk {to_email} adalah: {otp_code}")
+        return False
+
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = f"Kode OTP Pemulihan Kata Sandi B-Glow: {otp_code}"
+        msg["From"] = f"B-Glow Support <{smtp_user}>"
+        msg["To"] = to_email
+
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 20px; }}
+            .card {{ max-width: 480px; margin: 0 auto; background: #ffffff; border-radius: 16px; padding: 32px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; text-align: center; }}
+            .logo {{ font-size: 24px; font-weight: 800; color: #6366f1; margin-bottom: 8px; }}
+            .title {{ font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 12px; }}
+            .otp-box {{ background: #f1f5f9; border-radius: 12px; padding: 16px; font-size: 32px; font-weight: 800; letter-spacing: 8px; color: #4f46e5; margin: 20px 0; border: 1.5px dashed #6366f1; }}
+            .footer {{ font-size: 12px; color: #94a3b8; margin-top: 24px; line-height: 1.5; }}
+          </style>
+        </head>
+        <body>
+          <div class="card">
+            <div class="logo">✨ B-Glow</div>
+            <div class="title">Kode OTP Pemulihan Akun</div>
+            <p style="font-size: 14px; color: #475569; line-height: 1.5;">
+              Kami menerima permintaan untuk mengatur ulang kata sandi akun B-Glow Anda. Gunakan kode OTP di bawah ini untuk melanjutkan:
+            </p>
+            <div class="otp-box">{otp_code}</div>
+            <p style="font-size: 13px; color: #64748b;">
+              Kode ini berlaku selama 10 menit. Jangan bagikan kode ini kepada siapa pun.
+            </p>
+            <div class="footer">
+              Jika Anda tidak merasa meminta perubahan kata sandi, abaikan email ini.<br>
+              &copy; B-Glow Skincare Assistant
+            </div>
+          </div>
+        </body>
+        </html>
+        """
+
+        msg.attach(MIMEText(html_content, "html"))
+
+        with smtplib.SMTP(smtp_server, smtp_port, timeout=10) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_pass)
+            server.sendmail(smtp_user, [to_email], msg.as_string())
+        
+        print(f"[SMTP SUCCESS] Email OTP berhasil dikirim ke {to_email}")
+        return True
+    except Exception as err:
+        print(f"[SMTP ERROR] Gagal mengirim email OTP ke {to_email}: {err}")
+        return False
+
+
 @app.route("/api/forgot-password", methods=["POST"])
 def forgot_password():
     data = request.get_json()
     if not data or 'email' not in data:
         return jsonify({"detail": "Email wajib diisi"}), 400
 
-    email = data['email']
+    email = data['email'].strip()
     conn = get_db_connection()
     if not conn:
         return jsonify({"detail": "Database connection failed"}), 500
@@ -354,11 +466,17 @@ def forgot_password():
         if not db_user:
             return jsonify({"detail": "Email tidak terdaftar"}), 400
 
-        # Return mock OTP 1234
+        # Generate random 4-digit OTP
+        otp_code = str(random.randint(1000, 9999))
+
+        # Kirim email SMTP secara otomatis jika credentials dikonfigurasi
+        sent = send_otp_email(email, otp_code)
+
         return jsonify({
-            "message": "Kode OTP telah dikirim (Mock)",
-            "otp": "1234",
-            "email": email
+            "message": "Kode OTP telah berhasil dikirim ke email Anda" if sent else "Kode OTP telah dibuat",
+            "otp": otp_code,
+            "email": email,
+            "email_sent": sent
         }), 200
     except Exception as e:
         return jsonify({"detail": str(e)}), 500
@@ -449,6 +567,7 @@ def social_login():
                 "pore_condition": db_user.get('pore_condition'),
                 "skin_score": db_user.get('skin_score', 0),
                 "sunscreen_interval": db_user.get('sunscreen_interval', 2),
+                "subscription_plan": db_user.get('subscription_plan', 'basic'),
                 "favorites": extra["favorites"],
                 "diary_entries": extra["diary_entries"],
                 "routine": extra["routine"],
@@ -487,7 +606,7 @@ def get_user_profile(user_id):
     try:
         cursor = conn.cursor(dictionary=True)
         cursor.execute("""
-            SELECT id, name, email, profile_photo, skin_type, acne_level, oil_level, pore_condition, skin_score, sunscreen_interval 
+            SELECT id, name, email, profile_photo, skin_type, acne_level, oil_level, pore_condition, skin_score, sunscreen_interval, subscription_plan 
             FROM users WHERE id = %s
         """, (user_id,))
         user_data = cursor.fetchone()
@@ -500,6 +619,30 @@ def get_user_profile(user_id):
         return jsonify(user_data), 200
     except Exception as e:
         return jsonify({"detail": str(e)}), 500
+    finally:
+        if conn.is_connected():
+            cursor.close()
+            conn.close()
+
+
+@app.route("/api/user/<int:user_id>", methods=["DELETE"])
+@require_auth
+def delete_user_account(user_id):
+    """Google Play Policy Compliant Account Deletion Endpoint."""
+    if g.current_user_id != user_id:
+        return jsonify({"detail": "Akses tidak diizinkan"}), 403
+
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"detail": "Database connection failed"}), 500
+
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
+        conn.commit()
+        return jsonify({"message": "Akun dan seluruh data Anda telah berhasil dihapus secara permanen", "status": "success"}), 200
+    except Exception as e:
+        return jsonify({"detail": f"Gagal menghapus akun: {str(e)}"}), 500
     finally:
         if conn.is_connected():
             cursor.close()
@@ -535,7 +678,7 @@ def update_user_profile(user_id):
         allowed_core_fields = [
             'name', 'email', 'profile_photo', 'skin_type',
             'acne_level', 'oil_level', 'pore_condition', 'skin_score',
-            'sunscreen_interval'
+            'sunscreen_interval', 'subscription_plan'
         ]
         for field in allowed_core_fields:
             if field in data:
@@ -627,7 +770,7 @@ def update_user_profile(user_id):
         conn.commit()
 
         cursor.execute("""
-            SELECT id, name, email, profile_photo, skin_type, acne_level, oil_level, pore_condition, skin_score, sunscreen_interval 
+            SELECT id, name, email, profile_photo, skin_type, acne_level, oil_level, pore_condition, skin_score, sunscreen_interval, subscription_plan 
             FROM users WHERE id = %s
         """, (user_id,))
         updated_user = cursor.fetchone()
@@ -800,98 +943,82 @@ def scan_bpom():
         return jsonify({"detail": f"Gagal memindai data: {str(e)}"}), 500
 
 
-# ─── Gemini AI Skin Scan (via REST API) ───────────────────────────────────────
+# ─── Gemini AI Skin Scan (via Official SDK) ───────────────────────────────────
 
 _GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
-_GEMINI_MODEL = 'gemini-2.0-flash'
-_GEMINI_REST_URL = (
-    'https://generativelanguage.googleapis.com/v1beta/models/'
-    f'{_GEMINI_MODEL}:generateContent'
-)
+_GEMINI_MODEL = 'gemini-3.1-flash-lite'
 
-if not _GEMINI_API_KEY:
+_gemini_client = None
+if _GEMINI_API_KEY:
+    _gemini_client = genai.Client(api_key=_GEMINI_API_KEY)
+else:
     print("[WARN] GEMINI_API_KEY tidak diset. Menggunakan mode mock untuk /api/skin-scan.")
 
 
-SKIN_ANALYSIS_PROMPT = """\
-Anda adalah dermatologis profesional yang menganalisis kondisi kulit wajah.
-Analisis gambar ini dengan cermat.
-Kembalikan respons HANYA dalam format JSON valid tanpa teks tambahan, tanpa markdown, tanpa penjelasan.
 
-Struktur JSON yang harus dikembalikan:
+SKIN_ANALYSIS_PROMPT = """\
+Anda adalah pakar Dermatologis Klinis dan spesialis analisis citra kulit (Dermatoskopi AI).
+Tugas Anda: Lakukan pemindaian medis dan analisis kondisi kulit wajah pada gambar secara akurat dan sangat teliti.
+
+=== PANDUAN DEFINISI VISUAL KLINIS KONDISI KULIT ===
+Pahami perbedaan spesifik berikut sebelum memberi label:
+1. "Jerawat" (Papula/Pustula/Nodul): Benjolan menonjol, meradang, seringkali memiliki titik putih/kuning di tengah (nanah) atau kemerahan bengkak yang terisolasi.
+2. "PIE" (Post-Inflammatory Erythema): Noda/bekas jerawat berwarna MERAH MUDA hingga MERAH CERAH akibat pelebaran pembuluh darah pasca-inflamasi (datar, bukan benjolan nanah).
+3. "PIH" (Post-Inflammatory Hyperpigmentation): Noda/bekas jerawat berwarna COKLAT KEHITAMAN atau GELAP akibat penumpukan melanin (datar, bukan kemerahan).
+4. "Aging": Garis-garis halus, kerutan, atau penurunan elastisitas/kekencangan kulit di sekitar mata, dahi, atau senyum.
+5. "Kusam": Kulit yang tampak kusam, warna kulit tidak merata, melasma, atau flek kecokelatan yang kehilangan kilau alami.
+6. "Kemerahan" (Erythema / Irritation): Area kemerahan yang meluas/melebar (seperti di pipi, hidung, dagu) akibat iritasi, rosacea, atau barrier kulit yang terganggu.
+
+=== PANDUAN PENENTUAN JENIS KULIT ===
+- "Berminyak": Terlihat kilap/kilatan minyak (sebum shine) merata di seluruh wajah (dahi, hidung, pipi, dagu).
+- "Kombinasi": Terlihat kilap minyak terutama di area T-Zone (dahi & hidung), sedangkan area pipi cenderung normal/kering.
+- "Kering": Kulit tampak kusam, bersisik/flaky, terasa kencang, tanpa kilap minyak sama sekali.
+- "Normal": Produksi minyak seimbang, tekstur halus, tidak mengkilap berlebih dan tidak bersisik.
+
+=== ATURAN BOUNDING BOX (box_2d) & CONFIDENCE ===
+- Koordinat [ymin, xmin, ymax, xmax] harus PRESISI mengurung HANYA titik/area permasalahan tersebut. Skala [0-1000] relatif terhadap tinggi dan lebar gambar.
+- Jangan membuat box_2d raksasa yang mencakup seluruh wajah. Setiap jerawat / noda individu atau area iritasi lokal harus memiliki box_2d masing-masing.
+- Berikan skor "confidence" realistis (0.50 - 0.99) berdasarkan kejelasan visual pada gambar.
+- Jika kulit bersih tanpa masalah yang jelas, kembalikan array "permasalahan": [].
+
+=== FORMAT OUTPUT (HANYA JSON VALID) ===
+Kembalikan respon HANYA berupa JSON valid tanpa markdown, tanpa teks pembuka/penutup.
+
+Struktur JSON:
 {
   "jenis_kulit": "Normal" | "Berminyak" | "Kombinasi" | "Kering",
   "permasalahan": [
     {
-      "label": "Jerawat" | "PIE" | "PIH" | "Bopeng" | "Hiperpigmentasi" | "Kemerahan",
+      "label": "Jerawat" | "PIE" | "PIH" | "Aging" | "Kusam" | "Kemerahan",
       "box_2d": [ymin, xmin, ymax, xmax],
-      "confidence": 0.0
+      "confidence": 0.92
     }
   ]
 }
-
-Catatan:
-- box_2d menggunakan skala 0-1000 relatif terhadap ukuran gambar (bukan piksel)
-- confidence adalah nilai 0.0 hingga 1.0
-- Jika kulit bersih tanpa masalah, kembalikan array permasalahan kosong []
-- Deteksi SEMUA area permasalahan kulit yang terlihat
 """
 
 
 def _call_gemini_vision(b64_image: str, mime_type: str) -> dict:
     """
-    Panggil Gemini REST API generateContent dengan gambar inline (base64).
+    Panggil Gemini via official SDK (google.genai) dengan PIL Image.
     Kembalikan dict hasil parse JSON dari Gemini.
     """
-    payload = {
-        "contents": [
-            {
-                "parts": [
-                    {"text": SKIN_ANALYSIS_PROMPT},
-                    {
-                        "inline_data": {
-                            "mime_type": mime_type,
-                            "data": b64_image
-                        }
-                    }
-                ]
-            }
-        ],
-        "generationConfig": {
-            "temperature": 0.1,
-            "maxOutputTokens": 1024,
-        }
-    }
+    img_bytes = base64.b64decode(b64_image)
+    pil_img = Image.open(io.BytesIO(img_bytes))
 
-    resp = req.post(
-        _GEMINI_REST_URL,
-        params={'key': _GEMINI_API_KEY},
-        json=payload,
-        timeout=30,
-        headers={'Content-Type': 'application/json'}
+    response = _gemini_client.models.generate_content(
+        model=_GEMINI_MODEL,
+        contents=[SKIN_ANALYSIS_PROMPT, pil_img],
+        config=types.GenerateContentConfig(
+            temperature=0.1,
+            top_p=0.95
+        )
     )
 
-    if resp.status_code != 200:
-        raise RuntimeError(f"Gemini API error {resp.status_code}: {resp.text[:300]}")
-
-    resp_data = resp.json()
-    try:
-        raw_text = resp_data['candidates'][0]['content']['parts'][0]['text'].strip()
-    except (KeyError, IndexError) as e:
-        raise RuntimeError(f"Respons Gemini tidak terduga: {str(resp_data)[:200]}")
-
-    # Bersihkan markdown fence jika ada
-    clean = raw_text
-    if clean.startswith('```'):
-        lines = clean.split('\n')
-        # Buang baris pertama (```json atau ```) dan terakhir (```)
-        inner = lines[1:] if len(lines) > 1 else lines
-        if inner and inner[-1].strip() == '```':
-            inner = inner[:-1]
-        clean = '\n'.join(inner)
-    clean = clean.replace('```json', '').replace('```', '').strip()
-
+    raw_text = response.text.strip()
+    clean = raw_text.replace("```json", "").replace("```", "").strip()
     return json.loads(clean)
+
 
 
 def _calculate_skin_score(permasalahan_list: list) -> int:
@@ -909,17 +1036,11 @@ def _calculate_skin_score(permasalahan_list: list) -> int:
 
 
 def _derive_acne_level(permasalahan_list: list) -> str:
-    """Tentukan acne level dari hasil deteksi."""
+    """Tentukan status jerawat dari hasil deteksi."""
     jerawat = [p for p in permasalahan_list if p.get('label') == 'Jerawat']
     if not jerawat:
-        return 'Tidak Ada'
-    avg_conf = sum(float(p.get('confidence', 0.5)) for p in jerawat) / len(jerawat)
-    if avg_conf >= 0.8:
-        return 'Parah — Grade 3'
-    elif avg_conf >= 0.6:
-        return 'Sedang — Grade 2'
-    else:
-        return 'Ringan — Grade 1'
+        return 'Bersih'
+    return 'Jerawat'
 
 
 def _derive_oil_level(jenis_kulit: str) -> str:
@@ -945,109 +1066,105 @@ def _derive_pore_condition(permasalahan_list: list, jenis_kulit: str) -> str:
 
 @app.route("/api/skin-scan", methods=["POST"])
 def skin_scan():
-    """Analisis kulit menggunakan Gemini AI Vision (via REST API).
-
-    Body JSON:
-      image    : str  -- Data URL base64 (data:image/jpeg;base64,...) atau base64 murni
-      user_id  : int  -- (opsional) ID user untuk auto-update DB
-
-    Response JSON:
-      jenis_kulit, permasalahan[], skin_score, acne_level, oil_level, pore_condition
-    """
-    is_mock = False
-    if not _GEMINI_API_KEY:
-        is_mock = True
-        print("[WARN] GEMINI_API_KEY tidak diset. Menggunakan mock analysis.")
-
-    data = request.get_json()
-    if not data or 'image' not in data:
-        return jsonify({"detail": "Field 'image' (base64) wajib diisi."}), 400
-
-    image_data_url = data['image']
-    user_id = data.get('user_id')
-
-    # ── Decode base64 ───────────────────────────────────────────────────
+    """Analisis kulit menggunakan Gemini AI Vision (via REST API)."""
     try:
-        mime_type = 'image/jpeg'
-        if ',' in image_data_url:
-            header, b64_str = image_data_url.split(',', 1)
-            if 'png' in header:
-                mime_type = 'image/png'
-            elif 'webp' in header:
-                mime_type = 'image/webp'
-        else:
-            b64_str = image_data_url
+        is_mock = False
+        if not _GEMINI_API_KEY:
+            is_mock = True
+            print("[WARN] GEMINI_API_KEY tidak diset. Menggunakan mock analysis.")
 
-        # Validasi base64
-        base64.b64decode(b64_str, validate=True)
-    except Exception as e:
-        return jsonify({"detail": f"Format gambar tidak valid: {str(e)}"}), 400
+        data = request.get_json()
+        if not data or 'image' not in data:
+            return jsonify({"detail": "Field 'image' (base64) wajib diisi."}), 400
 
-    # ── Helper for mock analysis ──────────────────────────────────────
-    def get_mock_result():
-        return {
-            "jenis_kulit": "Kombinasi",
-            "permasalahan": [
-                {
-                    "label": "Jerawat",
-                    "deskripsi": "Jerawat kemerahan ringan di area pipi.",
-                    "box_2d": [300, 400, 350, 460],
-                    "confidence": 0.89
-                },
-                {
-                    "label": "Pori-pori Besar",
-                    "deskripsi": "Pori-pori tampak melebar di area T-zone.",
-                    "box_2d": [450, 480, 520, 560],
-                    "confidence": 0.85
-                }
-            ]
-        }
+        image_data_url = data['image']
+        user_id = data.get('user_id')
 
-    # ── Panggil Gemini ────────────────────────────────────────────────
-    if is_mock:
-        hasil = get_mock_result()
-    else:
+        # ── Decode base64 ───────────────────────────────────────────────────
         try:
-            hasil = _call_gemini_vision(b64_str, mime_type)
+            mime_type = 'image/jpeg'
+            if ',' in image_data_url:
+                header, b64_str = image_data_url.split(',', 1)
+                if 'png' in header:
+                    mime_type = 'image/png'
+                elif 'webp' in header:
+                    mime_type = 'image/webp'
+            else:
+                b64_str = image_data_url
+
+            # Validasi base64
+            base64.b64decode(b64_str, validate=True)
         except Exception as e:
-            print(f"[WARN] Gagal memanggil Gemini API ({str(e)}). Menggunakan fallback mock analysis.")
+            return jsonify({"detail": f"Format gambar tidak valid: {str(e)}"}), 400
+
+        # ── Helper for mock analysis ──────────────────────────────────────
+        def get_mock_result():
+            return {
+                "jenis_kulit": "Kombinasi",
+                "permasalahan": [
+                    {
+                        "label": "Jerawat",
+                        "deskripsi": "Jerawat kemerahan ringan di area pipi.",
+                        "box_2d": [300, 400, 350, 460],
+                        "confidence": 0.89
+                    },
+                    {
+                        "label": "Pori-pori Besar",
+                        "deskripsi": "Pori-pori tampak melebar di area T-zone.",
+                        "box_2d": [450, 480, 520, 560],
+                        "confidence": 0.85
+                    }
+                ]
+            }
+
+        # ── Panggil Gemini ────────────────────────────────────────────────
+        if is_mock:
             hasil = get_mock_result()
+        else:
+            try:
+                hasil = _call_gemini_vision(b64_str, mime_type)
+            except Exception as e:
+                print(f"[WARN] Gagal memanggil Gemini API ({str(e)}). Menggunakan fallback mock analysis.")
+                hasil = get_mock_result()
 
-    # ── Hitung metrik turunan ───────────────────────────────────────────
-    jenis_kulit = hasil.get('jenis_kulit', 'Normal')
-    permasalahan_list = hasil.get('permasalahan', [])
+        # ── Hitung metrik turunan ───────────────────────────────────────────
+        jenis_kulit = hasil.get('jenis_kulit', 'Normal')
+        permasalahan_list = hasil.get('permasalahan', [])
 
-    skin_score      = _calculate_skin_score(permasalahan_list)
-    acne_level      = _derive_acne_level(permasalahan_list)
-    oil_level       = _derive_oil_level(jenis_kulit)
-    pore_condition  = _derive_pore_condition(permasalahan_list, jenis_kulit)
+        skin_score      = _calculate_skin_score(permasalahan_list)
+        acne_level      = _derive_acne_level(permasalahan_list)
+        oil_level       = _derive_oil_level(jenis_kulit)
+        pore_condition  = _derive_pore_condition(permasalahan_list, jenis_kulit)
 
-    # ── Optional: Update DB user ─────────────────────────────────────────
-    if user_id:
-        try:
-            conn = get_db_connection()
-            if conn:
-                cursor = conn.cursor()
-                cursor.execute("""
-                    UPDATE users
-                    SET skin_type=%s, acne_level=%s, oil_level=%s,
-                        pore_condition=%s, skin_score=%s
-                    WHERE id=%s
-                """, (jenis_kulit, acne_level, oil_level, pore_condition, skin_score, user_id))
-                conn.commit()
-                cursor.close()
-                conn.close()
-        except Exception as e:
-            print(f"[WARN] Gagal update skin data user {user_id}: {e}")
+        # ── Optional: Update DB user ─────────────────────────────────────────
+        if user_id:
+            try:
+                conn = get_db_connection()
+                if conn:
+                    cursor = conn.cursor()
+                    cursor.execute("""
+                        UPDATE users
+                        SET skin_type=%s, acne_level=%s, oil_level=%s,
+                            pore_condition=%s, skin_score=%s
+                        WHERE id=%s
+                    """, (jenis_kulit, acne_level, oil_level, pore_condition, skin_score, user_id))
+                    conn.commit()
+                    cursor.close()
+                    conn.close()
+            except Exception as e:
+                print(f"[WARN] Gagal update skin data user {user_id}: {e}")
 
-    return jsonify({
-        "jenis_kulit":      jenis_kulit,
-        "permasalahan":     permasalahan_list,
-        "skin_score":       skin_score,
-        "acne_level":       acne_level,
-        "oil_level":        oil_level,
-        "pore_condition":   pore_condition,
-    }), 200
+        return jsonify({
+            "jenis_kulit":      jenis_kulit,
+            "permasalahan":     permasalahan_list,
+            "skin_score":       skin_score,
+            "acne_level":       acne_level,
+            "oil_level":        oil_level,
+            "pore_condition":   pore_condition,
+        }), 200
+    except Exception as general_err:
+        print(f"[ERROR] Exception in skin_scan route: {general_err}")
+        return jsonify({"detail": f"Terjadi kesalahan internal server: {str(general_err)}"}), 500
 
 
 # ─── Rekomendasi Produk (Berbasis Ingredien) ──────────────────────────────────
@@ -1108,95 +1225,7 @@ def get_recommendations():
         return jsonify({"detail": f"Gagal menghitung rekomendasi: {str(e)}"}), 500
 
 
-# ─── Review & Komentar Produk ───────────────────────────────────────────────
 
-@app.route("/api/reviews", methods=["GET"])
-def get_reviews():
-    product_name = request.args.get('product_name')
-    if not product_name:
-        return jsonify({"detail": "product_name query parameter required"}), 400
-    
-    conn = get_db_connection()
-    if not conn:
-        return jsonify({"detail": "Database connection failed"}), 500
-        
-    try:
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("""
-            SELECT user_name, user_profile, rating, recommends, comment, created_at 
-            FROM product_reviews 
-            WHERE product_name = %s 
-            ORDER BY id DESC
-        """, (product_name,))
-        rows = cursor.fetchall()
-        
-        reviews_list = []
-        for r in rows:
-            dt = r["created_at"]
-            date_str = dt.strftime("%Y-%m-%d") if isinstance(dt, datetime) else str(dt)
-            reviews_list.append({
-                "name": r["user_name"],
-                "profile": r["user_profile"],
-                "rating": int(r["rating"]),
-                "recommends": bool(r["recommends"]),
-                "comment": r["comment"],
-                "date": date_str
-            })
-        
-        return jsonify({"reviews": reviews_list}), 200
-    except Exception as e:
-        return jsonify({"detail": f"Error: {str(e)}"}), 500
-    finally:
-        cursor.close()
-        conn.close()
-
-
-@app.route("/api/reviews", methods=["POST"])
-@require_auth
-def create_review():
-    user_id = g.current_user_id
-    data = request.get_json()
-    if not data or 'product_name' not in data or 'rating' not in data or 'comment' not in data:
-        return jsonify({"detail": "Data tidak lengkap"}), 400
-        
-    product_name = data['product_name']
-    rating = int(data['rating'])
-    recommends = bool(data.get('recommends', True))
-    comment = data['comment']
-    
-    if rating < 1 or rating > 5:
-        return jsonify({"detail": "Rating harus antara 1 sampai 5"}), 400
-        
-    if not comment.strip():
-        return jsonify({"detail": "Komentar tidak boleh kosong"}), 400
-        
-    conn = get_db_connection()
-    if not conn:
-        return jsonify({"detail": "Database connection failed"}), 500
-        
-    try:
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT name, skin_type FROM users WHERE id = %s", (user_id,))
-        user = cursor.fetchone()
-        if not user:
-            return jsonify({"detail": "User tidak ditemukan"}), 404
-            
-        user_name = user['name']
-        skin_type = user['skin_type'] or 'Normal'
-        user_profile = f"Kulit {skin_type}"
-        
-        cursor.execute("""
-            INSERT INTO product_reviews (product_name, user_id, user_name, user_profile, rating, recommends, comment)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, (product_name, user_id, user_name, user_profile, rating, recommends, comment))
-        conn.commit()
-        
-        return jsonify({"message": "Review berhasil ditambahkan"}), 201
-    except Exception as e:
-        return jsonify({"detail": f"Error: {str(e)}"}), 500
-    finally:
-        cursor.close()
-        conn.close()
 
 
 if __name__ == "__main__":

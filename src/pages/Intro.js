@@ -65,25 +65,27 @@ export function renderIntro() {
 
     page.innerHTML = `
       <div class="intro-slide">
-        <div class="intro-visual">
-          <!-- Floating accent dots -->
-          <div class="intro-float-dot dot-1" style="background: ${slide.accent};"></div>
-          <div class="intro-float-dot dot-2" style="background: ${slide.accentLight};"></div>
-          <div class="intro-float-dot dot-3" style="background: ${slide.accentDot};"></div>
-          <div class="intro-float-dot dot-4" style="background: ${slide.accentLight};"></div>
+        <div class="intro-main-content">
+          <div class="intro-visual">
+            <!-- Floating accent dots -->
+            <div class="intro-float-dot dot-1" style="background: ${slide.accent};"></div>
+            <div class="intro-float-dot dot-2" style="background: ${slide.accentLight};"></div>
+            <div class="intro-float-dot dot-3" style="background: ${slide.accentDot};"></div>
+            <div class="intro-float-dot dot-4" style="background: ${slide.accentLight};"></div>
 
-          <!-- Outer ring -->
-          <div class="intro-ring" style="border-color: ${slide.ringColor};">
-            <!-- Inner circle with icon -->
-            <div class="intro-icon-circle" style="background: ${slide.circleBg};">
-              ${iconContent}
+            <!-- Outer ring -->
+            <div class="intro-ring" style="border-color: ${slide.ringColor};">
+              <!-- Inner circle with icon -->
+              <div class="intro-icon-circle" style="background: ${slide.circleBg};">
+                ${iconContent}
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="intro-text-wrap">
-          <h1 class="intro-title">${slide.title}</h1>
-          <p class="intro-desc">${slide.desc}</p>
+          <div class="intro-text-wrap">
+            <h1 class="intro-title">${slide.title}</h1>
+            <p class="intro-desc">${slide.desc}</p>
+          </div>
         </div>
 
         <div class="intro-bottom">

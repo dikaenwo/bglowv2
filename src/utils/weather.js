@@ -1,6 +1,8 @@
 // Kunci API OpenWeatherMap — Silakan isi dengan API Key Anda agar data UV Index terhubung secara langsung
 const OPENWEATHER_API_KEY = 'YOUR_OPENWEATHER_API_KEY';
 
+import { requestLocationWithPermission } from './geolocation.js';
+
 export async function fetchWeather(customLat = null, customLon = null) {
   let lat = -6.2088; // Default Jakarta
   let lon = 106.8456;
@@ -11,31 +13,28 @@ export async function fetchWeather(customLat = null, customLon = null) {
     lon = customLon;
     isDefaultLocation = false;
   } else {
-    // Check localStorage first to speed up load time
-    const storedLat = localStorage.getItem('bglow_user_lat');
-    const storedLon = localStorage.getItem('bglow_user_lon');
-    if (storedLat && storedLon) {
-      lat = parseFloat(storedLat);
-      lon = parseFloat(storedLon);
-      isDefaultLocation = false;
-    } else {
-      try {
-        const pos = await new Promise((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, { 
-            enableHighAccuracy: true,
-            timeout: 8000,
-            maximumAge: 60000 
-          });
-        });
-        lat = pos.coords.latitude;
-        lon = pos.coords.longitude;
+    // 1. Coba ambil posisi fresh via Capacitor native geolocation (handles permission properly)
+    let gotFreshPos = false;
+    try {
+      const pos = await requestLocationWithPermission({ silent: true, timeout: 10000, maxRetries: 1 });
+      if (pos && pos.lat !== null && pos.lon !== null) {
+        lat = pos.lat;
+        lon = pos.lon;
         isDefaultLocation = false;
-        
-        // Cache coordinates
-        localStorage.setItem('bglow_user_lat', lat);
-        localStorage.setItem('bglow_user_lon', lon);
-      } catch(e) {
-        console.warn("Geolocation tidak diizinkan atau timeout:", e);
+        gotFreshPos = true;
+      }
+    } catch (e) {
+      console.warn("Capacitor geolocation fallback:", e);
+    }
+
+    // 2. Fallback ke cache localStorage
+    if (!gotFreshPos) {
+      const storedLat = localStorage.getItem('bglow_user_lat');
+      const storedLon = localStorage.getItem('bglow_user_lon');
+      if (storedLat && storedLon) {
+        lat = parseFloat(storedLat);
+        lon = parseFloat(storedLon);
+        isDefaultLocation = false;
       }
     }
   }

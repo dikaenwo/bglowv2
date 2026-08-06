@@ -735,12 +735,12 @@ export function renderSkinScan() {
           </div>
 
           <!-- Disclaimer AI Accuracy -->
-          <div class="scan-info-disclaimer" style="margin-top: 12px; padding: 12px; background: #FFFDF5; border: 1.5px solid #FEF3C7; border-radius: var(--radius-lg); display: flex; gap: 10px; align-items: flex-start; text-align: left;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 1px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <div class="scan-info-disclaimer" style="margin-top: 12px; padding: 12px 14px; background: #FFFDF5; border: 1.5px solid #FEF3C7; border-radius: var(--radius-lg); display: flex; gap: 10px; align-items: flex-start; text-align: left;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 1px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <div>
-              <div style="font-weight: 700; font-size: 11px; color: #B45309; margin-bottom: 2px;">Analisis AI Bisa Saja Tidak Akurat</div>
-              <div style="font-size: 10.5px; color: #B45309; line-height: 1.4;">
-                Gunakan hasil deteksi ini sebagai panduan awal. Jika Anda merasa prediksi AI kurang sesuai, Anda dapat menyesuaikannya secara manual di bawah ini.
+              <div style="font-weight: 700; font-size: 11.5px; color: #B45309; margin-bottom: 3px;">⚠️ Disclaimer & Catatan Medis</div>
+              <div style="font-size: 11px; color: #B45309; line-height: 1.45;">
+                Hasil analisis AI B-Glow bersifat <strong>referensi pendukung dan bisa saja tidak 100% akurat</strong>. Harap jangan dijadikan acuan medis mutlak. Selalu konsultasikan dengan dokter spesialis kulit (dermatolog) untuk diagnosis resmi.
               </div>
             </div>
           </div>
@@ -1053,7 +1053,7 @@ export function renderSkinScan() {
           jenis_kulit: selectedType,
           permasalahan: formattedProblems,
           skin_score: 85,
-          acne_level: selectedProblems.includes('Jerawat') ? 'Ringan — Grade 1' : 'Bersih',
+          acne_level: selectedProblems.includes('Jerawat') ? 'Jerawat' : 'Bersih',
           oil_level: selectedType === 'Berminyak' ? 'Tinggi' : selectedType === 'Kering' ? 'Rendah' : 'Normal',
           pore_condition: 'Minimal'
         });
