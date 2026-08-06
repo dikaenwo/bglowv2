@@ -583,6 +583,11 @@ def _score_products_impl(
             kategori_frontend=kategori_frontend
         )
 
+        # Hanya tampilkan produk yang direkomendasikan (score >= 0.50)
+        # Produk "Tidak Direkomendasikan" tidak ditampilkan ke user
+        if wsm_result['wsm_score'] < 0.50:
+            continue
+
         harga = row.get('Harga')
         try:
             harga = int(harga)
