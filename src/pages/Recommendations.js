@@ -1,5 +1,5 @@
 import { icons } from '../components/BottomNav.js';
-import { getUserId } from '../utils/store.js';
+import { getUserId, isPremium } from '../utils/store.js';
 import { showCustomAlert } from '../utils/helpers.js';
 import { RECOMMENDATIONS_API_URL } from '../config.js';
 
@@ -273,7 +273,25 @@ export function renderRecommendations() {
     if (filterMin !== null) filtered = filtered.filter(p => p.price >= filterMin);
     if (filterMax !== null) filtered = filtered.filter(p => p.price <= filterMax);
 
+    const userIsPremium = isPremium();
+    const FREE_LIMIT = 2; // Produk gratis yang bisa dilihat full
+
     const titleText = kategori === 'trending' ? 'Trending Harian' : 'Rekomendasi ' + (categories.find(c => c.id === kategori)?.label || '');
+
+    // Banner upgrade untuk user free (hanya muncul kalau ada produk yang terkunci)
+    const lockedCount = !userIsPremium && filtered.length > FREE_LIMIT ? filtered.length - FREE_LIMIT : 0;
+    const upgradeBanner = (!userIsPremium && lockedCount > 0) ? `
+      <div class="glow-upgrade-banner anim-fade-in" id="upgrade-banner">
+        <div class="glow-upgrade-inner">
+          <span class="glow-upgrade-crown">👑</span>
+          <div class="glow-upgrade-text">
+            <strong>+${lockedCount} produk terkunci</strong>
+            <span>Upgrade ke Glow Plus untuk akses semua rekomendasi</span>
+          </div>
+          <button class="glow-upgrade-btn" id="btn-upgrade-banner">Upgrade</button>
+        </div>
+      </div>
+    ` : '';
 
     page.innerHTML = `
       <div class="page-header" style="margin-bottom: 8px; justify-content: center;">
@@ -303,9 +321,12 @@ export function renderRecommendations() {
         `).join('')}
       </div>
 
+      <!-- Upgrade Banner -->
+      ${upgradeBanner}
+
       <!-- Product Grid -->
       <div class="product-grid" id="product-grid">
-        ${loading ? renderSkeleton() : filtered.length === 0 ? renderEmpty() : filtered.map((p, i) => renderCard(p, i)).join('')}
+        ${loading ? renderSkeleton() : filtered.length === 0 ? renderEmpty() : filtered.map((p, i) => renderCard(p, i, i >= FREE_LIMIT && !userIsPremium)).join('')}
       </div>
     `;
 
@@ -326,6 +347,18 @@ export function renderRecommendations() {
       filterMin = minVal ? parseInt(minVal) : null;
       filterMax = maxVal ? parseInt(maxVal) : null;
       renderShell(currentCat, allProducts, false);
+    });
+
+    // ── Event: upgrade banner button ─────────────────────────────────────────
+    page.querySelector('#btn-upgrade-banner')?.addEventListener('click', () => {
+      window.location.hash = '#/subscription';
+    });
+
+    // ── Event: lock card overlay click ───────────────────────────────────────
+    page.querySelectorAll('.product-card-locked').forEach(card => {
+      card.addEventListener('click', () => {
+        window.location.hash = '#/subscription';
+      });
     });
 
     // ── Event: product detail ────────────────────────────────────────────────
@@ -355,7 +388,7 @@ export function renderRecommendations() {
   }
 
   // ── Render satu product card ────────────────────────────────────────────────
-  function renderCard(p, i) {
+  function renderCard(p, i, locked = false) {
     const display  = CATEGORY_DISPLAY[p.kategori] || { emoji: '🧴', bgColor: '#F5F5F5' };
     const imgTag   = p.image_url && p.image_url !== 'nan'
       ? `<img src="${p.image_url}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;border-radius:14px;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
@@ -397,6 +430,36 @@ export function renderRecommendations() {
     const scorePercent = Math.round(p.score * 100);
     const barColor = scorePercent >= 75 ? '#22c55e' : scorePercent >= 50 ? '#eab308' : '#ef4444';
 
+    // ── Locked card (blur + paywall overlay) ──────────────────────────────────
+    if (locked) {
+      return `
+        <div class="product-card product-card-locked" data-idx="${i}" style="cursor:pointer;position:relative;overflow:hidden;">
+          <!-- Blurred card content -->
+          <div style="filter:blur(5px);pointer-events:none;user-select:none;">
+            <div class="product-img" style="background:${display.bgColor}">
+              ${imgTag}
+            </div>
+            <div class="product-info">
+              <div class="product-name">${p.name}</div>
+              <div class="product-brand" style="font-size:var(--font-xs);color:var(--text-tertiary);margin-bottom:4px;">${p.kategori}</div>
+              <div class="wsm-score-bar-wrap">
+                <div class="wsm-score-bar" style="width:${scorePercent}%;background:${barColor};"></div>
+              </div>
+              <div class="product-price">Rp${p.price.toLocaleString('id-ID')}</div>
+            </div>
+          </div>
+          <!-- Lock overlay -->
+          <div class="product-lock-overlay">
+            <div class="product-lock-inner">
+              <span class="product-lock-icon">🔒</span>
+              <span class="product-lock-label">Glow Plus</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // ── Normal card ───────────────────────────────────────────────────────────
     return `
       <div class="product-card" data-idx="${i}">
         <div class="product-img" style="background:${display.bgColor}">
