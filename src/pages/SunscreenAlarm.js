@@ -1,11 +1,20 @@
 import { icons } from '../components/BottomNav.js';
 import { fetchWeather } from '../utils/weather.js';
-import { getUserId, syncUserData } from '../utils/store.js';
-import { showCustomAlert } from '../utils/helpers.js';
+import { getUserId, syncUserData, isPremium } from '../utils/store.js';
+import { showCustomAlert, renderPaywallPage } from '../utils/helpers.js';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { requestLocationWithPermission, isLocationPermissionGranted, openLocationSettings, openAppSettings } from '../utils/geolocation.js';
 
 export function renderSunscreenAlarm() {
+  // ── Paywall: hanya untuk Glow Plus ─────────────────────────────────────────
+  if (!isPremium()) {
+    return renderPaywallPage('Alarm UV', '☀️', [
+      'Pantau indeks UV real-time di lokasimu',
+      'Pengingat re-apply sunscreen otomatis',
+      'Jadwal sunscreen terpersonalisasi',
+    ]);
+  }
+
   const page = document.createElement('div');
   page.className = 'page';
 

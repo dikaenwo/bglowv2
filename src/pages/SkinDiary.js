@@ -1,5 +1,6 @@
 import { icons } from '../components/BottomNav.js';
-import { getRoutine, getProgress, getUserId, syncUserData } from '../utils/store.js';
+import { getRoutine, getProgress, getUserId, syncUserData, isPremium } from '../utils/store.js';
+import { renderPaywallPage } from '../utils/helpers.js';
 
 // ─── Skin Journey helpers ────────────────────────────────────────────────
 const JOURNEY_PRIORITY_ORDER = ['Jerawat', 'Kemerahan', 'PIE', 'PIH', 'Hiperpigmentasi', 'Bopeng'];
@@ -159,6 +160,15 @@ const conditionData = [60, 55, 65, 70, 68, 75, 80]; // percentage
 const dayLabels = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 
 export function renderSkinDiary() {
+  // ── Paywall: hanya untuk Glow Plus ─────────────────────────────────────────
+  if (!isPremium()) {
+    return renderPaywallPage('Jurnal Kulit', '📔', [
+      'Catat kondisi kulit harian dengan foto',
+      'Skin Journey tracker per masalah kulit',
+      'Grafik perkembangan kulit bulanan',
+    ]);
+  }
+
   const page = document.createElement('div');
   page.className = 'page';
 

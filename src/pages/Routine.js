@@ -8,9 +8,9 @@ import {
   getTodayDateString, getLatestCompletedDate,
   isDateCompleted, setDateCompleted,
   calculateCurrentStreak, getLatestCompletedDateFromDict,
-  calculateBestStreak
+  calculateBestStreak, isPremium
 } from '../utils/store.js';
-import { showCustomAlert, showCustomConfirm } from '../utils/helpers.js';
+import { showCustomAlert, showCustomConfirm, renderPaywallPage } from '../utils/helpers.js';
 
 const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 const dayShort = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
@@ -186,6 +186,15 @@ export function getStepIcon(label, fallbackEmoji, productName = '') {
 }
 
 export function renderRoutine() {
+  // ── Paywall: hanya untuk Glow Plus ─────────────────────────────────────────
+  if (!isPremium()) {
+    return renderPaywallPage('Rutinitas', '📚', [
+      'Pantau rutinitas skincare pagi & malam',
+      'Tracking streak & progress harian',
+      'Jadwal produk khusus hari tertentu',
+    ]);
+  }
+
   const page = document.createElement('div');
   page.className = 'page routine-page';
 

@@ -398,3 +398,164 @@ export function showToast(message, duration = 2000) {
     setTimeout(() => toast.remove(), 300);
   }, duration);
 }
+
+// ─── Glow Plus Paywall Page ───────────────────────────────────────────────────
+/**
+ * Render a full-page paywall screen for Glow Plus locked features.
+ * @param {string} featureName   - Nama fitur (e.g. 'Alarm UV', 'Rutinitas', 'Jurnal Kulit')
+ * @param {string} featureEmoji  - Emoji representasi fitur
+ * @param {string[]} benefits    - List manfaat fitur (max 3)
+ * @returns {HTMLElement}        - div.page siap di-return
+ */
+export function renderPaywallPage(featureName, featureEmoji, benefits = []) {
+  const page = document.createElement('div');
+  page.className = 'page paywall-page';
+
+  const benefitItems = benefits.map(b => `
+    <div class="pw-benefit-item">
+      <span class="pw-benefit-check">✓</span>
+      <span>${b}</span>
+    </div>
+  `).join('');
+
+  page.innerHTML = `
+    <div class="pw-container">
+      <button class="pw-back-btn" id="pw-back-btn">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+      <div class="pw-hero">
+        <div class="pw-crown-glow"></div>
+        <div class="pw-feature-emoji">${featureEmoji}</div>
+        <div class="pw-lock-badge"><span>🔒</span></div>
+      </div>
+      <div class="pw-content">
+        <div class="pw-crown-label">✨ Eksklusif Glow Plus</div>
+        <h1 class="pw-title">${featureName}</h1>
+        <p class="pw-subtitle">Fitur ini tersedia khusus untuk member Glow Plus. Upgrade sekarang untuk akses penuh!</p>
+        ${benefits.length > 0 ? `<div class="pw-benefits">${benefitItems}</div>` : ''}
+        <div class="pw-price-card">
+          <div class="pw-price-left">
+            <div class="pw-price-label">Glow Plus</div>
+            <div class="pw-price-amount">Rp 30.000<span>/bulan</span></div>
+          </div>
+          <div class="pw-price-badge">POPULER 🔥</div>
+        </div>
+        <button class="pw-cta-btn" id="pw-upgrade-btn">👑 Upgrade ke Glow Plus</button>
+        <button class="pw-secondary-btn" id="pw-back-btn2">Kembali</button>
+      </div>
+    </div>
+
+    <style>
+      .paywall-page {
+        background: linear-gradient(160deg, #0f0a2e 0%, #1e1b4b 50%, #2d1b69 100%);
+        min-height: 100vh; display: flex; flex-direction: column; overflow-y: auto; position: relative;
+      }
+      .pw-container {
+        display: flex; flex-direction: column; align-items: center;
+        padding: 20px 24px 40px; min-height: 100%; position: relative;
+      }
+      .pw-back-btn {
+        align-self: flex-start; background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.15); border-radius: 50%;
+        width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;
+        color: white; cursor: pointer; margin-bottom: 20px; flex-shrink: 0; transition: background 0.2s;
+      }
+      .pw-back-btn:hover { background: rgba(255,255,255,0.2); }
+      .pw-hero {
+        position: relative; display: flex; align-items: center; justify-content: center;
+        width: 150px; height: 150px; margin-bottom: 28px;
+      }
+      .pw-crown-glow {
+        position: absolute; inset: -10px; border-radius: 50%;
+        background: radial-gradient(circle, rgba(167,139,250,0.35) 0%, transparent 70%);
+        animation: pwPulse 2.5s ease-in-out infinite;
+      }
+      @keyframes pwPulse {
+        0%, 100% { transform: scale(1); opacity: 0.7; }
+        50% { transform: scale(1.12); opacity: 1; }
+      }
+      .pw-feature-emoji {
+        font-size: 5rem; filter: drop-shadow(0 0 20px rgba(167,139,250,0.5));
+        position: relative; z-index: 1; animation: pwFloat 3s ease-in-out infinite;
+      }
+      @keyframes pwFloat {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
+      }
+      .pw-lock-badge {
+        position: absolute; bottom: 4px; right: 4px; width: 38px; height: 38px;
+        background: linear-gradient(135deg, #312e81, #4c1d95); border-radius: 50%;
+        border: 2px solid rgba(167,139,250,0.4); display: flex; align-items: center;
+        justify-content: center; font-size: 1.1rem; z-index: 2;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      }
+      .pw-content { width: 100%; display: flex; flex-direction: column; align-items: center; text-align: center; }
+      .pw-crown-label {
+        font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+        color: #a78bfa; margin-bottom: 10px;
+      }
+      .pw-title {
+        font-size: 1.75rem; font-weight: 800; color: #ffffff;
+        margin: 0 0 12px; line-height: 1.2; letter-spacing: -0.5px;
+      }
+      .pw-subtitle {
+        font-size: 0.9rem; color: rgba(196,181,253,0.8); line-height: 1.6;
+        margin: 0 0 24px; max-width: 300px;
+      }
+      .pw-benefits {
+        width: 100%; background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1); border-radius: 14px;
+        padding: 14px 16px; margin-bottom: 20px;
+        display: flex; flex-direction: column; gap: 10px; text-align: left;
+      }
+      .pw-benefit-item { display: flex; align-items: center; gap: 10px; font-size: 0.875rem; color: rgba(255,255,255,0.85); font-weight: 500; }
+      .pw-benefit-check {
+        width: 20px; height: 20px; background: rgba(34,197,94,0.2); border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 11px; color: #4ade80; font-weight: 700; flex-shrink: 0;
+      }
+      .pw-price-card {
+        width: 100%; background: rgba(255,255,255,0.07);
+        border: 1px solid rgba(167,139,250,0.25); border-radius: 14px;
+        padding: 14px 18px; display: flex; align-items: center;
+        justify-content: space-between; margin-bottom: 20px;
+      }
+      .pw-price-label {
+        font-size: 11px; font-weight: 600; color: rgba(196,181,253,0.7);
+        text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px;
+      }
+      .pw-price-amount { font-size: 1.3rem; font-weight: 800; color: #fff; }
+      .pw-price-amount span { font-size: 0.8rem; font-weight: 500; color: rgba(196,181,253,0.7); }
+      .pw-price-badge {
+        background: linear-gradient(135deg, #f59e0b, #d97706); color: white;
+        font-size: 10px; font-weight: 800; padding: 5px 10px;
+        border-radius: 100px; letter-spacing: 0.3px;
+      }
+      .pw-cta-btn {
+        width: 100%; padding: 16px; border-radius: 14px;
+        background: linear-gradient(135deg, #7c3aed, #6d28d9); color: white;
+        font-size: 1rem; font-weight: 800; border: none; cursor: pointer;
+        letter-spacing: 0.3px; box-shadow: 0 6px 24px rgba(124,58,237,0.4);
+        transition: all 0.2s ease; margin-bottom: 12px;
+      }
+      .pw-cta-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(124,58,237,0.5); }
+      .pw-secondary-btn {
+        width: 100%; padding: 12px; border-radius: 14px; background: transparent;
+        color: rgba(196,181,253,0.7); font-size: 0.875rem; font-weight: 600;
+        border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: all 0.2s;
+      }
+      .pw-secondary-btn:hover { background: rgba(255,255,255,0.05); color: white; }
+    </style>
+  `;
+
+  const goBack = () => window.history.back();
+  page.querySelector('#pw-back-btn').addEventListener('click', goBack);
+  page.querySelector('#pw-back-btn2').addEventListener('click', goBack);
+  page.querySelector('#pw-upgrade-btn').addEventListener('click', () => {
+    window.location.hash = '#/subscription';
+  });
+
+  return page;
+}
