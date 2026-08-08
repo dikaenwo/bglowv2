@@ -664,6 +664,17 @@ export function renderSkinScan() {
       .filter(label => detectedLabels.includes(label))
       .map((label, idx) => ({ label, stepNum: idx + 1, info: JOURNEY_INFO[label] || null, col: PROBLEM_COLORS[label] || { hex: '#888', bg: '#F5F5F5' } }));
 
+    // Deduplicate permasalahan by label (keep highest confidence)
+    const uniquePermasalahan = [];
+    if (permasalahan && permasalahan.length > 0) {
+      const seen = {};
+      permasalahan.forEach(p => {
+        const conf = p.confidence || 0;
+        if (!seen[p.label] || conf > (seen[p.label].confidence || 0)) seen[p.label] = p;
+      });
+      Object.values(seen).forEach(p => uniquePermasalahan.push(p));
+    }
+
     page.innerHTML = `
       <div class="page-header">
         <button class="back-btn" id="back-btn">${icons.chevronLeft}</button>
@@ -671,43 +682,26 @@ export function renderSkinScan() {
       </div>
       <div class="scan-results anim-fade-in">
 
-        <!-- Deteksi per-masalah: carousel slider -->
+        <!-- Deteksi Area Kulit: single annotated image -->
         ${permasalahan && permasalahan.length > 0 ? `
         <div class="detection-section">
           <div class="std-header" style="margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
             <span class="std-label">Deteksi Area Kulit</span>
-            <span class="detection-count-badge">${permasalahan.length} area</span>
+            <span class="detection-count-badge">${uniquePermasalahan.length} masalah</span>
           </div>
-          <div class="detection-slider-wrapper">
-            <div class="detection-slider" id="detection-slider">
-              ${permasalahan.map((p, idx) => {
-                const col = PROBLEM_COLORS[p.label] || { hex: '#888', bg: '#F5F5F5' };
-                return `
-                <div class="detection-slide" data-idx="${idx}">
-                  <div class="detection-slide-img-wrap">
-                    <canvas class="detection-bbox-canvas" data-idx="${idx}" style="display: block; width: 100%; border-radius: 14px;"></canvas>
-                    <div class="detection-slide-badge" style="background: ${col.hex}; display: inline-flex; align-items: center; gap: 4px; color: #fff; padding: 4px 8px; font-size: 11px; font-weight: 700; border-radius: 20px;">
-                      ${PROBLEM_ICONS[p.label] || ''}
-                      <span>${p.label}</span>
-                    </div>
-                  </div>
-                  <div class="detection-slide-footer" style="border-top: 2px solid ${col.hex}20;">
-                    <div class="dsf-label" style="color: ${col.hex}; display: inline-flex; align-items: center; gap: 6px; font-weight: 700;">
-                      ${PROBLEM_ICONS[p.label] || ''}
-                      <span>${p.label}</span>
-                    </div>
-                    <div class="dsf-desc">${PROBLEM_DESCRIPTIONS[p.label] || p.label}</div>
-                  </div>
-                </div>`;
-              }).join('')}
-            </div>
-            ${permasalahan.length > 1 ? `
-            <div class="detection-slider-dots" id="slider-dots">
-              ${permasalahan.map((p, idx) => {
-                const col = PROBLEM_COLORS[p.label] || { hex: '#888' };
-                return `<div class="slider-dot ${idx === 0 ? 'active' : ''}" data-idx="${idx}" style="--dot-color: ${col.hex};"></div>`;
-              }).join('')}
-            </div>` : ''}
+          <!-- Single annotated canvas -->
+          <div style="border-radius: 16px; overflow: hidden; border: 1.5px solid var(--border);">
+            <canvas id="detection-bbox-canvas-main" style="display: block; width: 100%;"></canvas>
+          </div>
+          <!-- Problem chips (deduplicated) -->
+          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;">
+            ${uniquePermasalahan.map(p => {
+              const col = PROBLEM_COLORS[p.label] || { hex: '#888', bg: '#F5F5F5' };
+              return `<div style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:100px;background:${col.bg};border:1.5px solid ${col.hex}30;">
+                <div style="width:10px;height:10px;border-radius:50%;background:${col.hex};flex-shrink:0;"></div>
+                <span style="font-size:12px;font-weight:700;color:${col.hex};">${p.label}</span>
+              </div>`;
+            }).join('')}
           </div>
         </div>
         ` : `
@@ -840,103 +834,72 @@ export function renderSkinScan() {
       </div>
     `;
 
-    // Draw per-detection bounding boxes: each problem gets its OWN canvas
-    if (capturedImage && permasalahan && permasalahan.length > 0) {
+    // Draw ALL bounding boxes on a single canvas
+    const mainCanvas = page.querySelector('#detection-bbox-canvas-main');
+    if (capturedImage && permasalahan && permasalahan.length > 0 && mainCanvas) {
       const sourceImg = new Image();
-      sourceImg.src = capturedImage;
-
-      const drawSingleBox = (canvas, item) => {
-        // Use natural canvas resolution
-        const displayW = canvas.parentElement ? canvas.parentElement.offsetWidth : 320;
+      const doDrawAll = () => {
+        const displayW = mainCanvas.parentElement ? mainCanvas.parentElement.offsetWidth : 320;
         const aspect = sourceImg.naturalHeight / sourceImg.naturalWidth;
         const displayH = Math.round(displayW * aspect);
-        canvas.width = displayW;
-        canvas.height = displayH;
-
-        const ctx = canvas.getContext('2d');
-
-        // Draw the base image scaled to canvas
+        mainCanvas.width = displayW;
+        mainCanvas.height = displayH;
+        const ctx = mainCanvas.getContext('2d');
         ctx.drawImage(sourceImg, 0, 0, displayW, displayH);
 
-        if (!item.box_2d) {
-          return; // Skip box drawing if manual override without box coordinates
-        }
+        permasalahan.forEach(item => {
+          if (!item.box_2d || item.box_2d.length < 4) return;
+          const [ymin, xmin, ymax, xmax] = item.box_2d;
+          const col = (PROBLEM_COLORS[item.label] || { hex: '#AAAAAA' }).hex;
+          const x1 = xmin / 1000 * displayW;
+          const y1 = ymin / 1000 * displayH;
+          const bw = (xmax - xmin) / 1000 * displayW;
+          const bh = (ymax - ymin) / 1000 * displayH;
 
-        const [ymin, xmin, ymax, xmax] = item.box_2d;
-        const col = (PROBLEM_COLORS[item.label] || { hex: '#AAAAAA' }).hex;
-        const confPct = Math.round((item.confidence || 0.5) * 100);
+          // Translucent fill
+          ctx.fillStyle = col + '28';
+          ctx.fillRect(x1, y1, bw, bh);
 
-        const x1 = xmin / 1000 * displayW;
-        const y1 = ymin / 1000 * displayH;
-        const bw = (xmax - xmin) / 1000 * displayW;
-        const bh = (ymax - ymin) / 1000 * displayH;
+          // Rounded border with glow
+          ctx.save();
+          ctx.strokeStyle = col;
+          ctx.lineWidth = 3;
+          ctx.shadowColor = col;
+          ctx.shadowBlur = 10;
+          const r = 7;
+          ctx.beginPath();
+          ctx.moveTo(x1 + r, y1);
+          ctx.lineTo(x1 + bw - r, y1);
+          ctx.quadraticCurveTo(x1 + bw, y1, x1 + bw, y1 + r);
+          ctx.lineTo(x1 + bw, y1 + bh - r);
+          ctx.quadraticCurveTo(x1 + bw, y1 + bh, x1 + bw - r, y1 + bh);
+          ctx.lineTo(x1 + r, y1 + bh);
+          ctx.quadraticCurveTo(x1, y1 + bh, x1, y1 + bh - r);
+          ctx.lineTo(x1, y1 + r);
+          ctx.quadraticCurveTo(x1, y1, x1 + r, y1);
+          ctx.closePath();
+          ctx.stroke();
+          ctx.restore();
 
-        // Dim overlay outside the bounding box only
-        ctx.save();
-        ctx.fillStyle = 'rgba(0,0,0,0.50)';
-        // top strip
-        ctx.fillRect(0, 0, displayW, y1);
-        // bottom strip
-        ctx.fillRect(0, y1 + bh, displayW, displayH - y1 - bh);
-        // left strip
-        ctx.fillRect(0, y1, x1, bh);
-        // right strip
-        ctx.fillRect(x1 + bw, y1, displayW - x1 - bw, bh);
-        ctx.restore();
-
-        // Draw rounded rectangle border
-        ctx.save();
-        ctx.strokeStyle = col;
-        ctx.lineWidth = 3;
-        ctx.shadowColor = col;
-        ctx.shadowBlur = 12;
-        const r = 8;
-        ctx.beginPath();
-        ctx.moveTo(x1 + r, y1);
-        ctx.lineTo(x1 + bw - r, y1);
-        ctx.quadraticCurveTo(x1 + bw, y1, x1 + bw, y1 + r);
-        ctx.lineTo(x1 + bw, y1 + bh - r);
-        ctx.quadraticCurveTo(x1 + bw, y1 + bh, x1 + bw - r, y1 + bh);
-        ctx.lineTo(x1 + r, y1 + bh);
-        ctx.quadraticCurveTo(x1, y1 + bh, x1, y1 + bh - r);
-        ctx.lineTo(x1, y1 + r);
-        ctx.quadraticCurveTo(x1, y1, x1 + r, y1);
-        ctx.closePath();
-        ctx.stroke();
-        ctx.restore();
-      };
-
-      const canvases = page.querySelectorAll('.detection-bbox-canvas');
-      const doDrawAll = () => {
-        canvases.forEach((canvas, idx) => {
-          if (permasalahan[idx]) drawSingleBox(canvas, permasalahan[idx]);
+          // Label tag
+          const fontSize = Math.max(10, displayW * 0.03);
+          ctx.font = `bold ${fontSize}px sans-serif`;
+          const textW = ctx.measureText(item.label).width;
+          const padX = 5, padY = 3;
+          const lblH = fontSize + padY * 2;
+          const lblY = y1 > lblH + 2 ? y1 - lblH - 2 : y1 + 2;
+          ctx.fillStyle = col;
+          ctx.fillRect(x1, lblY, textW + padX * 2, lblH);
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillText(item.label, x1 + padX, lblY + fontSize + padY * 0.5);
         });
       };
 
+      sourceImg.src = capturedImage;
       if (sourceImg.complete && sourceImg.naturalWidth > 0) {
         doDrawAll();
       } else {
         sourceImg.onload = doDrawAll;
-      }
-
-      // Slider interaction
-      const slider = page.querySelector('#detection-slider');
-      const dots = page.querySelectorAll('.slider-dot');
-      if (slider && dots.length > 0) {
-        slider.addEventListener('scroll', () => {
-          const slideW = slider.offsetWidth;
-          const activeIdx = Math.round(slider.scrollLeft / slideW);
-          dots.forEach((dot, i) => {
-            dot.classList.toggle('active', i === activeIdx);
-          });
-        }, { passive: true });
-
-        dots.forEach(dot => {
-          dot.addEventListener('click', () => {
-            const idx = parseInt(dot.dataset.idx);
-            slider.scrollTo({ left: idx * slider.offsetWidth, behavior: 'smooth' });
-          });
-        });
       }
     }
 
