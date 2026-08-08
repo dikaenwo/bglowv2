@@ -434,8 +434,8 @@ export function renderRecommendations() {
     if (locked) {
       return `
         <div class="product-card product-card-locked" data-idx="${i}" style="cursor:pointer;position:relative;overflow:hidden;">
-          <!-- Blurred card content -->
-          <div style="filter:blur(5px);pointer-events:none;user-select:none;">
+          <!-- Heavily blurred card content -->
+          <div style="filter:blur(14px) brightness(0.6) saturate(0);pointer-events:none;user-select:none;transform:scale(1.05);">
             <div class="product-img" style="background:${display.bgColor}">
               ${imgTag}
             </div>
@@ -458,6 +458,7 @@ export function renderRecommendations() {
         </div>
       `;
     }
+
 
     // ── Normal card ───────────────────────────────────────────────────────────
     return `
