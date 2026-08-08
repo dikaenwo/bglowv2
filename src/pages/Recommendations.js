@@ -455,7 +455,35 @@ export function renderRecommendations() {
           <!-- Lock overlay -->
           <div class="product-lock-overlay">
             <div class="product-lock-inner">
-              <span class="product-lock-icon">🔒</span>
+              <span class="product-lock-icon">
+                <svg viewBox="0 0 40 40" width="40" height="40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <!-- Outer glow circle -->
+                  <circle cx="20" cy="20" r="19" fill="url(#lockGrad)" opacity="0.15"/>
+                  <!-- Lock body -->
+                  <rect x="10" y="20" width="20" height="14" rx="4" fill="url(#lockBodyGrad)"/>
+                  <!-- Lock shackle -->
+                  <path d="M14 20v-5a6 6 0 0 1 12 0v5" stroke="url(#lockShackleGrad)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+                  <!-- Keyhole -->
+                  <circle cx="20" cy="26" r="2.5" fill="white" opacity="0.9"/>
+                  <rect x="19" y="27" width="2" height="4" rx="1" fill="white" opacity="0.9"/>
+                  <!-- Shine -->
+                  <ellipse cx="16" cy="23" rx="2" ry="1" fill="white" opacity="0.2" transform="rotate(-20 16 23)"/>
+                  <defs>
+                    <linearGradient id="lockGrad" x1="0" y1="0" x2="40" y2="40">
+                      <stop offset="0%" stop-color="#a78bfa"/>
+                      <stop offset="100%" stop-color="#818cf8"/>
+                    </linearGradient>
+                    <linearGradient id="lockBodyGrad" x1="10" y1="20" x2="30" y2="34" gradientUnits="userSpaceOnUse">
+                      <stop offset="0%" stop-color="#7c3aed"/>
+                      <stop offset="100%" stop-color="#4f46e5"/>
+                    </linearGradient>
+                    <linearGradient id="lockShackleGrad" x1="14" y1="10" x2="26" y2="20" gradientUnits="userSpaceOnUse">
+                      <stop offset="0%" stop-color="#c4b5fd"/>
+                      <stop offset="100%" stop-color="#a78bfa"/>
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </span>
               <span class="product-lock-label">Glow Plus</span>
             </div>
           </div>
