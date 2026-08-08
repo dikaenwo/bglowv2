@@ -199,6 +199,7 @@ export function renderSubscription() {
   // Initialize Billing
   initBilling((result) => {
     if (result.success) {
+      document.body.classList.remove('has-paywall');
       showToast('✨ Pembelian Glow Plus Berhasil!');
       setTimeout(() => {
         window.location.hash = '#/';
@@ -218,6 +219,7 @@ export function renderSubscription() {
     showToast('🔍 Memeriksa pembelian Google Play...');
     const result = await restorePurchases();
     if (result.success) {
+      document.body.classList.remove('has-paywall');
       showToast('✨ Pembelian berhasil dipulihkan!');
       setTimeout(() => {
         window.location.hash = '#/';
@@ -241,7 +243,8 @@ export function renderSubscription() {
       try {
         const res = await purchaseGlowPlus();
         if (res && res.success && res.simulated) {
-          // Web simulation mode
+          // Web simulation mode — langsung aktif
+          document.body.classList.remove('has-paywall');
           showToast('✨ Selamat! Glow Plus berhasil diaktifkan (Simulasi).');
           setTimeout(() => { window.location.hash = '#/'; }, 1500);
         } else if (res && res.success && res.pending) {
@@ -249,6 +252,7 @@ export function renderSubscription() {
           showToast('⏳ Menunggu konfirmasi Google Play...');
           // Tombol tetap disabled sampai listener callback menavigasi
         } else if (res && res.success) {
+          document.body.classList.remove('has-paywall');
           showToast('✨ Selamat! Glow Plus berhasil diaktifkan.');
           setTimeout(() => { window.location.hash = '#/'; }, 1500);
         } else if (res && !res.success) {
