@@ -2,51 +2,50 @@ import { icons } from '../components/BottomNav.js';
 import { getUserId, getAuthHeaders } from '../utils/store.js';
 import { API_BASE_URL, SKIN_SCAN_API_URL } from '../config.js';
 
-// ─── SVG Icons for Skin Types ────────────────────────────────────────────────
+// ─── SVG Icons for Skin Types (same as Settings.js) ─────────────────────────
 const skinTypeIcons = {
-  'Normal':    `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="fill: rgba(245, 158, 11, 0.12);"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>`,
-  'Berminyak': `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="fill: rgba(59, 130, 246, 0.12);"><path d="M12 22a7 7 0 0 0 7-7c0-4.3-7-13-7-13S5 10.7 5 15a7 7 0 0 0 7 7z"/></svg>`,
-  'Kombinasi': `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="fill: rgba(139, 92, 246, 0.12);"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 2v20"/></svg>`,
-  'Kering':    `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="fill: rgba(16, 185, 129, 0.12);"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 3.5 1 9.8a7 7 0 0 1-9 8.2z"/><path d="M9 22v-4h4"/></svg>`,
-  'Sensitif':  `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="fill: rgba(239, 68, 68, 0.12);"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+  'Normal':    `<svg viewBox="0 0 32 32" width="24" height="24" fill="none"><circle cx="16" cy="16" r="13" fill="#D1FAE5" stroke="#10B981" stroke-width="1.5"/><circle cx="16" cy="16" r="8" fill="#6EE7B7" opacity="0.5"/><path d="M11 20c1.5 2 3.5 3 5 3s3.5-1 5-3" stroke="#059669" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="14" r="1.5" fill="#059669"/><circle cx="20" cy="14" r="1.5" fill="#059669"/><path d="M22 8l1.5-2M10 8L8.5 6M16 6V4" stroke="#10B981" stroke-width="1.2" stroke-linecap="round"/></svg>`,
+  'Berminyak': `<svg viewBox="0 0 32 32" width="24" height="24" fill="none"><circle cx="16" cy="16" r="13" fill="#DBEAFE" stroke="#3B82F6" stroke-width="1.5"/><circle cx="16" cy="16" r="8" fill="#93C5FD" opacity="0.4"/><path d="M11 20c1.5 1.5 3.5 2 5 2s3.5-.5 5-2" stroke="#2563EB" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="14" r="1.5" fill="#2563EB"/><circle cx="20" cy="14" r="1.5" fill="#2563EB"/><path d="M9 9c0 2-2 3-2 5" stroke="#60A5FA" stroke-width="1.2" stroke-linecap="round"/><path d="M23 9c0 2 2 3 2 5" stroke="#60A5FA" stroke-width="1.2" stroke-linecap="round"/><circle cx="8" cy="18" r="2" fill="#93C5FD" opacity="0.6"/><circle cx="24" cy="18" r="2" fill="#93C5FD" opacity="0.6"/><circle cx="16" cy="10" r="1.5" fill="#93C5FD" opacity="0.7"/></svg>`,
+  'Kombinasi': `<svg viewBox="0 0 32 32" width="24" height="24" fill="none"><circle cx="16" cy="16" r="13" fill="#EDE9FE" stroke="#8B5CF6" stroke-width="1.5"/><path d="M16 3a13 13 0 010 26" fill="#C4B5FD" opacity="0.5"/><path d="M16 3a13 13 0 000 26" fill="#DDD6FE" opacity="0.3"/><path d="M11 20c1.5 1.5 3.5 2 5 2s3.5-.5 5-2" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="14" r="1.5" fill="#7C3AED"/><circle cx="20" cy="14" r="1.5" fill="#7C3AED"/><line x1="16" y1="5" x2="16" y2="27" stroke="#8B5CF6" stroke-width="0.8" stroke-dasharray="2 2"/><circle cx="14" cy="10" r="1.2" fill="#93C5FD" opacity="0.7"/><circle cx="16" cy="8" r="1" fill="#93C5FD" opacity="0.6"/></svg>`,
+  'Kering':    `<svg viewBox="0 0 32 32" width="24" height="24" fill="none"><circle cx="16" cy="16" r="13" fill="#FEF3C7" stroke="#D97706" stroke-width="1.5"/><circle cx="16" cy="16" r="8" fill="#FDE68A" opacity="0.4"/><path d="M12 19c1 1 2.5 1.5 4 1.5s3-.5 4-1.5" stroke="#B45309" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="14" r="1.5" fill="#B45309"/><circle cx="20" cy="14" r="1.5" fill="#B45309"/><path d="M8 12l1.5 1M24 12l-1.5 1" stroke="#D97706" stroke-width="1" stroke-linecap="round"/><path d="M10 22l2-1M22 22l-2-1M13 24l1-1.5M19 24l-1-1.5" stroke="#D97706" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/></svg>`,
 };
 
-// ─── SVG Icons for Skin Problems ─────────────────────────────────────────────
+// ─── SVG Icons for Skin Problems (same as Settings.js) ──────────────────────
 const PROBLEM_ICONS = {
-  'Jerawat':         `<svg class="problem-svg-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; display:inline-block; vertical-align:middle;"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="2.5"/><circle cx="7" cy="8" r="1"/><circle cx="16" cy="16" r="1"/></svg>`,
-  'PIE':             `<svg class="problem-svg-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; display:inline-block; vertical-align:middle;"><circle cx="8" cy="8" r="2.5"/><circle cx="16" cy="10" r="2"/><circle cx="11" cy="16" r="1.5"/></svg>`,
-  'PIH':             `<svg class="problem-svg-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; display:inline-block; vertical-align:middle;"><path d="M12 3a9 9 0 1 0 9 9 9 9 0 0 0-9-9z"/><path d="M8 12h.01M12 8h.01M16 12h.01M12 16h.01"/></svg>`,
-  'Bopeng':          `<svg class="problem-svg-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; display:inline-block; vertical-align:middle;"><path d="M12 3a9 9 0 1 0 9 9 9 9 0 0 0-9-9z"/><path d="M12 8c-2 0-3 1-3 3s1 3 3 3 3-1 3-3-1-3-3-3z"/></svg>`,
-  'Hiperpigmentasi': `<svg class="problem-svg-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; display:inline-block; vertical-align:middle;"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M5.64 18.36l-1.42 1.42M19.78 4.22l-1.42 1.42"/></svg>`,
-  'Kemerahan':       `<svg class="problem-svg-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; display:inline-block; vertical-align:middle;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>`,
+  'Jerawat':         `<svg viewBox="0 0 24 24" width="18" height="18" fill="none"><circle cx="12" cy="12" r="10" fill="#FEE2E2" stroke="#EF4444" stroke-width="1.5"/><circle cx="9" cy="10" r="2" fill="#FCA5A5" stroke="#EF4444" stroke-width="1"/><circle cx="15" cy="9" r="1.5" fill="#FCA5A5" stroke="#EF4444" stroke-width="1"/><circle cx="13" cy="15" r="2.5" fill="#FCA5A5" stroke="#EF4444" stroke-width="1"/><circle cx="9" cy="10" r="0.8" fill="#EF4444"/><circle cx="15" cy="9" r="0.6" fill="#EF4444"/><circle cx="13" cy="15" r="1" fill="#EF4444"/></svg>`,
+  'PIE':             `<svg viewBox="0 0 24 24" width="18" height="18" fill="none"><circle cx="12" cy="12" r="10" fill="#FCE7F3" stroke="#EC4899" stroke-width="1.5"/><circle cx="9" cy="10" r="2.5" fill="none" stroke="#EC4899" stroke-width="1.2" stroke-dasharray="1.5 1.5"/><circle cx="15" cy="14" r="2" fill="none" stroke="#EC4899" stroke-width="1.2" stroke-dasharray="1.5 1.5"/><circle cx="12" cy="8" r="1.5" fill="#F9A8D4" opacity="0.6"/><circle cx="8" cy="15" r="1.8" fill="#F9A8D4" opacity="0.5"/></svg>`,
+  'PIH':             `<svg viewBox="0 0 24 24" width="18" height="18" fill="none"><circle cx="12" cy="12" r="10" fill="#FFF7ED" stroke="#F97316" stroke-width="1.5"/><ellipse cx="9" cy="10" rx="2.5" ry="2" fill="#FDBA74" stroke="#F97316" stroke-width="1"/><ellipse cx="15" cy="14" rx="2" ry="1.5" fill="#FDBA74" stroke="#F97316" stroke-width="1"/><ellipse cx="13" cy="8" rx="1.5" ry="1" fill="#FB923C" opacity="0.6"/></svg>`,
+  'Kemerahan':       `<svg viewBox="0 0 24 24" width="18" height="18" fill="none"><circle cx="12" cy="12" r="10" fill="#DCFCE7" stroke="#22C55E" stroke-width="1.5"/><path d="M7 12c0-1 1.5-3 5-3s5 2 5 3" fill="#BBF7D0" stroke="#16A34A" stroke-width="1"/><circle cx="8" cy="13" r="2.5" fill="#FCA5A5" opacity="0.5"/><circle cx="16" cy="13" r="2.5" fill="#FCA5A5" opacity="0.5"/><path d="M10 16c.5.5 1.2.8 2 .8s1.5-.3 2-.8" stroke="#16A34A" stroke-width="1" stroke-linecap="round"/></svg>`,
+  'Kusam':           `<svg viewBox="0 0 24 24" width="18" height="18" fill="none"><circle cx="12" cy="12" r="10" fill="#FEF9C3" stroke="#EAB308" stroke-width="1.5"/><circle cx="12" cy="12" r="7" fill="#FDE047" opacity="0.3"/><path d="M8 10c1-1 2.5-1.5 4-1.5s3 .5 4 1.5" stroke="#CA8A04" stroke-width="1" stroke-linecap="round"/><rect x="7" y="13" width="4" height="3" rx="1" fill="#CA8A04" opacity="0.3"/><rect x="13" y="11" width="3" height="4" rx="1" fill="#CA8A04" opacity="0.25"/><rect x="10" y="15" width="3" height="2" rx="0.8" fill="#CA8A04" opacity="0.2"/></svg>`,
+  'Aging':           `<svg viewBox="0 0 24 24" width="18" height="18" fill="none"><circle cx="12" cy="12" r="10" fill="#F3E8FF" stroke="#8B5CF6" stroke-width="1.5"/><path d="M8 9c0-1 1-2 2-2M14 9c0-1 1-2 2-2" stroke="#8B5CF6" stroke-width="1" stroke-linecap="round"/><path d="M9 14c.8 1.2 1.8 1.8 3 1.8s2.2-.6 3-1.8" stroke="#8B5CF6" stroke-width="1" stroke-linecap="round"/><path d="M7 11l3 .5M17 11l-3 .5" stroke="#A78BFA" stroke-width="0.8" stroke-linecap="round"/><path d="M8 16l2-.5M16 16l-2-.5" stroke="#A78BFA" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/></svg>`,
 };
 
 // ─── Palet warna per kategori permasalahan ───────────────────────────────────
 const PROBLEM_COLORS = {
-  'Jerawat':         { hex: '#FF3B3B', bg: '#FFF0F0' },
-  'PIE':             { hex: '#3B7FFF', bg: '#EFF4FF' },
-  'PIH':             { hex: '#FF8C00', bg: '#FFF5E6' },
-  'Bopeng':          { hex: '#CC00CC', bg: '#F9EEFF' },
-  'Hiperpigmentasi': { hex: '#CCCC00', bg: '#FEFEE6' },
-  'Kemerahan':       { hex: '#00CC44', bg: '#EDFFF3' },
+  'Jerawat':   { hex: '#EF4444', bg: '#FEE2E2' },
+  'PIE':       { hex: '#EC4899', bg: '#FCE7F3' },
+  'PIH':       { hex: '#F97316', bg: '#FFF7ED' },
+  'Kemerahan': { hex: '#22C55E', bg: '#DCFCE7' },
+  'Kusam':     { hex: '#EAB308', bg: '#FEF9C3' },
+  'Aging':     { hex: '#8B5CF6', bg: '#F3E8FF' },
 };
 
 const PROBLEM_DESCRIPTIONS = {
-  'Jerawat':         'Peradangan folikel rambut akibat sumbatan sebum dan bakteri.',
-  'PIE':             'Post-Inflammatory Erythema — kemerahan sisa bekas jerawat.',
-  'PIH':             'Post-Inflammatory Hyperpigmentation — bercak gelap bekas jerawat.',
-  'Bopeng':          'Jaringan parut cekung akibat kerusakan kolagen dari jerawat parah.',
-  'Hiperpigmentasi': 'Penggelapan kulit akibat produksi melanin berlebih.',
-  'Kemerahan':       'Iritasi atau rosacea menyebabkan kulit tampak merah.',
+  'Jerawat':   'Peradangan folikel rambut akibat sumbatan sebum dan bakteri.',
+  'PIE':       'Post-Inflammatory Erythema — kemerahan sisa bekas jerawat.',
+  'PIH':       'Post-Inflammatory Hyperpigmentation — bercak gelap bekas jerawat.',
+  'Kemerahan': 'Iritasi atau rosacea menyebabkan kulit tampak merah.',
+  'Kusam':     'Kulit tampak tidak bercahaya akibat sel kulit mati menumpuk.',
+  'Aging':     'Tanda penuaan seperti garis halus, kerutan, atau kulit kendur.',
 };
 
-// ─── Urutan prioritas medis ───────────────────────────────────────────────────
-const MEDICAL_PRIORITY_ORDER = ['Jerawat', 'Kemerahan', 'PIE', 'PIH', 'Hiperpigmentasi', 'Bopeng'];
+// ─── Urutan prioritas medis ────────────────────────────────────────────────
+const MEDICAL_PRIORITY_ORDER = ['Jerawat', 'Kemerahan', 'PIE', 'PIH', 'Kusam', 'Aging'];
 
 const JOURNEY_INFO = {
   'Jerawat': {
     tagline: 'Atasi akar masalahnya dulu',
-    why: 'Jerawat aktif adalah sumber utama dari PIE, PIH, dan bopeng. Selama jerawat masih muncul, perawatan bekas luka tidak akan efektif. Prioritas utama adalah menghentikan siklus peradangan.',
+    why: 'Jerawat aktif adalah sumber utama dari PIE, PIH, dan aging. Selama jerawat masih muncul, perawatan bekas luka tidak akan efektif. Prioritas utama adalah menghentikan siklus peradangan.',
     ingredients: ['Salicylic Acid', 'Niacinamide', 'Benzoyl Peroxide', 'Tea Tree Oil'],
     duration: '4–8 minggu',
     done_when: 'Tidak ada jerawat aktif selama ≥ 2 minggu berturut-turut',
@@ -72,19 +71,19 @@ const JOURNEY_INFO = {
     duration: '12–24 minggu',
     done_when: 'Flek hitam memudar dan warna kulit lebih merata',
   },
-  'Hiperpigmentasi': {
-    tagline: 'Ratakan warna kulit secara menyeluruh',
-    why: 'Hiperpigmentasi umum perlu ditangani setelah kondisi jerawat stabil agar produk pencerah dapat bekerja optimal tanpa terganggu peradangan aktif.',
-    ingredients: ['Vitamin C', 'Kojic Acid', 'Licorice Root Extract', 'Retinol'],
-    duration: '12–20 minggu',
-    done_when: 'Warna kulit lebih merata dan bercak gelap berkurang',
+  'Kusam': {
+    tagline: 'Kembalikan cahaya alami kulit',
+    why: 'Kulit kusam terjadi akibat penumpukan sel kulit mati dan penurunan produksi kolagen. Eksfoliasi rutin dan bahan pencerah dapat mengembalikan kecerahan dan tekstur kulit.',
+    ingredients: ['Vitamin C', 'AHA (Glycolic Acid)', 'Niacinamide', 'Retinol'],
+    duration: '8–16 minggu',
+    done_when: 'Kulit terasa lebih cerah, halus, dan bercahaya',
   },
-  'Bopeng': {
-    tagline: 'Pulihkan tekstur kulit',
-    why: 'Bopeng adalah kerusakan struktural yang hanya dapat diatasi setelah kulit benar-benar bersih dari jerawat dan inflamasi. Ini adalah tahap akhir perjalanan perawatan kulit.',
-    ingredients: ['Retinol', 'Peptide', 'Bakuchiol', 'Konsultasi dokter untuk prosedur'],
-    duration: '6–12 bulan',
-    done_when: 'Tekstur kulit membaik dan bekas luka cekung berkurang',
+  'Aging': {
+    tagline: 'Perlambat tanda-tanda penuaan',
+    why: 'Tanda penuaan seperti garis halus dan kerutan perlu ditangani setelah kondisi kulit stabil. Bahan aktif anti-aging bekerja optimal di kulit yang sehat dan terhidrasi dengan baik.',
+    ingredients: ['Retinol', 'Peptide', 'Hyaluronic Acid', 'Vitamin C'],
+    duration: '12–24 minggu',
+    done_when: 'Garis halus berkurang dan kulit terasa lebih kenyal dan padat',
   },
 };
 
@@ -633,19 +632,7 @@ export function renderSkinScan() {
           cursor: pointer;
           font-size: var(--font-sm);
         }
-        /* Custom colors for pill SVGs inside Modal */
-        .adjust-pill[data-skin-type="Normal"] svg { stroke: #F59E0B; fill: rgba(245, 158, 11, 0.12); }
-        .adjust-pill[data-skin-type="Berminyak"] svg { stroke: #3B82F6; fill: rgba(59, 130, 246, 0.12); }
-        .adjust-pill[data-skin-type="Kombinasi"] svg { stroke: #8B5CF6; fill: rgba(139, 92, 246, 0.12); }
-        .adjust-pill[data-skin-type="Kering"] svg { stroke: #10B981; fill: rgba(16, 185, 129, 0.12); }
-        .adjust-pill[data-skin-type="Sensitif"] svg { stroke: #EF4444; fill: rgba(239, 68, 68, 0.12); }
-
-        .adjust-pill[data-problem="Jerawat"] svg { stroke: #EF4444; fill: rgba(239, 68, 68, 0.12); }
-        .adjust-pill[data-problem="PIE"] svg { stroke: #EC4899; fill: rgba(236, 72, 153, 0.12); }
-        .adjust-pill[data-problem="PIH"] svg { stroke: #F97316; fill: rgba(249, 115, 22, 0.12); }
-        .adjust-pill[data-problem="Bopeng"] svg { stroke: #8B5CF6; fill: rgba(139, 92, 246, 0.12); }
-        .adjust-pill[data-problem="Hiperpigmentasi"] svg { stroke: #9CA3AF; fill: rgba(156, 163, 175, 0.12); }
-        .adjust-pill[data-problem="Kemerahan"] svg { stroke: #EF4444; fill: rgba(239, 68, 68, 0.12); }
+        /* Icons inside pills already have built-in colors — no CSS override needed */
       `;
       document.head.appendChild(style);
     }
@@ -895,14 +882,14 @@ export function renderSkinScan() {
       const overlay = document.createElement('div');
       overlay.className = 'adjust-modal-overlay';
       
-      const manualSkinTypes = ['Normal', 'Berminyak', 'Kombinasi', 'Kering', 'Sensitif'];
+      const manualSkinTypes = ['Normal', 'Berminyak', 'Kombinasi', 'Kering'];
       const skinProblems = [
-        { id: 'Jerawat', label: 'Berjerawat' },
-        { id: 'PIE', label: 'PIE' },
-        { id: 'PIH', label: 'PIH' },
-        { id: 'Bopeng', label: 'Aging / Kerutan' },
-        { id: 'Hiperpigmentasi', label: 'Kusam' },
-        { id: 'Kemerahan', label: 'Kemerahan' }
+        { id: 'Jerawat',   label: 'Jerawat',   icon: PROBLEM_ICONS['Jerawat'] },
+        { id: 'PIE',       label: 'PIE',        icon: PROBLEM_ICONS['PIE'] },
+        { id: 'PIH',       label: 'PIH',        icon: PROBLEM_ICONS['PIH'] },
+        { id: 'Aging',     label: 'Aging',      icon: PROBLEM_ICONS['Aging'] },
+        { id: 'Kusam',     label: 'Kusam',      icon: PROBLEM_ICONS['Kusam'] },
+        { id: 'Kemerahan', label: 'Kemerahan',  icon: PROBLEM_ICONS['Kemerahan'] },
       ];
 
       const currentProbLabels = (currentProblems || []).map(p => p.label || p);
