@@ -724,7 +724,12 @@ async function renderSkinLabWidget(container, userId) {
           bgColor: meta.color || '#F8FAFC',
           rating: 4.5,
           desc: `Produk ${meta.label || cat} terpilih khusus untuk jenis kulit Anda.`,
-          ingredients: [],
+          ingredients: p.ingredients || [],
+          ingredients_analysis: p.ingredients_analysis || [],
+          wsm_detail: p.wsm_detail || {},
+          score: p.score || 0,
+          kategori_rekomendasi: p.kategori_rekomendasi || '',
+          kategori: p.kategori || cat,
           link: p.link || ''
         };
         sessionStorage.setItem('bglow_selected_product', JSON.stringify(enriched));
