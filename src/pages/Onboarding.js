@@ -466,7 +466,20 @@ export function renderOnboarding() {
           'Aging':     { color: '#8B5CF6', bg: '#F3E8FF', icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none"><circle cx="12" cy="12" r="10" fill="#F3E8FF" stroke="#8B5CF6" stroke-width="1.5"/><path d="M8 9c0-1 1-2 2-2M14 9c0-1 1-2 2-2" stroke="#8B5CF6" stroke-width="1" stroke-linecap="round"/><path d="M9 14c.8 1.2 1.8 1.8 3 1.8s2.2-.6 3-1.8" stroke="#8B5CF6" stroke-width="1" stroke-linecap="round"/></svg>` },
         };
 
-        const problemsChipsHTML = (!res.permasalahan || res.permasalahan.length === 0) ? `
+        // Deduplicate permasalahan: keep highest confidence per unique label
+        const uniqueProblems = [];
+        if (res.permasalahan && res.permasalahan.length > 0) {
+          const seen = {};
+          res.permasalahan.forEach(p => {
+            const conf = p.confidence || 0;
+            if (!seen[p.label] || conf > (seen[p.label].confidence || 0)) {
+              seen[p.label] = p;
+            }
+          });
+          Object.values(seen).forEach(p => uniqueProblems.push(p));
+        }
+
+        const problemsChipsHTML = uniqueProblems.length === 0 ? `
           <div style="display:flex; align-items:center; gap:10px; padding: 14px 16px; background: #F0FDF4; border-radius: 12px; border: 1.5px solid #86EFAC;">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
             <div>
@@ -474,13 +487,16 @@ export function renderOnboarding() {
               <div style="color: #4ADE80; font-size: 11px; margin-top:2px;">Tidak ada anomali atau noda parah terdeteksi.</div>
             </div>
           </div>
-        ` : `<div style="display:flex; flex-wrap:wrap; gap:8px;">${res.permasalahan.map(p => {
+        ` : `<div style="display:flex; flex-wrap:wrap; gap:8px;">${uniqueProblems.map(p => {
           const pdata = problemIconsResult[p.label] || { color: '#888', bg: '#F5F5F5', icon: '' };
           return `<div style="display:flex; align-items:center; gap:6px; padding:8px 14px; border-radius:100px; background:${pdata.bg}; border:1.5px solid ${pdata.color}30;">
             ${pdata.icon}
             <span style="font-size:12px; font-weight:700; color:${pdata.color};">${p.label}</span>
           </div>`;
         }).join('')}</div>`;
+
+        // Encode bounding box data for canvas rendering
+        const boxDataEncoded = encodeURIComponent(JSON.stringify(res.permasalahan || []));
 
         html = `
           <div class="ob-title-wrap" style="text-align: center; margin-bottom: 14px;">
@@ -513,10 +529,30 @@ export function renderOnboarding() {
           </div>
 
           <!-- Masalah Kulit -->
-          <div style="margin-bottom: 8px;">
+          <div style="margin-bottom: 12px;">
             <div style="font-size: var(--font-sm); font-weight: 700; color: var(--text-primary); margin-bottom: 10px;">Masalah Kulit Terdeteksi</div>
             ${problemsChipsHTML}
           </div>
+
+          <!-- Bounding Box Viewer Toggle -->
+          ${(res.permasalahan && res.permasalahan.length > 0) ? `
+          <div style="margin-bottom: 8px;">
+            <button id="ob-toggle-scan-detail" style="
+              width: 100%; padding: 10px 14px; border-radius: 12px;
+              background: var(--bg-soft); border: 1.5px solid var(--border);
+              color: var(--text-secondary); font-size: 12px; font-weight: 600;
+              cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+              transition: all 0.2s ease;
+            ">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+              Lihat Hasil Scan Detail
+              <svg id="ob-toggle-chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="transition:transform 0.2s;"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div id="ob-scan-detail-panel" style="display:none; margin-top:10px; border-radius:12px; overflow:hidden; border:1.5px solid var(--border);">
+              <canvas id="ob-bbox-canvas" style="width:100%; display:block;"></canvas>
+            </div>
+          </div>
+          ` : ''}
         `;
         break;
 
@@ -682,6 +718,71 @@ export function renderOnboarding() {
       pickManualBtn.addEventListener('mouseleave', () => {
         pickManualBtn.style.background = 'transparent';
         pickManualBtn.style.color = 'var(--text-secondary)';
+      });
+    }
+
+    // Step 9: Bounding box canvas toggle
+    const toggleBtn = page.querySelector('#ob-toggle-scan-detail');
+    const detailPanel = page.querySelector('#ob-scan-detail-panel');
+    const bboxCanvas = page.querySelector('#ob-bbox-canvas');
+    const chevron = page.querySelector('#ob-toggle-chevron');
+    let canvasRendered = false;
+
+    if (toggleBtn && detailPanel && bboxCanvas && capturedImage && answers.scanResult) {
+      toggleBtn.addEventListener('click', () => {
+        const isOpen = detailPanel.style.display !== 'none';
+        detailPanel.style.display = isOpen ? 'none' : 'block';
+        if (chevron) chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+
+        if (!isOpen && !canvasRendered) {
+          canvasRendered = true;
+          const problemColors = {
+            'Jerawat': '#EF4444', 'PIE': '#EC4899', 'PIH': '#F97316',
+            'Kemerahan': '#22C55E', 'Kusam': '#9CA3AF', 'Aging': '#8B5CF6'
+          };
+          const img = new Image();
+          img.onload = () => {
+            bboxCanvas.width = img.naturalWidth;
+            bboxCanvas.height = img.naturalHeight;
+            const ctx = bboxCanvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+
+            const problems = answers.scanResult.permasalahan || [];
+            problems.forEach(p => {
+              if (!p.box_2d || p.box_2d.length < 4) return;
+              const [ymin, xmin, ymax, xmax] = p.box_2d;
+              const x = (xmin / 1000) * img.naturalWidth;
+              const y = (ymin / 1000) * img.naturalHeight;
+              const w = ((xmax - xmin) / 1000) * img.naturalWidth;
+              const h = ((ymax - ymin) / 1000) * img.naturalHeight;
+              const color = problemColors[p.label] || '#FFFFFF';
+
+              // Draw rectangle
+              ctx.strokeStyle = color;
+              ctx.lineWidth = Math.max(2, img.naturalWidth * 0.004);
+              ctx.strokeRect(x, y, w, h);
+
+              // Draw fill overlay
+              ctx.fillStyle = color + '25';
+              ctx.fillRect(x, y, w, h);
+
+              // Draw label background
+              const fontSize = Math.max(12, img.naturalWidth * 0.032);
+              ctx.font = `bold ${fontSize}px sans-serif`;
+              const textW = ctx.measureText(p.label).width;
+              const padX = 6, padY = 4;
+              const lblH = fontSize + padY * 2;
+              const lblY = y > lblH + 2 ? y - lblH - 2 : y + 2;
+              ctx.fillStyle = color;
+              ctx.fillRect(x, lblY, textW + padX * 2, lblH);
+
+              // Draw label text
+              ctx.fillStyle = '#FFFFFF';
+              ctx.fillText(p.label, x + padX, lblY + fontSize + padY * 0.5);
+            });
+          };
+          img.src = capturedImage;
+        }
       });
     }
 
