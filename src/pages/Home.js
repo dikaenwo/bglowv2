@@ -1,4 +1,4 @@
-﻿import { icons } from '../components/BottomNav.js';
+import { icons } from '../components/BottomNav.js';
 import { addRipple } from '../utils/helpers.js';
 import { getRoutine, getProgress, getStreak, getUserId } from '../utils/store.js';
 import { fetchWeather } from '../utils/weather.js';
@@ -677,19 +677,23 @@ async function renderSkinLabWidget(container, userId) {
     return;
   }
 
-  const rowsHTML = rows.map(({ p, cat }) => {
+  // Store product data in memory to avoid data-attribute encoding issues
+  window.__skinlabData = rows.map(({ p, cat }) => ({ p, cat }));
+
+  const rowsHTML = rows.map(({ p, cat }, idx) => {
     const meta = catMeta[cat] || { label: cat, color: '#F8FAFC', iconColor: '#64748B', icon: '' };
     const scorePct = Math.round((p.score || 0) * 100);
     const imgContent = (p.image_url && p.image_url !== 'nan')
-      ? `<img src="${p.image_url}" alt="${p.name}" />`
+      ? `<img src="${p.image_url}" alt="product" />`
       : meta.icon;
+    const priceStr = typeof p.price === 'number' ? p.price.toLocaleString('id-ID') : p.price;
     return `
-      <div class="skinlab-row" data-cat="${cat}" data-name="${p.name}" data-price="${p.price}" data-img="${p.image_url || ''}">
+      <div class="skinlab-row" data-idx="${idx}">
         <div class="skinlab-row-img" style="background:${meta.color};">${imgContent}</div>
         <div class="skinlab-row-info">
           <div class="skinlab-row-cat" style="color:${meta.iconColor};">${meta.label}</div>
           <div class="skinlab-row-name">${p.name}</div>
-          <div class="skinlab-row-price">Rp${p.price.toLocaleString('id-ID')}</div>
+          <div class="skinlab-row-price">Rp${priceStr}</div>
         </div>
         <div class="skinlab-row-badge">${scorePct}% Cocok</div>
       </div>
@@ -705,21 +709,29 @@ async function renderSkinLabWidget(container, userId) {
 
   container.querySelectorAll('.skinlab-row').forEach(row => {
     row.addEventListener('click', () => {
-      const cat = row.dataset.cat;
-      const meta = catMeta[cat] || {};
-      const enriched = {
-        name: row.dataset.name,
-        brand: row.dataset.name.split(' ')[0] || '',
-        price: parseInt(row.dataset.price),
-        emoji: '🧴',
-        bgColor: meta.color || '#F8FAFC',
-        rating: 4.5,
-        desc: `Produk ${meta.label || cat} terpilih khusus untuk jenis kulit Anda.`,
-        ingredients: [],
-        link: ''
-      };
-      sessionStorage.setItem('bglow_selected_product', JSON.stringify(enriched));
-      window.location.hash = '#/product-detail';
+      try {
+        const idx = parseInt(row.dataset.idx);
+        const entry = (window.__skinlabData || [])[idx];
+        if (!entry) return;
+        const { p, cat } = entry;
+        const meta = catMeta[cat] || {};
+        const enriched = {
+          name: p.name,
+          brand: (p.name || '').split(' ')[0] || '',
+          price: typeof p.price === 'number' ? p.price : parseInt(p.price) || 0,
+          image_url: p.image_url || '',
+          emoji: '🧴',
+          bgColor: meta.color || '#F8FAFC',
+          rating: 4.5,
+          desc: `Produk ${meta.label || cat} terpilih khusus untuk jenis kulit Anda.`,
+          ingredients: [],
+          link: p.link || ''
+        };
+        sessionStorage.setItem('bglow_selected_product', JSON.stringify(enriched));
+        window.location.hash = '#/product-detail';
+      } catch (err) {
+        console.error('[SkinLab] Click error:', err);
+      }
     });
   });
 
