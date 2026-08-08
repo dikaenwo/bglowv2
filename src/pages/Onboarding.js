@@ -638,6 +638,22 @@ export function renderOnboarding() {
     } else if (currentStep === 7 || currentStep === 8) {
       // Auto transitions, no next button
       footer.innerHTML = ``;
+    } else if (currentStep === 9) {
+      // Scan results: show Lanjut + secondary "Pilih Sendiri" option
+      footer.innerHTML = `
+        <button class="ob-btn-primary" id="ob-next">Lanjut</button>
+        <button id="ob-pick-manual" style="
+          width: 100%; margin-top: 8px; padding: 12px;
+          background: transparent; border: 1.5px solid var(--border);
+          border-radius: var(--radius-lg); color: var(--text-secondary);
+          font-size: var(--font-sm); font-weight: 600; cursor: pointer;
+          display: flex; align-items: center; justify-content: center; gap: 8px;
+          transition: all 0.2s ease;
+        ">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Tidak yakin? Pilih sendiri
+        </button>
+      `;
     } else {
       footer.innerHTML = `<button class="ob-btn-primary" id="ob-next" ${isNextDisabled ? 'disabled' : ''}>Lanjut</button>`;
     }
@@ -650,6 +666,25 @@ export function renderOnboarding() {
 
   // Bind Events for Active Step
   function attachStepEvents() {
+    // Step 9: "Pilih Sendiri" button → go to manual selection (step 11)
+    const pickManualBtn = page.querySelector('#ob-pick-manual');
+    if (pickManualBtn) {
+      pickManualBtn.addEventListener('click', () => {
+        // Reset any previous manual selection so user starts fresh
+        answers.selectedManualSkinType = '';
+        answers.selectedSkinProblems = [];
+        goToStep(11);
+      });
+      pickManualBtn.addEventListener('mouseenter', () => {
+        pickManualBtn.style.background = 'var(--bg-soft)';
+        pickManualBtn.style.color = 'var(--text-primary)';
+      });
+      pickManualBtn.addEventListener('mouseleave', () => {
+        pickManualBtn.style.background = 'transparent';
+        pickManualBtn.style.color = 'var(--text-secondary)';
+      });
+    }
+
     // Standard option click (single select) — Step 3 only
     const options = page.querySelectorAll('.ob-option-card');
     options.forEach(card => {
