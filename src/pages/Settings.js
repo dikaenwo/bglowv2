@@ -51,7 +51,12 @@ export function renderSettings() {
           <span class="mi-arrow">${icons.chevronRight}</span>
         </div>
         <div class="menu-item anim-fade-in-up anim-delay-5" id="menu-location-gps" style="cursor:pointer;">
-          <div class="mi-icon amber" style="background:#FEF3C7; color:#D97706; display:flex; align-items:center; justify-content:center; font-size:16px;">📍</div>
+          <div class="mi-icon amber" style="background:#FEF3C7; display:flex; align-items:center; justify-content:center;">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="10" r="3"/>
+              <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/>
+            </svg>
+          </div>
           <span class="mi-text">Akurasi Lokasi & GPS</span>
           <span class="mi-arrow">${icons.chevronRight}</span>
         </div>
@@ -75,7 +80,14 @@ export function renderSettings() {
           <span class="mi-arrow"></span>
         </div>
         <div class="menu-item anim-fade-in-up anim-delay-8" id="menu-delete-account" style="cursor:pointer;">
-          <div class="mi-icon red" style="background:#FEE2E2; color:#DC2626; display:flex; align-items:center; justify-content:center; font-size:16px;">🗑️</div>
+          <div class="mi-icon red" style="background:#FEE2E2; display:flex; align-items:center; justify-content:center;">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+              <path d="M10 11v6M14 11v6"/>
+              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+          </div>
           <span class="mi-text" style="color:var(--danger); font-weight:600;">Hapus Akun Permanen</span>
           <span class="mi-arrow"></span>
         </div>
