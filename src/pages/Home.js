@@ -577,14 +577,19 @@ export function renderHome() {
 
 async function renderSkinLabWidget(container, userId) {
   const hasScanned = localStorage.getItem('bglow_has_scanned_' + userId) === '1';
-  
+
+  // Custom SVG icons (no emoji)
+  const lockSVG = `<svg viewBox="0 0 24 24" width="28" height="28" fill="none"><circle cx="12" cy="12" r="11" fill="#EDE9FE" stroke="#8B5CF6" stroke-width="1"/><rect x="7" y="12" width="10" height="7" rx="2.5" fill="#7C3AED"/><path d="M9 12V9.5a3 3 0 0 1 6 0V12" stroke="#A78BFA" stroke-width="1.8" stroke-linecap="round" fill="none"/><circle cx="12" cy="15" r="1.3" fill="white" opacity="0.9"/><rect x="11.2" y="15.8" width="1.5" height="2" rx="0.7" fill="white" opacity="0.9"/></svg>`;
+  const unlockSVG = `<svg viewBox="0 0 24 24" width="28" height="28" fill="none"><circle cx="12" cy="12" r="11" fill="#D1FAE5" stroke="#10B981" stroke-width="1"/><rect x="7" y="12" width="10" height="7" rx="2.5" fill="#10B981"/><path d="M9 12V9.5a3 3 0 0 1 5.5-1" stroke="#6EE7B7" stroke-width="1.8" stroke-linecap="round" fill="none"/><circle cx="12" cy="15" r="1.3" fill="white" opacity="0.9"/><rect x="11.2" y="15.8" width="1.5" height="2" rx="0.7" fill="white" opacity="0.9"/></svg>`;
+  const labIconSVG = `<svg viewBox="0 0 22 22" width="18" height="18" fill="none" style="display:inline-block;vertical-align:middle;margin-right:6px;"><circle cx="11" cy="11" r="10" fill="#EDE9FE" stroke="#8B5CF6" stroke-width="1"/><path d="M9 5v7l-3 4h10l-3-4V5" stroke="#7C3AED" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M9 5h4" stroke="#A78BFA" stroke-width="1.3" stroke-linecap="round"/><circle cx="9.5" cy="14.5" r="1" fill="#A78BFA"/><circle cx="12" cy="15.5" r="0.7" fill="#C4B5FD"/></svg>`;
+
   if (!hasScanned) {
     container.innerHTML = `
-      <h3 class="skinlab-title">🔬 Rekomendasi Produk</h3>
+      <h3 class="skinlab-title">${labIconSVG} Rekomendasi Produk</h3>
       <p class="skinlab-subtitle">Rekomendasi skincare yang dicocokkan khusus untuk kondisi kulit Anda.</p>
       <div style="display:flex; flex-direction:column; align-items:center; padding: 24px; text-align:center; background:#faf5ff; border: 1px dashed #d8b4fe; border-radius:18px;">
-        <span style="font-size:2rem; margin-bottom:8px;">🔬</span>
-        <div style="font-weight:700; font-size:12px; color:#581c87; margin-bottom:4px;">Rekomendasi Terkunci</div>
+        ${lockSVG}
+        <div style="font-weight:700; font-size:12px; color:#581c87; margin-bottom:4px; margin-top:8px;">Rekomendasi Terkunci</div>
         <p style="font-size:11px; color:#6b21a8; margin:0 0 12px 0; line-height:1.4;">Lakukan Scan AI kulit wajah Anda terlebih dahulu untuk melihat preview produk yang cocok.</p>
         <button class="btn btn-primary" id="skinlab-scan-btn" style="padding:8px 16px; font-size:11px; border-radius:8px; width:auto; font-weight:700;">Mulai Scan Kulit</button>
       </div>
@@ -731,7 +736,7 @@ async function renderSkinLabWidget(container, userId) {
   }
 
   container.innerHTML = `
-    <h3 class="skinlab-title">🔬 Rekomendasi Produk</h3>
+    <h3 class="skinlab-title">${labIconSVG} Rekomendasi Produk</h3>
     <p class="skinlab-subtitle">Rekomendasi skincare yang paling cocok dengan jenis kulitmu.</p>
     <div style="height:120px; display:flex; align-items:center; justify-content:center; color:#94a3b8; font-size:0.85rem;">⏳ Menganalisis kecocokan...</div>
   `;
@@ -804,7 +809,7 @@ async function renderSkinLabWidget(container, userId) {
       <div class="skinlab-scroll-container">
         ${showProds.map(p => renderProdCard(p)).join('')}
         <div class="skinlab-lock-card" id="unlock-cleansers">
-          <span style="font-size:1.5rem;">${premium ? '🔓' : '🔒'}</span>
+          ${premium ? unlockSVG : lockSVG}
           <span class="skinlab-lock-title">${premium ? 'Lihat Semua' : `Buka ${remainingCount}+ lainnya`}</span>
         </div>
       </div>
@@ -819,7 +824,7 @@ async function renderSkinLabWidget(container, userId) {
       <div class="skinlab-scroll-container">
         ${showProds.map(p => renderProdCard(p)).join('')}
         <div class="skinlab-lock-card" id="unlock-moisturizers">
-          <span style="font-size:1.5rem;">${premium ? '🔓' : '🔒'}</span>
+          ${premium ? unlockSVG : lockSVG}
           <span class="skinlab-lock-title">${premium ? 'Lihat Semua' : `Buka ${remainingCount}+ lainnya`}</span>
         </div>
       </div>
@@ -828,7 +833,7 @@ async function renderSkinLabWidget(container, userId) {
 
   if (!cleansersHTML && !moisturizersHTML) {
     container.innerHTML = `
-      <h3 class="skinlab-title">🔬 Rekomendasi Produk</h3>
+      <h3 class="skinlab-title">${labIconSVG} Rekomendasi Produk</h3>
       <p class="skinlab-subtitle">Rekomendasi skincare yang paling cocok dengan jenis kulitmu.</p>
       <div style="padding:20px; text-align:center; color:#64748b; font-size:0.8rem;">Tidak ada rekomendasi yang tersedia saat ini.</div>
     `;
@@ -836,7 +841,7 @@ async function renderSkinLabWidget(container, userId) {
   }
 
   container.innerHTML = `
-    <h3 class="skinlab-title">🔬 Rekomendasi Produk</h3>
+    <h3 class="skinlab-title">${labIconSVG} Rekomendasi Produk</h3>
     <p class="skinlab-subtitle">Rekomendasi skincare yang paling cocok dengan jenis kulitmu.</p>
     ${cleansersHTML}
     ${moisturizersHTML}
@@ -986,8 +991,11 @@ async function renderTrendingWidget(container, userId) {
     document.head.appendChild(style);
   }
 
+  // Trending flame icon SVG
+  const flameSVG = `<svg viewBox="0 0 22 22" width="18" height="18" fill="none" style="display:inline-block;vertical-align:middle;margin-right:6px;"><circle cx="11" cy="11" r="10" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1"/><path d="M11 4c0 0-5 4.5-5 7.5a5 5 0 0 0 10 0C16 8.5 11 4 11 4z" fill="#FDE047" stroke="#D97706" stroke-width="0.8" stroke-linejoin="round"/><path d="M11 10c0 0-2 1.5-2 3a2 2 0 0 0 4 0C13 11.5 11 10 11 10z" fill="#F59E0B"/></svg>`;
+
   container.innerHTML = `
-    <h3 class="trending-title">🔥 Trending Hari Ini</h3>
+    <h3 class="trending-title">${flameSVG} Trending Hari Ini</h3>
     <p class="trending-subtitle">Orang lain dengan kulit ${jenis_kulit} menyukai produk ini</p>
     <div style="height:100px; display:flex; align-items:center; justify-content:center; color:#94a3b8; font-size:0.8rem;">⏳ Memuat tren terhangat...</div>
   `;
@@ -1017,7 +1025,7 @@ async function renderTrendingWidget(container, userId) {
     const remainingCount = Math.max(0, products.length - showProds.length) || 6;
 
     container.innerHTML = `
-      <h3 class="trending-title">🔥 Trending Hari Ini</h3>
+      <h3 class="trending-title">${flameSVG} Trending Hari Ini</h3>
       <p class="trending-subtitle">Orang lain dengan kulit ${jenis_kulit} menyukai produk ini</p>
       <div class="trending-scroll-container">
         <!-- Trending Cards -->
@@ -1043,9 +1051,8 @@ async function renderTrendingWidget(container, userId) {
           `;
         }).join('')}
 
-        <!-- Lock Card -->
         <div class="skinlab-lock-card" id="unlock-trending" style="flex: 0 0 160px; height: auto;">
-          <span style="font-size:1.5rem;">${premium ? '🔓' : '🔒'}</span>
+          ${premium ? unlockSVG : lockSVG}
           <span class="skinlab-lock-title">${premium ? 'Lihat Semua' : `Buka ${remainingCount}+ lainnya`}</span>
         </div>
       </div>
