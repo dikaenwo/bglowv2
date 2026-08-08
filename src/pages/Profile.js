@@ -3,228 +3,6 @@ import { getStreak, getUserId, getAuthHeaders } from '../utils/store.js';
 import { showCustomAlert } from '../utils/helpers.js';
 import { API_BASE_URL } from '../config.js';
 
-function getProfilePhoto() {
-  return localStorage.getItem('bglow_profile_photo_' + getUserId()) || null;
-}
-
-async function saveProfilePhoto(dataUrl) {
-  const userId = getUserId();
-  localStorage.setItem('bglow_profile_photo_' + userId, dataUrl);
-  if (userId && userId !== 'guest') {
-    try {
-      await fetch(`${API_BASE_URL}/api/user/${userId}`, {
-        method: 'PUT',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ profile_photo: dataUrl })
-      });
-    } catch (e) {
-      console.error("Gagal menyimpan foto profil ke database:", e);
-    }
-  }
-}
-
-function openCropperModal(file, callback) {
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const originalSrc = e.target.result;
-
-    const overlay = document.createElement('div');
-    overlay.className = 'profile-modal-overlay';
-
-    overlay.innerHTML = `
-      <div class="cropper-card">
-        <div class="cropper-header">
-          <h3>Potong Foto Profil</h3>
-          <button class="cropper-close-btn" id="crop-close-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
-        </div>
-        <div class="cropper-view-wrapper">
-          <div class="cropper-outer-container">
-            <img src="${originalSrc}" class="cropper-view-img" id="crop-target-img" alt="Crop Target" />
-          </div>
-        </div>
-        <div class="cropper-zoom-row">
-          <span>➖</span>
-          <input type="range" class="cropper-zoom-slider" id="crop-zoom-slider" min="1" max="3" step="0.01" value="1" />
-          <span>➕</span>
-        </div>
-        <div class="cropper-footer">
-          <button class="cropper-btn cropper-btn-cancel" id="crop-cancel-btn">Batal</button>
-          <button class="cropper-btn cropper-btn-save" id="crop-save-btn">Simpan</button>
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(overlay);
-
-    const img = overlay.querySelector('#crop-target-img');
-    const slider = overlay.querySelector('#crop-zoom-slider');
-    const saveBtn = overlay.querySelector('#crop-save-btn');
-    const cancelBtn = overlay.querySelector('#crop-cancel-btn');
-    const closeBtn = overlay.querySelector('#crop-close-btn');
-
-    let currentZoom = 1;
-    let left = 0;
-    let top = 0;
-    let imgWidth = 0;
-    let imgHeight = 0;
-    const containerSize = 240;
-
-    let isDragging = false;
-    let startX = 0;
-    let startY = 0;
-
-    const updateZoom = (newZoom) => {
-      const cx = (containerSize / 2 - left) / currentZoom;
-      const cy = (containerSize / 2 - top) / currentZoom;
-
-      currentZoom = newZoom;
-
-      img.style.width = (imgWidth * currentZoom) + 'px';
-      img.style.height = (imgHeight * currentZoom) + 'px';
-
-      left = containerSize / 2 - cx * currentZoom;
-      top = containerSize / 2 - cy * currentZoom;
-
-      constrainPosition();
-    };
-
-    const constrainPosition = () => {
-      const w = imgWidth * currentZoom;
-      const h = imgHeight * currentZoom;
-
-      if (left > 0) left = 0;
-      if (left + w < containerSize) left = containerSize - w;
-      if (top > 0) top = 0;
-      if (top + h < containerSize) top = containerSize - h;
-
-      img.style.left = left + 'px';
-      img.style.top = top + 'px';
-    };
-
-    img.onload = () => {
-      if (img.naturalWidth > img.naturalHeight) {
-        imgHeight = containerSize;
-        imgWidth = (img.naturalWidth * containerSize) / img.naturalHeight;
-      } else {
-        imgWidth = containerSize;
-        imgHeight = (img.naturalHeight * containerSize) / img.naturalWidth;
-      }
-
-      img.style.width = imgWidth + 'px';
-      img.style.height = imgHeight + 'px';
-
-      left = (containerSize - imgWidth) / 2;
-      top = (containerSize - imgHeight) / 2;
-      img.style.left = left + 'px';
-      img.style.top = top + 'px';
-    };
-
-    // Drag events (Mouse)
-    img.addEventListener('mousedown', (e) => {
-      e.preventDefault();
-      isDragging = true;
-      startX = e.clientX - left;
-      startY = e.clientY - top;
-    });
-
-    window.addEventListener('mousemove', (e) => {
-      if (!isDragging) return;
-      left = e.clientX - startX;
-      top = e.clientY - startY;
-      constrainPosition();
-    });
-
-    window.addEventListener('mouseup', () => {
-      isDragging = false;
-    });
-
-    // Drag events (Touch)
-    img.addEventListener('touchstart', (e) => {
-      if (e.touches.length !== 1) return;
-      isDragging = true;
-      startX = e.touches[0].clientX - left;
-      startY = e.touches[0].clientY - top;
-    });
-
-    img.addEventListener('touchmove', (e) => {
-      if (!isDragging || e.touches.length !== 1) return;
-      left = e.touches[0].clientX - startX;
-      top = e.touches[0].clientY - startY;
-      constrainPosition();
-    });
-
-    img.addEventListener('touchend', () => {
-      isDragging = false;
-    });
-
-    // Zoom event
-    slider.addEventListener('input', () => {
-      updateZoom(parseFloat(slider.value));
-    });
-
-    // Save event
-    saveBtn.addEventListener('click', () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = 200;
-      canvas.height = 200;
-      const ctx = canvas.getContext('2d');
-
-      const F = 200 / containerSize;
-      const W_draw = (imgWidth * currentZoom) * F;
-      const H_draw = (imgHeight * currentZoom) * F;
-      const X_draw = left * F;
-      const Y_draw = top * F;
-
-      ctx.drawImage(img, X_draw, Y_draw, W_draw, H_draw);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-
-      overlay.remove();
-      callback(dataUrl);
-    });
-
-    const closeModal = () => {
-      overlay.remove();
-    };
-
-    cancelBtn.addEventListener('click', closeModal);
-    closeBtn.addEventListener('click', closeModal);
-  };
-  reader.readAsDataURL(file);
-}
-
-function openPreviewModal(imageSrc) {
-  const overlay = document.createElement('div');
-  overlay.className = 'preview-modal-overlay';
-  overlay.innerHTML = `
-    <button class="preview-close-btn" id="preview-close-btn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
-    </button>
-    <div class="preview-img-container">
-      <img src="${imageSrc}" class="preview-large-img" alt="Pratinjau Foto Profil" />
-    </div>
-  `;
-
-  document.body.appendChild(overlay);
-
-  const closeBtn = overlay.querySelector('#preview-close-btn');
-  const closeModal = () => {
-    overlay.remove();
-  };
-
-  closeBtn.addEventListener('click', closeModal);
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) closeModal();
-  });
-}
-
 function getScanCount() {
   const val = localStorage.getItem('bglow_scan_count_' + getUserId());
   return val ? parseInt(val) : 0;
@@ -288,11 +66,8 @@ export function renderProfile() {
   const scanCount = getScanCount();
   const streakCount = streakData.current;
 
-  // Profile photo
-  const profilePhoto = getProfilePhoto();
-  const avatarContent = profilePhoto
-    ? `<img src="${profilePhoto}" alt="Profile" class="profile-avatar-img" />`
-    : `<span class="profile-avatar-initial">${userInitial}</span>`;
+  // Profile avatar (inisial saja, tanpa upload foto)
+  const avatarContent = `<span class="profile-avatar-initial">${userInitial}</span>`;
 
   page.innerHTML = `
     <!-- Profile Header -->
@@ -301,13 +76,6 @@ export function renderProfile() {
         <div class="profile-avatar">
           ${avatarContent}
         </div>
-        <div class="profile-avatar-edit" id="avatar-edit-btn" title="Ubah foto profil">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-            <circle cx="12" cy="13" r="4"/>
-          </svg>
-        </div>
-        <input type="file" id="profile-photo-input" accept="image/*" style="display:none;" />
       </div>
       <div class="profile-name">${userName}</div>
       <div class="profile-email">${userEmail}</div>
@@ -385,54 +153,6 @@ export function renderProfile() {
     if (settings) settings.addEventListener('click', () => window.location.hash = '#/settings');
     if (favorites) favorites.addEventListener('click', () => window.location.hash = '#/favorites');
     if (history) history.addEventListener('click', () => window.location.hash = '#/scan-history');
-    // Profile photo edit & preview
-    const editBtn = page.querySelector('#avatar-edit-btn');
-    const fileInput = page.querySelector('#profile-photo-input');
-    const avatarView = page.querySelector('.profile-avatar');
-
-    if (editBtn && fileInput) {
-      editBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        fileInput.click();
-      });
-
-      fileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        // Validate file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-          showCustomAlert('Ukuran foto terlalu besar. Maksimal 5MB.', 'Validasi Foto');
-          return;
-        }
-
-        openCropperModal(file, (croppedDataUrl) => {
-          saveProfilePhoto(croppedDataUrl);
-
-          // Update avatar immediately
-          const avatarEl = page.querySelector('.profile-avatar');
-          if (avatarEl) {
-            avatarEl.innerHTML = `<img src="${croppedDataUrl}" alt="Profile" class="profile-avatar-img" />`;
-          }
-        });
-
-        // Reset file input value
-        fileInput.value = '';
-      });
-    }
-
-    if (avatarView && fileInput) {
-      avatarView.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const photo = getProfilePhoto();
-        if (photo) {
-          openPreviewModal(photo);
-        } else {
-          fileInput.click();
-        }
-      });
-    }
-
     // Sync profile data from backend
     (async () => {
       const userId = getUserId();
@@ -492,9 +212,7 @@ export function renderProfile() {
             if (nameEl && user.name) nameEl.textContent = user.name;
             if (emailEl && user.email) emailEl.textContent = user.email;
             
-            if (avatarEl && user.profile_photo) {
-              avatarEl.innerHTML = `<img src="${user.profile_photo}" alt="Profile" class="profile-avatar-img" />`;
-            } else if (avatarEl) {
+            if (avatarEl) {
               const initial = user.name ? user.name.charAt(0).toUpperCase() : 'B';
               avatarEl.innerHTML = `<span class="profile-avatar-initial">${initial}</span>`;
             }

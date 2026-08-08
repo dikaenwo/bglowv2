@@ -177,19 +177,23 @@ export function renderRecommendations() {
   // ── Baca data kulit dari localStorage ──────────────────────────────────────
   const jenis_kulit    = localStorage.getItem('bglow_skin_type_'     + userId) || 'Normal';
   
-  // Ambil masalah kulit prioritas (hanya 1 masalah)
-  const prioritas      = localStorage.getItem('bglow_journey_priority_' + userId);
-  const rawProblems    = localStorage.getItem('bglow_skin_problems_' + userId) || '[]';
+  // Ambil masalah kulit prioritas
+  // PENTING: bglow_journey_priority_ hanya di-set ketika user klik "Mulai Atasi X"
+  // Jika belum pernah diklik, jangan otomatis pakai masalah scan — 
+  // gunakan semua masalah yang terdeteksi agar rekomendasi tidak berubah tanpa aksi user
+  const explicitPriority = localStorage.getItem('bglow_journey_priority_' + userId);
+  const rawProblems      = localStorage.getItem('bglow_skin_problems_' + userId) || '[]';
   
   let permasalahan = [];
-  if (prioritas) {
-    permasalahan = [prioritas];
+  if (explicitPriority) {
+    // User sudah klik "Mulai Atasi X" — fokus ke 1 masalah itu
+    permasalahan = [explicitPriority];
   } else {
-    // Fallback jika belum ada prioritas yang dipilih, ambil masalah pertama saja
+    // Belum ada pilihan eksplisit — pakai semua masalah dari scan
     try {
       const parsed = JSON.parse(rawProblems);
       if (parsed.length > 0) {
-        permasalahan = [parsed[0].label || parsed[0]];
+        permasalahan = parsed.map(p => p.label || p);
       }
     } catch (_) {}
   }
