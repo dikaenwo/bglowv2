@@ -1,5 +1,5 @@
 import { icons } from '../components/BottomNav.js';
-import { getStreak, getUserId, getAuthHeaders } from '../utils/store.js';
+import { getStreak, getUserId, getAuthHeaders, isPremium, getSubscriptionPlan } from '../utils/store.js';
 import { showCustomAlert } from '../utils/helpers.js';
 import { API_BASE_URL } from '../config.js';
 
@@ -79,19 +79,41 @@ export function renderProfile() {
       </div>
       <div class="profile-name">${userName}</div>
       <div class="profile-email">${userEmail}</div>
-      <div class="profile-stats-row">
-        <div class="profile-stat anim-fade-in-up anim-delay-1">
-          <div class="ps-value">${skinScore}</div>
-          <div class="ps-label">Skor Kulit</div>
-        </div>
-        <div class="profile-stat anim-fade-in-up anim-delay-2">
-          <div class="ps-value">${scanCount}</div>
-          <div class="ps-label">Scans</div>
-        </div>
-        <div class="profile-stat anim-fade-in-up anim-delay-3">
-          <div class="ps-value">${streakCount}</div>
-          <div class="ps-label">Beruntun</div>
-        </div>
+      <!-- Subscription Badge -->
+      <div class="profile-sub-badge anim-fade-in-up anim-delay-1" id="sub-badge">
+        ${isPremium()
+          ? `<div style="display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#312e81,#4f46e5);border-radius:20px;padding:10px 20px;">
+              <svg viewBox="0 0 28 28" width="26" height="26" fill="none">
+                <circle cx="14" cy="14" r="13" fill="url(#crownPBg)" opacity="0.2"/>
+                <path d="M5 19 L7.5 11 L11 16 L14 8 L17 16 L20.5 11 L23 19 Z" fill="url(#crownPFill)" stroke="#FCD34D" stroke-width="0.8" stroke-linejoin="round"/>
+                <rect x="5" y="19" width="18" height="2.5" rx="1.2" fill="url(#crownPBand)"/>
+                <circle cx="14" cy="10" r="1.5" fill="#FCD34D"/>
+                <defs>
+                  <linearGradient id="crownPBg" x1="0" y1="0" x2="28" y2="28"><stop offset="0%" stop-color="#FDE68A"/><stop offset="100%" stop-color="#F59E0B"/></linearGradient>
+                  <linearGradient id="crownPFill" x1="5" y1="8" x2="23" y2="22" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#FDE68A"/><stop offset="100%" stop-color="#D97706"/></linearGradient>
+                  <linearGradient id="crownPBand" x1="5" y1="19" x2="23" y2="22" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#FCD34D"/><stop offset="100%" stop-color="#B45309"/></linearGradient>
+                </defs>
+              </svg>
+              <div>
+                <div style="font-size:13px;font-weight:800;color:#FDE68A;letter-spacing:0.2px;">Glow Plus</div>
+                <div style="font-size:10px;color:rgba(255,255,255,0.7);font-weight:500;">Akses penuh ke semua fitur</div>
+              </div>
+            </div>`
+          : `<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.12);border-radius:20px;padding:10px 16px;border:1px solid rgba(255,255,255,0.2);">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <svg viewBox="0 0 28 28" width="24" height="24" fill="none">
+                  <circle cx="14" cy="14" r="13" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+                  <path d="M14 9v7l-3 4h6l-3-4V9" stroke="rgba(255,255,255,0.7)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                  <path d="M11 9h6" stroke="rgba(255,255,255,0.7)" stroke-width="1.3" stroke-linecap="round"/>
+                </svg>
+                <div>
+                  <div style="font-size:12px;font-weight:700;color:white;">Pengguna Basic</div>
+                  <div style="font-size:10px;color:rgba(255,255,255,0.6);">Upgrade untuk akses penuh</div>
+                </div>
+              </div>
+              <button id="profile-upgrade-btn" style="background:linear-gradient(135deg,#FDE68A,#F59E0B);color:#1e1b4b;font-size:10px;font-weight:800;border:none;border-radius:12px;padding:6px 12px;cursor:pointer;white-space:nowrap;">Upgrade</button>
+            </div>`
+        }
       </div>
     </div>
 
@@ -153,7 +175,14 @@ export function renderProfile() {
     if (settings) settings.addEventListener('click', () => window.location.hash = '#/settings');
     if (favorites) favorites.addEventListener('click', () => window.location.hash = '#/favorites');
     if (history) history.addEventListener('click', () => window.location.hash = '#/scan-history');
-    // Sync profile data from backend
+
+    // Upgrade button (only shown for basic users)
+    const upgradeBtn = page.querySelector('#profile-upgrade-btn');
+    if (upgradeBtn) upgradeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      window.location.hash = '#/subscription';
+    });
+
     (async () => {
       const userId = getUserId();
       if (userId && userId !== 'guest') {
