@@ -288,60 +288,112 @@ export function renderSettings() {
     const userId = getUserId();
     
     const skinType = localStorage.getItem('bglow_skin_type_' + userId) || 'Kombinasi';
-    const acneLevel = (localStorage.getItem('bglow_acne_level_' + userId) || 'Jerawat').replace(/ — Grade \d+/, '');
-    const oilLevel = localStorage.getItem('bglow_oil_level_' + userId) || 'Sedang — T-Zone';
-    const poreCond = localStorage.getItem('bglow_pore_condition_' + userId) || 'Baik — Minimal';
-    const skinScore = localStorage.getItem('bglow_skin_score_' + userId) || '65';
+    
+    // Load existing skin problems
+    let currentProblems = [];
+    try {
+      const raw = localStorage.getItem('bglow_skin_problems_' + userId);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        currentProblems = parsed.map(p => p.label || p);
+      }
+    } catch (_) {}
+
+    let selectedType = skinType;
+    let selectedProblems = [...currentProblems];
+
+    const skinTypes = [
+      { id: 'Normal', emoji: '✨', desc: 'Seimbang' },
+      { id: 'Berminyak', emoji: '💧', desc: 'Produksi sebum berlebih' },
+      { id: 'Kombinasi', emoji: '🔄', desc: 'Berminyak di T-zone' },
+      { id: 'Kering', emoji: '🏜️', desc: 'Kekurangan kelembapan' },
+      { id: 'Sensitif', emoji: '🌡️', desc: 'Rentan iritasi' },
+    ];
+
+    const skinProblems = [
+      { id: 'Jerawat', emoji: '🔴', color: '#EF4444' },
+      { id: 'PIE', emoji: '🩷', color: '#EC4899' },
+      { id: 'PIH', emoji: '🟠', color: '#F97316' },
+      { id: 'Kemerahan', emoji: '🟢', color: '#22C55E' },
+      { id: 'Hiperpigmentasi', emoji: '🟡', color: '#EAB308' },
+      { id: 'Bopeng', emoji: '🟣', color: '#8B5CF6' },
+    ];
     
     const overlay = document.createElement('div');
     overlay.className = 'diary-modal-overlay';
     overlay.innerHTML = `
       <div class="diary-modal" style="border-radius: var(--radius-lg) var(--radius-lg) 0 0; max-height:85vh;">
+        <style>
+          .sp-chip-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+          .sp-chip {
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px 14px; border-radius: 12px;
+            border: 1.5px solid var(--border-light); background: #fafafa;
+            cursor: pointer; transition: all 0.2s ease; user-select: none;
+          }
+          .sp-chip:hover { border-color: var(--primary); background: var(--bg-overlay); }
+          .sp-chip.active {
+            border-color: var(--primary) !important;
+            background: var(--bg-overlay) !important;
+            box-shadow: 0 0 0 2px rgba(59,130,246,0.15);
+          }
+          .sp-chip-emoji { font-size: 1.2rem; flex-shrink: 0; }
+          .sp-chip-label { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+          .sp-chip-desc { font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
+          .sp-prob-chip {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 14px; border-radius: 100px;
+            border: 1.5px solid var(--border-light); background: #fafafa;
+            cursor: pointer; transition: all 0.2s ease; user-select: none;
+            font-size: 13px; font-weight: 600; color: var(--text-secondary);
+          }
+          .sp-prob-chip:hover { border-color: var(--primary); }
+          .sp-prob-chip.active {
+            color: white !important; border-color: transparent !important;
+          }
+          .sp-section-title {
+            font-size: 13px; font-weight: 700; color: var(--text-primary);
+            margin-bottom: 10px; margin-top: 20px;
+            display: flex; align-items: center; gap: 6px;
+          }
+          .sp-section-title:first-of-type { margin-top: 12px; }
+          .sp-prob-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+          .sp-hint {
+            font-size: 11px; color: var(--text-tertiary); margin-top: 8px; line-height: 1.4;
+          }
+        </style>
         <div class="modal-handle"></div>
         <div class="modal-title">Profil Kulit Anda</div>
         
-        <div class="modal-field">
-          <label>Jenis Kulit</label>
-          <select id="skin-type" class="auth-input premium-select" style="border: 1.5px solid var(--border); border-radius: var(--radius-md); padding: 12px; width: 100%; box-sizing: border-box; background: white;">
-            <option value="Kombinasi" ${skinType === 'Kombinasi' ? 'selected' : ''}>Kombinasi (Combination)</option>
-            <option value="Berminyak" ${skinType === 'Berminyak' ? 'selected' : ''}>Berminyak (Oily)</option>
-            <option value="Kering" ${skinType === 'Kering' ? 'selected' : ''}>Kering (Dry)</option>
-            <option value="Normal" ${skinType === 'Normal' ? 'selected' : ''}>Normal</option>
-            <option value="Sensitif" ${skinType === 'Sensitif' ? 'selected' : ''}>Sensitif (Sensitive)</option>
-          </select>
+        <div class="sp-section-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+          Jenis Kulit
         </div>
-        
-        <div class="modal-field">
-          <label>Kondisi Jerawat</label>
-          <select id="acne-level" class="auth-input premium-select" style="border: 1.5px solid var(--border); border-radius: var(--radius-md); padding: 12px; width: 100%; box-sizing: border-box; background: white;">
-            <option value="Bersih" ${acneLevel.includes('Bersih') || acneLevel.includes('Tidak') ? 'selected' : ''}>Bersih (Tidak Ada)</option>
-            <option value="Jerawat" ${!acneLevel.includes('Bersih') && !acneLevel.includes('Tidak') ? 'selected' : ''}>Jerawat (Ada Jerawat)</option>
-          </select>
+        <div class="sp-chip-grid" id="sp-skin-types">
+          ${skinTypes.map(t => `
+            <div class="sp-chip ${selectedType === t.id ? 'active' : ''}" data-type="${t.id}">
+              <span class="sp-chip-emoji">${t.emoji}</span>
+              <div>
+                <div class="sp-chip-label">${t.id}</div>
+                <div class="sp-chip-desc">${t.desc}</div>
+              </div>
+            </div>
+          `).join('')}
         </div>
-        
-        <div class="modal-field">
-          <label>Level Minyak</label>
-          <select id="oil-level" class="auth-input premium-select" style="border: 1.5px solid var(--border); border-radius: var(--radius-md); padding: 12px; width: 100%; box-sizing: border-box; background: white;">
-            <option value="Rendah" ${oilLevel === 'Rendah' ? 'selected' : ''}>Rendah (Low)</option>
-            <option value="Normal" ${oilLevel === 'Normal' ? 'selected' : ''}>Normal</option>
-            <option value="Sedang — T-Zone" ${oilLevel === 'Sedang — T-Zone' ? 'selected' : ''}>Sedang (Oily T-Zone)</option>
-            <option value="Tinggi" ${oilLevel === 'Tinggi' ? 'selected' : ''}>Tinggi (High)</option>
-          </select>
+
+        <div class="sp-section-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Masalah Kulit
         </div>
-        
-        <div class="modal-field">
-          <label>Kondisi Pori</label>
-          <select id="pore-cond" class="auth-input premium-select" style="border: 1.5px solid var(--border); border-radius: var(--radius-md); padding: 12px; width: 100%; box-sizing: border-box; background: white;">
-            <option value="Baik — Minimal" ${poreCond === 'Baik — Minimal' ? 'selected' : ''}>Baik (Minimal)</option>
-            <option value="Cukup" ${poreCond === 'Cukup' ? 'selected' : ''}>Cukup (Moderate)</option>
-            <option value="Kurang Baik" ${poreCond === 'Kurang Baik' ? 'selected' : ''}>Kurang Baik (Enlarged)</option>
-          </select>
+        <div class="sp-prob-grid" id="sp-problems">
+          ${skinProblems.map(p => `
+            <div class="sp-prob-chip ${selectedProblems.includes(p.id) ? 'active' : ''}" data-prob="${p.id}" style="${selectedProblems.includes(p.id) ? `background:${p.color}; border-color:${p.color};` : ''}">
+              <span>${p.emoji}</span>
+              <span>${p.id}</span>
+            </div>
+          `).join('')}
         </div>
-        
-        <div class="modal-field">
-          <label id="skin-score-label">Skor Kulit (${skinScore})</label>
-          <input type="range" id="skin-score" min="0" max="100" value="${skinScore}" style="width:100%; cursor:pointer;" />
-        </div>
+        <div class="sp-hint">Pilih semua masalah kulit yang sedang kamu alami. Bisa lebih dari satu.</div>
         
         <div class="modal-actions" style="display:flex; gap:10px; margin-top:20px;">
           <button class="btn btn-outline" id="btn-cancel-skin" style="flex:1; padding: 12px; border-radius: var(--radius-md); font-weight:600; cursor:pointer;">Batal</button>
@@ -349,22 +401,42 @@ export function renderSettings() {
         </div>
       </div>
     `;
-    
-    const scoreInput = overlay.querySelector('#skin-score');
-    const scoreLabel = overlay.querySelector('#skin-score-label');
-    scoreInput.addEventListener('input', (e) => {
-      scoreLabel.textContent = `Skor Kulit (${e.target.value})`;
+
+    // Skin type chip selection
+    overlay.querySelectorAll('.sp-chip[data-type]').forEach(chip => {
+      chip.addEventListener('click', () => {
+        selectedType = chip.dataset.type;
+        overlay.querySelectorAll('.sp-chip[data-type]').forEach(c => c.classList.toggle('active', c.dataset.type === selectedType));
+      });
     });
-    
+
+    // Problem chip multi-select
+    const probColors = {};
+    skinProblems.forEach(p => probColors[p.id] = p.color);
+
+    overlay.querySelectorAll('.sp-prob-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const val = chip.dataset.prob;
+        const idx = selectedProblems.indexOf(val);
+        if (idx === -1) {
+          selectedProblems.push(val);
+          chip.classList.add('active');
+          chip.style.background = probColors[val];
+          chip.style.borderColor = probColors[val];
+        } else {
+          selectedProblems.splice(idx, 1);
+          chip.classList.remove('active');
+          chip.style.background = '#fafafa';
+          chip.style.borderColor = '';
+        }
+      });
+    });
+
     overlay.querySelector('#btn-cancel-skin').addEventListener('click', () => overlay.remove());
     
     overlay.querySelector('#btn-save-skin').addEventListener('click', async () => {
-      const selectedSkinType = overlay.querySelector('#skin-type').value;
-      const selectedAcneLevel = overlay.querySelector('#acne-level').value;
-      const selectedOilLevel = overlay.querySelector('#oil-level').value;
-      const selectedPoreCond = overlay.querySelector('#pore-cond').value;
-      const selectedSkinScore = parseInt(scoreInput.value);
-      
+      const formattedProblems = selectedProblems.map(p => ({ label: p, confidence: 0.95 }));
+
       if (userId && userId !== 'guest') {
         try {
           overlay.querySelector('#btn-save-skin').textContent = 'Menyimpan...';
@@ -374,21 +446,14 @@ export function renderSettings() {
             method: 'PUT',
             headers: getAuthHeaders(),
             body: JSON.stringify({
-              skin_type: selectedSkinType,
-              acne_level: selectedAcneLevel,
-              oil_level: selectedOilLevel,
-              pore_condition: selectedPoreCond,
-              skin_score: selectedSkinScore
+              skin_type: selectedType
             })
           });
           
           if (res.ok) {
             localStorage.setItem('bglow_has_scanned_' + userId, '1');
-            localStorage.setItem('bglow_skin_type_' + userId, selectedSkinType);
-            localStorage.setItem('bglow_acne_level_' + userId, selectedAcneLevel);
-            localStorage.setItem('bglow_oil_level_' + userId, selectedOilLevel);
-            localStorage.setItem('bglow_pore_condition_' + userId, selectedPoreCond);
-            localStorage.setItem('bglow_skin_score_' + userId, String(selectedSkinScore));
+            localStorage.setItem('bglow_skin_type_' + userId, selectedType);
+            localStorage.setItem('bglow_skin_problems_' + userId, JSON.stringify(formattedProblems));
             
             showCustomAlert("Profil kulit berhasil diperbarui!", "Profil Kulit Diperbarui", () => {
               overlay.remove();
@@ -407,11 +472,8 @@ export function renderSettings() {
         }
       } else {
         localStorage.setItem('bglow_has_scanned_' + userId, '1');
-        localStorage.setItem('bglow_skin_type_' + userId, selectedSkinType);
-        localStorage.setItem('bglow_acne_level_' + userId, selectedAcneLevel);
-        localStorage.setItem('bglow_oil_level_' + userId, selectedOilLevel);
-        localStorage.setItem('bglow_pore_condition_' + userId, selectedPoreCond);
-        localStorage.setItem('bglow_skin_score_' + userId, String(selectedSkinScore));
+        localStorage.setItem('bglow_skin_type_' + userId, selectedType);
+        localStorage.setItem('bglow_skin_problems_' + userId, JSON.stringify(formattedProblems));
         showCustomAlert("Profil kulit (Guest) diperbarui!", "Profil Kulit Diperbarui", () => {
           overlay.remove();
         });
