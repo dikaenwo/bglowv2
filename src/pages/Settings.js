@@ -303,20 +303,20 @@ export function renderSettings() {
     let selectedProblems = [...currentProblems];
 
     const skinTypes = [
-      { id: 'Normal', emoji: '✨', desc: 'Seimbang' },
-      { id: 'Berminyak', emoji: '💧', desc: 'Produksi sebum berlebih' },
-      { id: 'Kombinasi', emoji: '🔄', desc: 'Berminyak di T-zone' },
-      { id: 'Kering', emoji: '🏜️', desc: 'Kekurangan kelembapan' },
-      { id: 'Sensitif', emoji: '🌡️', desc: 'Rentan iritasi' },
+      { id: 'Normal', icon: `<svg viewBox="0 0 32 32" width="28" height="28" fill="none"><circle cx="16" cy="16" r="13" fill="#D1FAE5" stroke="#10B981" stroke-width="1.5"/><circle cx="16" cy="16" r="8" fill="#6EE7B7" opacity="0.5"/><path d="M11 20c1.5 2 3.5 3 5 3s3.5-1 5-3" stroke="#059669" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="14" r="1.5" fill="#059669"/><circle cx="20" cy="14" r="1.5" fill="#059669"/><path d="M22 8l1.5-2M10 8L8.5 6M16 6V4" stroke="#10B981" stroke-width="1.2" stroke-linecap="round"/></svg>`, desc: 'Seimbang' },
+      { id: 'Berminyak', icon: `<svg viewBox="0 0 32 32" width="28" height="28" fill="none"><circle cx="16" cy="16" r="13" fill="#DBEAFE" stroke="#3B82F6" stroke-width="1.5"/><circle cx="16" cy="16" r="8" fill="#93C5FD" opacity="0.4"/><path d="M11 20c1.5 1.5 3.5 2 5 2s3.5-.5 5-2" stroke="#2563EB" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="14" r="1.5" fill="#2563EB"/><circle cx="20" cy="14" r="1.5" fill="#2563EB"/><path d="M9 9c0 2-2 3-2 5" stroke="#60A5FA" stroke-width="1.2" stroke-linecap="round"/><path d="M23 9c0 2 2 3 2 5" stroke="#60A5FA" stroke-width="1.2" stroke-linecap="round"/><circle cx="8" cy="18" r="2" fill="#93C5FD" opacity="0.6"/><circle cx="24" cy="18" r="2" fill="#93C5FD" opacity="0.6"/><circle cx="16" cy="10" r="1.5" fill="#93C5FD" opacity="0.7"/></svg>`, desc: 'Produksi sebum berlebih' },
+      { id: 'Kombinasi', icon: `<svg viewBox="0 0 32 32" width="28" height="28" fill="none"><circle cx="16" cy="16" r="13" fill="#EDE9FE" stroke="#8B5CF6" stroke-width="1.5"/><path d="M16 3a13 13 0 010 26" fill="#C4B5FD" opacity="0.5"/><path d="M16 3a13 13 0 000 26" fill="#DDD6FE" opacity="0.3"/><path d="M11 20c1.5 1.5 3.5 2 5 2s3.5-.5 5-2" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="14" r="1.5" fill="#7C3AED"/><circle cx="20" cy="14" r="1.5" fill="#7C3AED"/><line x1="16" y1="5" x2="16" y2="27" stroke="#8B5CF6" stroke-width="0.8" stroke-dasharray="2 2"/><circle cx="14" cy="10" r="1.2" fill="#93C5FD" opacity="0.7"/><circle cx="16" cy="8" r="1" fill="#93C5FD" opacity="0.6"/></svg>`, desc: 'Berminyak di T-zone' },
+      { id: 'Kering', icon: `<svg viewBox="0 0 32 32" width="28" height="28" fill="none"><circle cx="16" cy="16" r="13" fill="#FEF3C7" stroke="#D97706" stroke-width="1.5"/><circle cx="16" cy="16" r="8" fill="#FDE68A" opacity="0.4"/><path d="M12 19c1 1 2.5 1.5 4 1.5s3-.5 4-1.5" stroke="#B45309" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="14" r="1.5" fill="#B45309"/><circle cx="20" cy="14" r="1.5" fill="#B45309"/><path d="M8 12l1.5 1M24 12l-1.5 1" stroke="#D97706" stroke-width="1" stroke-linecap="round"/><path d="M10 22l2-1M22 22l-2-1M13 24l1-1.5M19 24l-1-1.5" stroke="#D97706" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/></svg>`, desc: 'Kekurangan kelembapan' },
+      { id: 'Sensitif', icon: `<svg viewBox="0 0 32 32" width="28" height="28" fill="none"><circle cx="16" cy="16" r="13" fill="#FEE2E2" stroke="#EF4444" stroke-width="1.5"/><circle cx="16" cy="16" r="8" fill="#FCA5A5" opacity="0.3"/><path d="M12 20c1 .8 2.5 1 4 1s3-.2 4-1" stroke="#DC2626" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="14" r="1.5" fill="#DC2626"/><circle cx="20" cy="14" r="1.5" fill="#DC2626"/><path d="M16 5l-1 2.5h2L16 5z" fill="#EF4444"/><circle cx="9" cy="16" r="2.5" fill="#FCA5A5" opacity="0.5"/><circle cx="23" cy="16" r="2.5" fill="#FCA5A5" opacity="0.5"/></svg>`, desc: 'Rentan iritasi' },
     ];
 
     const skinProblems = [
-      { id: 'Jerawat', emoji: '🔴', color: '#EF4444' },
-      { id: 'PIE', emoji: '🩷', color: '#EC4899' },
-      { id: 'PIH', emoji: '🟠', color: '#F97316' },
-      { id: 'Kemerahan', emoji: '🟢', color: '#22C55E' },
-      { id: 'Hiperpigmentasi', emoji: '🟡', color: '#EAB308' },
-      { id: 'Bopeng', emoji: '🟣', color: '#8B5CF6' },
+      { id: 'Jerawat', icon: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none"><circle cx="12" cy="12" r="10" fill="#FEE2E2" stroke="#EF4444" stroke-width="1.5"/><circle cx="9" cy="10" r="2" fill="#FCA5A5" stroke="#EF4444" stroke-width="1"/><circle cx="15" cy="9" r="1.5" fill="#FCA5A5" stroke="#EF4444" stroke-width="1"/><circle cx="13" cy="15" r="2.5" fill="#FCA5A5" stroke="#EF4444" stroke-width="1"/><circle cx="9" cy="10" r="0.8" fill="#EF4444"/><circle cx="15" cy="9" r="0.6" fill="#EF4444"/><circle cx="13" cy="15" r="1" fill="#EF4444"/></svg>`, color: '#EF4444' },
+      { id: 'PIE', icon: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none"><circle cx="12" cy="12" r="10" fill="#FCE7F3" stroke="#EC4899" stroke-width="1.5"/><circle cx="9" cy="10" r="2.5" fill="none" stroke="#EC4899" stroke-width="1.2" stroke-dasharray="1.5 1.5"/><circle cx="15" cy="14" r="2" fill="none" stroke="#EC4899" stroke-width="1.2" stroke-dasharray="1.5 1.5"/><circle cx="12" cy="8" r="1.5" fill="#F9A8D4" opacity="0.6"/><circle cx="8" cy="15" r="1.8" fill="#F9A8D4" opacity="0.5"/></svg>`, color: '#EC4899' },
+      { id: 'PIH', icon: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none"><circle cx="12" cy="12" r="10" fill="#FFF7ED" stroke="#F97316" stroke-width="1.5"/><ellipse cx="9" cy="10" rx="2.5" ry="2" fill="#FDBA74" stroke="#F97316" stroke-width="1"/><ellipse cx="15" cy="14" rx="2" ry="1.5" fill="#FDBA74" stroke="#F97316" stroke-width="1"/><ellipse cx="13" cy="8" rx="1.5" ry="1" fill="#FB923C" opacity="0.6"/></svg>`, color: '#F97316' },
+      { id: 'Kemerahan', icon: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none"><circle cx="12" cy="12" r="10" fill="#DCFCE7" stroke="#22C55E" stroke-width="1.5"/><path d="M7 12c0-1 1.5-3 5-3s5 2 5 3" fill="#BBF7D0" stroke="#16A34A" stroke-width="1"/><circle cx="8" cy="13" r="2.5" fill="#FCA5A5" opacity="0.5"/><circle cx="16" cy="13" r="2.5" fill="#FCA5A5" opacity="0.5"/><path d="M10 16c.5.5 1.2.8 2 .8s1.5-.3 2-.8" stroke="#16A34A" stroke-width="1" stroke-linecap="round"/></svg>`, color: '#22C55E' },
+      { id: 'Hiperpigmentasi', icon: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none"><circle cx="12" cy="12" r="10" fill="#FEF9C3" stroke="#EAB308" stroke-width="1.5"/><circle cx="12" cy="12" r="7" fill="#FDE047" opacity="0.3"/><path d="M8 10c1-1 2.5-1.5 4-1.5s3 .5 4 1.5" stroke="#CA8A04" stroke-width="1" stroke-linecap="round"/><rect x="7" y="13" width="4" height="3" rx="1" fill="#CA8A04" opacity="0.3"/><rect x="13" y="11" width="3" height="4" rx="1" fill="#CA8A04" opacity="0.25"/><rect x="10" y="15" width="3" height="2" rx="0.8" fill="#CA8A04" opacity="0.2"/></svg>`, color: '#EAB308' },
+      { id: 'Bopeng', icon: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none"><circle cx="12" cy="12" r="10" fill="#F3E8FF" stroke="#8B5CF6" stroke-width="1.5"/><ellipse cx="9" cy="10" rx="2" ry="1.5" fill="#DDD6FE" stroke="#8B5CF6" stroke-width="0.8"/><ellipse cx="15" cy="13" rx="2.5" ry="2" fill="#DDD6FE" stroke="#8B5CF6" stroke-width="0.8"/><ellipse cx="11" cy="15" rx="1.5" ry="1" fill="#DDD6FE" stroke="#8B5CF6" stroke-width="0.8"/><path d="M9 10v0M15 13v0M11 15v0" stroke="#8B5CF6" stroke-width="0.5" stroke-linecap="round"/></svg>`, color: '#8B5CF6' },
     ];
     
     const overlay = document.createElement('div');
@@ -372,7 +372,7 @@ export function renderSettings() {
         <div class="sp-chip-grid" id="sp-skin-types">
           ${skinTypes.map(t => `
             <div class="sp-chip ${selectedType === t.id ? 'active' : ''}" data-type="${t.id}">
-              <span class="sp-chip-emoji">${t.emoji}</span>
+              <span class="sp-chip-emoji">${t.icon}</span>
               <div>
                 <div class="sp-chip-label">${t.id}</div>
                 <div class="sp-chip-desc">${t.desc}</div>
@@ -388,7 +388,7 @@ export function renderSettings() {
         <div class="sp-prob-grid" id="sp-problems">
           ${skinProblems.map(p => `
             <div class="sp-prob-chip ${selectedProblems.includes(p.id) ? 'active' : ''}" data-prob="${p.id}" style="${selectedProblems.includes(p.id) ? `background:${p.color}; border-color:${p.color};` : ''}">
-              <span>${p.emoji}</span>
+              <span>${p.icon}</span>
               <span>${p.id}</span>
             </div>
           `).join('')}
