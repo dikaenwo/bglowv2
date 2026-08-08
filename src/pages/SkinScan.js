@@ -851,47 +851,31 @@ export function renderSkinScan() {
           if (!item.box_2d || item.box_2d.length < 4) return;
           const [ymin, xmin, ymax, xmax] = item.box_2d;
           const col = (PROBLEM_COLORS[item.label] || { hex: '#AAAAAA' }).hex;
-          const x1 = xmin / 1000 * displayW;
-          const y1 = ymin / 1000 * displayH;
-          const bw = (xmax - xmin) / 1000 * displayW;
-          const bh = (ymax - ymin) / 1000 * displayH;
+          const x = xmin / 1000 * displayW;
+          const y = ymin / 1000 * displayH;
+          const w = (xmax - xmin) / 1000 * displayW;
+          const h = (ymax - ymin) / 1000 * displayH;
 
-          // Translucent fill
-          ctx.fillStyle = col + '28';
-          ctx.fillRect(x1, y1, bw, bh);
-
-          // Rounded border with glow
-          ctx.save();
+          // Draw plain rectangle (no rounded corners) — same as onboarding
           ctx.strokeStyle = col;
-          ctx.lineWidth = 3;
-          ctx.shadowColor = col;
-          ctx.shadowBlur = 10;
-          const r = 7;
-          ctx.beginPath();
-          ctx.moveTo(x1 + r, y1);
-          ctx.lineTo(x1 + bw - r, y1);
-          ctx.quadraticCurveTo(x1 + bw, y1, x1 + bw, y1 + r);
-          ctx.lineTo(x1 + bw, y1 + bh - r);
-          ctx.quadraticCurveTo(x1 + bw, y1 + bh, x1 + bw - r, y1 + bh);
-          ctx.lineTo(x1 + r, y1 + bh);
-          ctx.quadraticCurveTo(x1, y1 + bh, x1, y1 + bh - r);
-          ctx.lineTo(x1, y1 + r);
-          ctx.quadraticCurveTo(x1, y1, x1 + r, y1);
-          ctx.closePath();
-          ctx.stroke();
-          ctx.restore();
+          ctx.lineWidth = Math.max(2, displayW * 0.004);
+          ctx.strokeRect(x, y, w, h);
 
-          // Label tag
-          const fontSize = Math.max(10, displayW * 0.03);
+          // Draw fill overlay
+          ctx.fillStyle = col + '25';
+          ctx.fillRect(x, y, w, h);
+
+          // Draw label background + text
+          const fontSize = Math.max(12, displayW * 0.032);
           ctx.font = `bold ${fontSize}px sans-serif`;
           const textW = ctx.measureText(item.label).width;
-          const padX = 5, padY = 3;
+          const padX = 6, padY = 4;
           const lblH = fontSize + padY * 2;
-          const lblY = y1 > lblH + 2 ? y1 - lblH - 2 : y1 + 2;
+          const lblY = y > lblH + 2 ? y - lblH - 2 : y + 2;
           ctx.fillStyle = col;
-          ctx.fillRect(x1, lblY, textW + padX * 2, lblH);
+          ctx.fillRect(x, lblY, textW + padX * 2, lblH);
           ctx.fillStyle = '#FFFFFF';
-          ctx.fillText(item.label, x1 + padX, lblY + fontSize + padY * 0.5);
+          ctx.fillText(item.label, x + padX, lblY + fontSize + padY * 0.5);
         });
       };
 
