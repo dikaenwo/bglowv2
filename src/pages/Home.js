@@ -419,43 +419,6 @@ export function renderHome() {
         <!-- Rendered dynamically -->
       </div>
 
-      <!-- Skincare Guides Section (Get Smart) -->
-      <div class="anim-fade-in-up anim-delay-4" style="background:#ffffff; border-radius:var(--radius-xl); padding:20px; box-shadow:0 4px 20px rgba(0,0,0,0.05); border:1px solid var(--border-light); margin-top:12px;">
-        <h3 style="font-size:1.1rem; font-weight:800; color:#0f172a; margin:0 0 4px 0; text-align:left; letter-spacing:-0.3px;">Pintar Bersama B-Glow</h3>
-        <p style="font-size:0.75rem; color:#94a3b8; margin:0 0 20px 0; text-align:left; font-weight:500;">Bacaan singkat untuk membantumu mengambil keputusan terbaik</p>
-        
-        <div style="display:flex; gap:12px; overflow-x:auto; padding-bottom:8px; scrollbar-width:none;" class="articles-scroll">
-          <!-- Article 1 -->
-          <div class="article-card" style="flex:0 0 170px; cursor:pointer;" id="article-1">
-            <div style="width:100%; height:110px; background:linear-gradient(135deg, #ffedd5, #fee2e2); border-radius:18px; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; margin-bottom:8px;">
-              ${skincarePumpSvg}
-              <span style="position:absolute; bottom:8px; left:8px; background:rgba(255,255,255,0.85); backdrop-filter:blur(4px); font-size:9px; font-weight:700; color:#475569; padding:2px 8px; border-radius:20px;">⏱ 2 mnt</span>
-            </div>
-            <div style="font-size:11px; font-weight:700; color:#1e293b; text-align:left; line-height:1.4;">Apa penyebab kulit sensitif?</div>
-          </div>
-
-          <!-- Article 2 -->
-          <div class="article-card" style="flex:0 0 170px; cursor:pointer;" id="article-2">
-            <div style="width:100%; height:110px; background:linear-gradient(135deg, #f3e8ff, #fae8ff); border-radius:18px; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; margin-bottom:8px;">
-              ${flowerSvg}
-              <span style="position:absolute; bottom:8px; left:8px; background:rgba(255,255,255,0.85); backdrop-filter:blur(4px); font-size:9px; font-weight:700; color:#475569; padding:2px 8px; border-radius:20px;">⏱ 1 mnt</span>
-            </div>
-            <div style="font-size:11px; font-weight:700; color:#1e293b; text-align:left; line-height:1.4;">Apa itu kulit kusam?</div>
-          </div>
-
-          <!-- Article 3 -->
-          <div class="article-card" style="flex:0 0 170px; cursor:pointer;" id="article-3">
-            <div style="width:100%; height:110px; background:linear-gradient(135deg, #ecfdf5, #d1fae5); border-radius:18px; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; margin-bottom:8px;">
-              ${sunShieldSvg}
-              <span style="position:absolute; bottom:8px; left:8px; background:rgba(255,255,255,0.85); backdrop-filter:blur(4px); font-size:9px; font-weight:700; color:#475569; padding:2px 8px; border-radius:20px;">⏱ 3 mnt</span>
-            </div>
-            <div style="font-size:11px; font-weight:700; color:#1e293b; text-align:left; line-height:1.4;">Kenapa sunscreen wajib?</div>
-          </div>
-        </div>
-
-        <button id="btn-see-guides" style="width:100%; background:#1E1B4B; color:white; border:none; border-radius:20px; padding:12px; font-size:12px; font-weight:700; cursor:pointer; margin-top:16px; transition: all 0.2s ease;">Lihat panduan skincare lainnya</button>
-      </div>
-
     </section>
   `;
 
@@ -486,39 +449,6 @@ export function renderHome() {
       showCustomAlert("Mood kulit Anda hari ini berhasil disimpan! Jaga kesehatan kulit Anda ya. ✨", "Mood Kulit Dicatat");
     });
   });
-
-  // Skincare Guides Articles click listeners
-  const art1 = page.querySelector('#article-1');
-  if (art1) {
-    art1.addEventListener('click', async () => {
-      const { showCustomAlert } = await import('../utils/helpers.js');
-      showCustomAlert("Kulit sensitif disebabkan oleh tipisnya lapisan pelindung kulit (skin barrier). Disarankan menggunakan kandungan Ceramide dan menghindari alkohol/fragrance.", "Apa Penyebab Kulit Sensitif?");
-    });
-  }
-
-  const art2 = page.querySelector('#article-2');
-  if (art2) {
-    art2.addEventListener('click', async () => {
-      const { showCustomAlert } = await import('../utils/helpers.js');
-      showCustomAlert("Kekusaman kulit terjadi akibat penumpukan sel kulit mati dan kurangnya hidrasi. Lakukan eksfoliasi lembut 1-2x seminggu dan gunakan pelembab secara rutin.", "Apa itu Kulit Kusam?");
-    });
-  }
-
-  const art3 = page.querySelector('#article-3');
-  if (art3) {
-    art3.addEventListener('click', async () => {
-      const { showCustomAlert } = await import('../utils/helpers.js');
-      showCustomAlert("Sunscreen wajib digunakan untuk melindungi kulit dari sinar UV yang dapat memicu penuaan dini, bintik hitam, dan merusak skin barrier kulit.", "Pentingnya Sunscreen");
-    });
-  }
-
-  const seeGuides = page.querySelector('#btn-see-guides');
-  if (seeGuides) {
-    seeGuides.addEventListener('click', async () => {
-      const { showCustomAlert } = await import('../utils/helpers.js');
-      showCustomAlert("Temukan panduan merawat kulit lebih lengkap di menu Jurnal Kulit Anda! ✨", "Edukasi Skincare");
-    });
-  }
 
   page.querySelectorAll('.qa-item').forEach(item => {
     item.addEventListener('click', () => {
