@@ -428,10 +428,33 @@ export function renderPaywallPage(featureName, featureEmoji, benefits = []) {
       <div class="pw-hero">
         <div class="pw-crown-glow"></div>
         <div class="pw-feature-emoji">${featureEmoji}</div>
-        <div class="pw-lock-badge"><span>🔒</span></div>
+        <div class="pw-lock-badge">
+          <svg viewBox="0 0 38 38" width="28" height="28" fill="none">
+            <rect x="9" y="18" width="20" height="13" rx="4" fill="url(#pwLockBody)"/>
+            <path d="M13 18v-4.5a6 6 0 0 1 12 0V18" stroke="url(#pwShackle)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+            <circle cx="19" cy="24" r="2.2" fill="white" opacity="0.9"/>
+            <rect x="18" y="25" width="2" height="3.5" rx="1" fill="white" opacity="0.9"/>
+            <defs>
+              <linearGradient id="pwLockBody" x1="9" y1="18" x2="29" y2="31" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#7c3aed"/>
+                <stop offset="100%" stop-color="#4f46e5"/>
+              </linearGradient>
+              <linearGradient id="pwShackle" x1="13" y1="10" x2="25" y2="18" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#c4b5fd"/>
+                <stop offset="100%" stop-color="#a78bfa"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
       </div>
       <div class="pw-content">
-        <div class="pw-crown-label">✨ Eksklusif Glow Plus</div>
+        <div class="pw-crown-label">
+          <svg viewBox="0 0 16 16" width="13" height="13" fill="none" style="display:inline-block;vertical-align:middle;margin-right:4px;">
+            <circle cx="8" cy="8" r="7.5" fill="#EDE9FE" stroke="#8B5CF6" stroke-width="0.8"/>
+            <path d="M8 4 L9 6.5 L11.5 6.5 L9.5 8 L10.2 10.5 L8 9 L5.8 10.5 L6.5 8 L4.5 6.5 L7 6.5 Z" fill="#8B5CF6" stroke="#7C3AED" stroke-width="0.3" stroke-linejoin="round"/>
+          </svg>
+          Eksklusif Glow Plus
+        </div>
         <h1 class="pw-title">${featureName}</h1>
         <p class="pw-subtitle">Fitur ini tersedia khusus untuk member Glow Plus. Upgrade sekarang untuk akses penuh!</p>
         ${benefits.length > 0 ? `<div class="pw-benefits">${benefitItems}</div>` : ''}
@@ -440,9 +463,29 @@ export function renderPaywallPage(featureName, featureEmoji, benefits = []) {
             <div class="pw-price-label">Glow Plus</div>
             <div class="pw-price-amount">Rp 30.000<span>/bulan</span></div>
           </div>
-          <div class="pw-price-badge">POPULER 🔥</div>
+          <div class="pw-price-badge">
+            <svg viewBox="0 0 14 14" width="10" height="10" fill="none" style="display:inline-block;vertical-align:middle;margin-right:3px;">
+              <circle cx="7" cy="7" r="6.5" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.7"/>
+              <path d="M7 2.5 Q5.5 5 4 5.8 Q5.5 5.3 7 6.2 Q8.5 5.3 10 5.8 Q8.5 5 7 2.5Z" fill="#F59E0B" stroke="#D97706" stroke-width="0.4" stroke-linejoin="round"/>
+              <path d="M4.5 9.5 Q7 8 9.5 9.5" stroke="#D97706" stroke-width="0.8" stroke-linecap="round" fill="none"/>
+            </svg>
+            POPULER
+          </div>
         </div>
-        <button class="pw-cta-btn" id="pw-upgrade-btn">👑 Upgrade ke Glow Plus</button>
+        <button class="pw-cta-btn" id="pw-upgrade-btn">
+          <svg viewBox="0 0 20 20" width="16" height="16" fill="none" style="display:inline-block;vertical-align:middle;margin-right:6px;">
+            <circle cx="10" cy="10" r="9.5" fill="#FDE68A" stroke="#D97706" stroke-width="0.8"/>
+            <path d="M4 13 L6 7 L10 11 L14 7 L16 13 Z" fill="url(#ctaCrown)" stroke="#D97706" stroke-width="0.8" stroke-linejoin="round"/>
+            <rect x="4" y="13" width="12" height="2" rx="1" fill="#F59E0B"/>
+            <defs>
+              <linearGradient id="ctaCrown" x1="4" y1="7" x2="16" y2="15">
+                <stop offset="0%" stop-color="#FDE68A"/>
+                <stop offset="100%" stop-color="#F59E0B"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          Upgrade ke Glow Plus
+        </button>
         <button class="pw-secondary-btn" id="pw-back-btn2">Kembali</button>
       </div>
     </div>
@@ -550,10 +593,20 @@ export function renderPaywallPage(featureName, featureEmoji, benefits = []) {
     </style>
   `;
 
-  const goBack = () => window.history.back();
+  // Hide bottom nav while paywall is shown
+  const bottomNav = document.querySelector('.bottom-nav');
+  if (bottomNav) bottomNav.style.display = 'none';
+
+  const restoreNav = () => {
+    const nav = document.querySelector('.bottom-nav');
+    if (nav) nav.style.display = '';
+  };
+
+  const goBack = () => { restoreNav(); window.history.back(); };
   page.querySelector('#pw-back-btn').addEventListener('click', goBack);
   page.querySelector('#pw-back-btn2').addEventListener('click', goBack);
   page.querySelector('#pw-upgrade-btn').addEventListener('click', () => {
+    restoreNav();
     window.location.hash = '#/subscription';
   });
 
