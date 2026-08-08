@@ -590,16 +590,17 @@ export function renderPaywallPage(featureName, featureEmoji, benefits = []) {
         border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: all 0.2s;
       }
       .pw-secondary-btn:hover { background: rgba(255,255,255,0.05); color: white; }
+
+      /* Hide bottom nav while paywall is active */
+      body.has-paywall .bottom-nav { display: none !important; }
     </style>
   `;
 
-  // Hide bottom nav while paywall is shown
-  const bottomNav = document.querySelector('.bottom-nav');
-  if (bottomNav) bottomNav.style.display = 'none';
+  // Apply body class immediately to hide bottom nav
+  document.body.classList.add('has-paywall');
 
   const restoreNav = () => {
-    const nav = document.querySelector('.bottom-nav');
-    if (nav) nav.style.display = '';
+    document.body.classList.remove('has-paywall');
   };
 
   const goBack = () => { restoreNav(); window.history.back(); };
