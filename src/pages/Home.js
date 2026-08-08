@@ -1,4 +1,4 @@
-import { icons } from '../components/BottomNav.js';
+﻿import { icons } from '../components/BottomNav.js';
 import { addRipple } from '../utils/helpers.js';
 import { getRoutine, getProgress, getStreak, getUserId } from '../utils/store.js';
 import { fetchWeather } from '../utils/weather.js';
@@ -578,170 +578,61 @@ export function renderHome() {
 async function renderSkinLabWidget(container, userId) {
   const hasScanned = localStorage.getItem('bglow_has_scanned_' + userId) === '1';
 
-  // Custom SVG icons (no emoji)
   const lockSVG = `<svg viewBox="0 0 24 24" width="28" height="28" fill="none"><circle cx="12" cy="12" r="11" fill="#EDE9FE" stroke="#8B5CF6" stroke-width="1"/><rect x="7" y="12" width="10" height="7" rx="2.5" fill="#7C3AED"/><path d="M9 12V9.5a3 3 0 0 1 6 0V12" stroke="#A78BFA" stroke-width="1.8" stroke-linecap="round" fill="none"/><circle cx="12" cy="15" r="1.3" fill="white" opacity="0.9"/><rect x="11.2" y="15.8" width="1.5" height="2" rx="0.7" fill="white" opacity="0.9"/></svg>`;
-  const unlockSVG = `<svg viewBox="0 0 24 24" width="28" height="28" fill="none"><circle cx="12" cy="12" r="11" fill="#D1FAE5" stroke="#10B981" stroke-width="1"/><rect x="7" y="12" width="10" height="7" rx="2.5" fill="#10B981"/><path d="M9 12V9.5a3 3 0 0 1 5.5-1" stroke="#6EE7B7" stroke-width="1.8" stroke-linecap="round" fill="none"/><circle cx="12" cy="15" r="1.3" fill="white" opacity="0.9"/><rect x="11.2" y="15.8" width="1.5" height="2" rx="0.7" fill="white" opacity="0.9"/></svg>`;
   const labIconSVG = `<svg viewBox="0 0 22 22" width="18" height="18" fill="none" style="display:inline-block;vertical-align:middle;margin-right:6px;"><circle cx="11" cy="11" r="10" fill="#EDE9FE" stroke="#8B5CF6" stroke-width="1"/><path d="M9 5v7l-3 4h10l-3-4V5" stroke="#7C3AED" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M9 5h4" stroke="#A78BFA" stroke-width="1.3" stroke-linecap="round"/><circle cx="9.5" cy="14.5" r="1" fill="#A78BFA"/><circle cx="12" cy="15.5" r="0.7" fill="#C4B5FD"/></svg>`;
+
+  const catMeta = {
+    cleanser:    { label: 'Pembersih',  color: '#E0F2FE', iconColor: '#0EA5E9', icon: `<svg viewBox="0 0 24 24" width="28" height="28" fill="none"><path d="M12 2C8 2 5 5 5 9c0 5 7 13 7 13s7-8 7-13c0-4-3-7-7-7z" fill="#BAE6FD" stroke="#0EA5E9" stroke-width="1.5"/></svg>` },
+    moisturizer: { label: 'Pelembab',   color: '#DCFCE7', iconColor: '#22C55E', icon: `<svg viewBox="0 0 24 24" width="28" height="28" fill="none"><ellipse cx="12" cy="14" rx="6" ry="7" fill="#BBF7D0" stroke="#22C55E" stroke-width="1.5"/><path d="M12 3 Q10 7 12 9 Q14 7 12 3Z" fill="#22C55E"/></svg>` },
+    serum:       { label: 'Serum',      color: '#FEF3C7', iconColor: '#F59E0B', icon: `<svg viewBox="0 0 24 24" width="28" height="28" fill="none"><rect x="9" y="8" width="6" height="10" rx="3" fill="#FDE68A" stroke="#F59E0B" stroke-width="1.5"/><rect x="10" y="4" width="4" height="5" rx="1" fill="#FCD34D" stroke="#F59E0B" stroke-width="1"/></svg>` },
+    sunscreen:   { label: 'Sunscreen',  color: '#FFF7ED', iconColor: '#F97316', icon: `<svg viewBox="0 0 24 24" width="28" height="28" fill="none"><circle cx="12" cy="12" r="5" fill="#FED7AA" stroke="#F97316" stroke-width="1.5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke="#F97316" stroke-width="1.5" stroke-linecap="round"/></svg>` },
+    exfoliator:  { label: 'Eksfoliasi', color: '#F5F3FF', iconColor: '#8B5CF6', icon: `<svg viewBox="0 0 24 24" width="28" height="28" fill="none"><circle cx="12" cy="12" r="8" fill="#DDD6FE" stroke="#8B5CF6" stroke-width="1.5"/><circle cx="9" cy="10" r="1.5" fill="#8B5CF6"/><circle cx="15" cy="10" r="1.5" fill="#8B5CF6"/><path d="M8.5 15a5 5 0 0 0 7 0" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>` },
+  };
 
   if (!hasScanned) {
     container.innerHTML = `
       <h3 class="skinlab-title">${labIconSVG} Rekomendasi Produk</h3>
       <p class="skinlab-subtitle">Rekomendasi skincare yang dicocokkan khusus untuk kondisi kulit Anda.</p>
-      <div style="display:flex; flex-direction:column; align-items:center; padding: 24px; text-align:center; background:#faf5ff; border: 1px dashed #d8b4fe; border-radius:18px;">
+      <div style="display:flex;flex-direction:column;align-items:center;padding:24px;text-align:center;background:#faf5ff;border:1px dashed #d8b4fe;border-radius:18px;">
         ${lockSVG}
-        <div style="font-weight:700; font-size:12px; color:#581c87; margin-bottom:4px; margin-top:8px;">Rekomendasi Terkunci</div>
-        <p style="font-size:11px; color:#6b21a8; margin:0 0 12px 0; line-height:1.4;">Lakukan Scan AI kulit wajah Anda terlebih dahulu untuk melihat preview produk yang cocok.</p>
-        <button class="btn btn-primary" id="skinlab-scan-btn" style="padding:8px 16px; font-size:11px; border-radius:8px; width:auto; font-weight:700;">Mulai Scan Kulit</button>
+        <div style="font-weight:700;font-size:12px;color:#581c87;margin-bottom:4px;margin-top:8px;">Rekomendasi Terkunci</div>
+        <p style="font-size:11px;color:#6b21a8;margin:0 0 12px 0;line-height:1.4;">Lakukan Scan AI kulit wajah Anda terlebih dahulu untuk melihat preview produk yang cocok.</p>
+        <button class="btn btn-primary" id="skinlab-scan-btn" style="padding:8px 16px;font-size:11px;border-radius:8px;width:auto;font-weight:700;">Mulai Scan Kulit</button>
       </div>
     `;
-    container.querySelector('#skinlab-scan-btn').addEventListener('click', () => {
-      window.location.hash = '#/scan';
-    });
+    container.querySelector('#skinlab-scan-btn').addEventListener('click', () => { window.location.hash = '#/scan'; });
     return;
   }
 
-  // Inject styles for widget dynamically
   if (!document.getElementById('skinlab-widget-styles')) {
     const style = document.createElement('style');
     style.id = 'skinlab-widget-styles';
     style.textContent = `
-      .skinlab-section {
-        background: #ffffff;
-        border-radius: var(--radius-xl);
-        padding: var(--space-xl) var(--space-lg);
-        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-        border: 1px solid var(--border-light);
-        margin-top: 12px;
-      }
-      .skinlab-title {
-        font-size: 1.15rem;
-        font-weight: 800;
-        color: #1e1b4b;
-        margin-bottom: 4px;
-        letter-spacing: -0.3px;
-      }
-      .skinlab-subtitle {
-        font-size: var(--font-xs);
-        color: var(--text-secondary);
-        margin-bottom: 20px;
-        line-height: 1.4;
-      }
-      .skinlab-category-title {
-        font-size: var(--font-sm);
-        font-weight: 700;
-        color: #1e1b4b;
-        margin-bottom: 12px;
-        margin-top: 16px;
-        text-align: left;
-      }
-      .skinlab-scroll-container {
-        display: flex;
-        gap: 12px;
-        overflow-x: auto;
-        padding-bottom: 8px;
-        scrollbar-width: none;
-      }
-      .skinlab-scroll-container::-webkit-scrollbar {
-        display: none;
-      }
-      .skinlab-product-card {
-        flex: 0 0 160px;
-        background: #f8fafc;
-        border: 1px solid #cbd5e130;
-        border-radius: 16px;
-        padding: 12px;
-        display: flex;
-        flex-direction: column;
-        text-align: left;
-        box-sizing: border-box;
-        position: relative;
-        cursor: pointer;
-        transition: all 0.2s ease;
-      }
-      .skinlab-product-card:active {
-        transform: scale(0.97);
-      }
-      .skinlab-product-img {
-        width: 100%;
-        height: 120px;
-        background: #e3f2fd;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2.2rem;
-        margin-bottom: 8px;
-        overflow: hidden;
-        position: relative;
-      }
-      .skinlab-product-match-badge {
-        position: absolute;
-        bottom: 8px;
-        left: 8px;
-        background: rgba(34, 197, 94, 0.9);
-        color: #fff;
-        font-size: 9px;
-        font-weight: 700;
-        padding: 2px 6px;
-        border-radius: 6px;
-      }
-      .skinlab-product-name {
-        font-size: 11px;
-        font-weight: 700;
-        color: #0f172a;
-        line-height: 1.3;
-        margin-bottom: 4px;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        height: 28px;
-      }
-      .skinlab-product-price {
-        font-size: 11px;
-        font-weight: 700;
-        color: var(--primary);
-      }
-      .skinlab-lock-card {
-        flex: 0 0 160px;
-        background: #ffffff;
-        border: 1.5px dashed var(--primary);
-        border-radius: 16px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 16px;
-        box-sizing: border-box;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.2s ease;
-      }
-      .skinlab-lock-card:hover {
-        background: #eff6ff;
-        border-color: #2563eb;
-      }
-      .skinlab-lock-card:active {
-        transform: scale(0.97);
-      }
-      .skinlab-lock-title {
-        font-size: 11px;
-        font-weight: 700;
-        color: var(--primary);
-        line-height: 1.4;
-        margin-top: 8px;
-      }
+      .skinlab-section{background:#fff;border-radius:var(--radius-xl);padding:var(--space-xl) var(--space-lg);box-shadow:0 4px 20px rgba(0,0,0,0.05);border:1px solid var(--border-light);margin-top:12px;}
+      .skinlab-title{font-size:1.15rem;font-weight:800;color:#1e1b4b;margin-bottom:4px;letter-spacing:-0.3px;}
+      .skinlab-subtitle{font-size:var(--font-xs);color:var(--text-secondary);margin-bottom:16px;line-height:1.4;}
+      .skinlab-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background 0.15s;border-radius:8px;}
+      .skinlab-row:last-child{border-bottom:none;padding-bottom:0;}
+      .skinlab-row:active{background:#f8fafc;}
+      .skinlab-row-img{width:52px;height:52px;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+      .skinlab-row-img img{width:100%;height:100%;object-fit:cover;}
+      .skinlab-row-info{flex:1;min-width:0;}
+      .skinlab-row-cat{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;}
+      .skinlab-row-name{font-size:12px;font-weight:700;color:#0f172a;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+      .skinlab-row-price{font-size:11px;font-weight:600;color:var(--primary);margin-top:2px;}
+      .skinlab-row-badge{font-size:9px;font-weight:700;background:rgba(34,197,94,0.12);color:#16a34a;padding:2px 7px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
+      .skinlab-see-all-btn{width:100%;margin-top:14px;padding:12px;background:linear-gradient(135deg,#6d28d9,#4f46e5);color:white;border:none;border-radius:12px;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;letter-spacing:0.2px;}
+      .skinlab-see-all-btn:active{transform:scale(0.98);}
     `;
     document.head.appendChild(style);
   }
 
   container.innerHTML = `
     <h3 class="skinlab-title">${labIconSVG} Rekomendasi Produk</h3>
-    <p class="skinlab-subtitle">Rekomendasi skincare yang paling cocok dengan jenis kulitmu.</p>
-    <div style="height:120px; display:flex; align-items:center; justify-content:center; color:#94a3b8; font-size:0.85rem;">⏳ Menganalisis kecocokan...</div>
+    <p class="skinlab-subtitle">Satu produk terbaik dari tiap kategori untuk kulitmu.</p>
+    <div style="height:80px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:0.8rem;">Menganalisis kecocokan...</div>
   `;
 
-  // Fetch products
   const jenis_kulit = localStorage.getItem('bglow_skin_type_' + userId) || 'Normal';
   const prioritas = localStorage.getItem('bglow_journey_priority_' + userId);
   const rawProblems = localStorage.getItem('bglow_skin_problems_' + userId) || '[]';
@@ -759,125 +650,71 @@ async function renderSkinLabWidget(container, userId) {
   const { isPremium } = await import('../utils/store.js');
   const premium = isPremium();
 
-  const fetchCat = async (cat) => {
+  const fetchTop1 = async (cat) => {
     try {
       const resp = await fetch(RECOMMENDATIONS_API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jenis_kulit, permasalahan: JSON.stringify(permasalahan), kategori: cat, limit: 10 })
+        body: JSON.stringify({ jenis_kulit, permasalahan: JSON.stringify(permasalahan), kategori: cat, limit: 3 })
       });
-      if (!resp.ok) return [];
+      if (!resp.ok) return null;
       const data = await resp.json();
-      return data.products || [];
-    } catch (e) {
-      return [];
-    }
+      return (data.products || [])[0] || null;
+    } catch (e) { return null; }
   };
 
-  const [cleansers, moisturizers] = await Promise.all([
-    fetchCat('cleanser'),
-    fetchCat('moisturizer')
-  ]);
+  const categories = ['cleanser', 'moisturizer', 'serum', 'sunscreen', 'exfoliator'];
+  const results = await Promise.all(categories.map(c => fetchTop1(c)));
 
-  // Render preview
-  let cleansersHTML = '';
-  let moisturizersHTML = '';
+  const rows = results.map((p, i) => ({ p, cat: categories[i] })).filter(({ p }) => p !== null);
 
-  const renderProdCard = (p) => {
-    const scorePct = Math.round(p.score * 100);
-    const imgTag = p.image_url && p.image_url !== 'nan'
-      ? `<img src="${p.image_url}" alt="${p.name}" style="width:100%; height:100%; object-fit:cover; border-radius:12px;" />`
-      : `<span style="font-size:1.8rem;">🧴</span>`;
-    
-    return `
-      <div class="skinlab-product-card" data-cat="${p.kategori}" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-img="${p.image_url}">
-        <div class="skinlab-product-img">
-          ${imgTag}
-          <div class="skinlab-product-match-badge">${scorePct}% Cocok</div>
-        </div>
-        <div class="skinlab-product-name">${p.name}</div>
-        <div class="skinlab-product-price">Rp${p.price.toLocaleString('id-ID')}</div>
-      </div>
-    `;
-  };
-
-  if (cleansers.length > 0) {
-    const showProds = cleansers.slice(0, 4);
-    const remainingCount = Math.max(0, cleansers.length - showProds.length) || 6;
-    cleansersHTML = `
-      <div class="skinlab-category-title">Pembersih Wajah yang Cocok</div>
-      <div class="skinlab-scroll-container">
-        ${showProds.map(p => renderProdCard(p)).join('')}
-        <div class="skinlab-lock-card" id="unlock-cleansers">
-          ${premium ? unlockSVG : lockSVG}
-          <span class="skinlab-lock-title">${premium ? 'Lihat Semua' : `Buka ${remainingCount}+ lainnya`}</span>
-        </div>
-      </div>
-    `;
-  }
-
-  if (moisturizers.length > 0) {
-    const showProds = moisturizers.slice(0, 4);
-    const remainingCount = Math.max(0, moisturizers.length - showProds.length) || 11;
-    moisturizersHTML = `
-      <div class="skinlab-category-title">Pelembab untuk Kulitmu</div>
-      <div class="skinlab-scroll-container">
-        ${showProds.map(p => renderProdCard(p)).join('')}
-        <div class="skinlab-lock-card" id="unlock-moisturizers">
-          ${premium ? unlockSVG : lockSVG}
-          <span class="skinlab-lock-title">${premium ? 'Lihat Semua' : `Buka ${remainingCount}+ lainnya`}</span>
-        </div>
-      </div>
-    `;
-  }
-
-  if (!cleansersHTML && !moisturizersHTML) {
+  if (rows.length === 0) {
     container.innerHTML = `
       <h3 class="skinlab-title">${labIconSVG} Rekomendasi Produk</h3>
-      <p class="skinlab-subtitle">Rekomendasi skincare yang paling cocok dengan jenis kulitmu.</p>
-      <div style="padding:20px; text-align:center; color:#64748b; font-size:0.8rem;">Tidak ada rekomendasi yang tersedia saat ini.</div>
+      <p class="skinlab-subtitle">Satu produk terbaik dari tiap kategori untuk kulitmu.</p>
+      <div style="padding:20px;text-align:center;color:#64748b;font-size:0.8rem;">Tidak ada rekomendasi tersedia.</div>
     `;
     return;
   }
 
+  const rowsHTML = rows.map(({ p, cat }) => {
+    const meta = catMeta[cat] || { label: cat, color: '#F8FAFC', iconColor: '#64748B', icon: '' };
+    const scorePct = Math.round((p.score || 0) * 100);
+    const imgContent = (p.image_url && p.image_url !== 'nan')
+      ? `<img src="${p.image_url}" alt="${p.name}" />`
+      : meta.icon;
+    return `
+      <div class="skinlab-row" data-cat="${cat}" data-name="${p.name}" data-price="${p.price}" data-img="${p.image_url || ''}">
+        <div class="skinlab-row-img" style="background:${meta.color};">${imgContent}</div>
+        <div class="skinlab-row-info">
+          <div class="skinlab-row-cat" style="color:${meta.iconColor};">${meta.label}</div>
+          <div class="skinlab-row-name">${p.name}</div>
+          <div class="skinlab-row-price">Rp${p.price.toLocaleString('id-ID')}</div>
+        </div>
+        <div class="skinlab-row-badge">${scorePct}% Cocok</div>
+      </div>
+    `;
+  }).join('');
+
   container.innerHTML = `
     <h3 class="skinlab-title">${labIconSVG} Rekomendasi Produk</h3>
-    <p class="skinlab-subtitle">Rekomendasi skincare yang paling cocok dengan jenis kulitmu.</p>
-    ${cleansersHTML}
-    ${moisturizersHTML}
+    <p class="skinlab-subtitle">Satu produk terbaik dari tiap kategori untuk kulitmu.</p>
+    <div id="skinlab-rows">${rowsHTML}</div>
+    <button class="skinlab-see-all-btn" id="skinlab-see-all">Lihat Semua Rekomendasi</button>
   `;
 
-  // Click handlers for unlock cards
-  const cleansersUnlock = container.querySelector('#unlock-cleansers');
-  if (cleansersUnlock) {
-    cleansersUnlock.addEventListener('click', () => {
-      window.location.hash = premium ? '#/recommendations?category=cleanser' : '#/subscription';
-    });
-  }
-
-  const moisturizersUnlock = container.querySelector('#unlock-moisturizers');
-  if (moisturizersUnlock) {
-    moisturizersUnlock.addEventListener('click', () => {
-      window.location.hash = premium ? '#/recommendations?category=moisturizer' : '#/subscription';
-    });
-  }
-
-  // Click handlers for product cards
-  container.querySelectorAll('.skinlab-product-card').forEach(card => {
-    card.addEventListener('click', () => {
-      const name = card.dataset.name;
-      const price = parseInt(card.dataset.price);
-      const image = card.dataset.img;
-      const category = card.dataset.cat;
-      
+  container.querySelectorAll('.skinlab-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const cat = row.dataset.cat;
+      const meta = catMeta[cat] || {};
       const enriched = {
-        name,
-        brand: name.split(' ')[0] || name,
-        price,
-        emoji: category === 'cleanser' ? '🧴' : '💧',
-        bgColor: category === 'cleanser' ? '#E3F2FD' : '#E8F5E9',
+        name: row.dataset.name,
+        brand: row.dataset.name.split(' ')[0] || '',
+        price: parseInt(row.dataset.price),
+        emoji: '🧴',
+        bgColor: meta.color || '#F8FAFC',
         rating: 4.5,
-        desc: `Produk ${category} yang terpilih khusus untuk jenis kulit Anda.`,
+        desc: `Produk ${meta.label || cat} terpilih khusus untuk jenis kulit Anda.`,
         ingredients: [],
         link: ''
       };
@@ -885,8 +722,11 @@ async function renderSkinLabWidget(container, userId) {
       window.location.hash = '#/product-detail';
     });
   });
-}
 
+  container.querySelector('#skinlab-see-all').addEventListener('click', () => {
+    window.location.hash = premium ? '#/recommendations' : '#/subscription';
+  });
+}
 async function renderTrendingWidget(container, userId) {
   const jenis_kulit = localStorage.getItem('bglow_skin_type_' + userId) || 'Normal';
   
