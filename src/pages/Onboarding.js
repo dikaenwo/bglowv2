@@ -182,7 +182,7 @@ export function renderOnboarding() {
             <div class="ob-intro-q-item">Kandungan apa yang sebenarnya ada di dalam?</div>
             <div class="ob-intro-q-item">Bagaimana urutan pemakaian rutinitas saya?</div>
             <div class="ob-intro-q-item">Berapa lama sampai terlihat hasilnya?</div>
-            <div class="ob-intro-q-item highlight">Apakah produk ini benar-benar cocok?</div>
+            <div class="ob-intro-q-item">Apakah produk ini benar-benar cocok?</div>
           </div>
         `;
         break;
@@ -196,15 +196,6 @@ export function renderOnboarding() {
           <div class="ob-title-wrap" style="text-align: center; margin-bottom: 24px; padding: 0 var(--space-md);">
             <h1 class="ob-quiz-title" style="font-size: var(--font-2xl); font-weight: 800; margin-bottom: 8px;">Perkenalkan B-Glow</h1>
             <p class="ob-quiz-subtitle" style="font-size: var(--font-sm); line-height: 1.5; color: var(--text-secondary); margin: 0;">Pendamping perawatan kulit berbasis sains untuk memandu transformasi kulit sehat Anda.</p>
-          </div>
-          <div class="ob-rating-card" style="margin-bottom: 24px;">
-            <div class="ob-rating-stars">★★★★★</div>
-            <div class="ob-rating-stats">Skor rating 4.8 dari 10,000+ pengguna aktif</div>
-            <div class="ob-rating-logos">
-              <span class="ob-logo-text">BPOM CHECK</span>
-              <span class="ob-logo-text" style="color:var(--primary); font-weight: bold;">AI SCAN</span>
-              <span class="ob-logo-text">DIARY KULIT</span>
-            </div>
           </div>
         `;
         break;
