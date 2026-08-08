@@ -447,6 +447,41 @@ export function renderOnboarding() {
           `;
         }).join('');
 
+        // Skin type icons matching Settings.js
+        const skinTypeIconsResult = {
+          'Normal':    { icon: `<svg viewBox="0 0 32 32" width="40" height="40" fill="none"><circle cx="16" cy="16" r="13" fill="#D1FAE5" stroke="#10B981" stroke-width="1.5"/><circle cx="16" cy="16" r="8" fill="#6EE7B7" opacity="0.5"/><path d="M11 20c1.5 2 3.5 3 5 3s3.5-1 5-3" stroke="#059669" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="14" r="1.5" fill="#059669"/><circle cx="20" cy="14" r="1.5" fill="#059669"/><path d="M22 8l1.5-2M10 8L8.5 6M16 6V4" stroke="#10B981" stroke-width="1.2" stroke-linecap="round"/></svg>`, color: '#10B981', bg: '#D1FAE5' },
+          'Berminyak': { icon: `<svg viewBox="0 0 32 32" width="40" height="40" fill="none"><circle cx="16" cy="16" r="13" fill="#DBEAFE" stroke="#3B82F6" stroke-width="1.5"/><circle cx="16" cy="16" r="8" fill="#93C5FD" opacity="0.4"/><path d="M11 20c1.5 1.5 3.5 2 5 2s3.5-.5 5-2" stroke="#2563EB" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="14" r="1.5" fill="#2563EB"/><circle cx="20" cy="14" r="1.5" fill="#2563EB"/><circle cx="8" cy="18" r="2" fill="#93C5FD" opacity="0.6"/><circle cx="24" cy="18" r="2" fill="#93C5FD" opacity="0.6"/><circle cx="16" cy="10" r="1.5" fill="#93C5FD" opacity="0.7"/></svg>`, color: '#3B82F6', bg: '#DBEAFE' },
+          'Kombinasi': { icon: `<svg viewBox="0 0 32 32" width="40" height="40" fill="none"><circle cx="16" cy="16" r="13" fill="#EDE9FE" stroke="#8B5CF6" stroke-width="1.5"/><path d="M16 3a13 13 0 010 26" fill="#C4B5FD" opacity="0.5"/><path d="M11 20c1.5 1.5 3.5 2 5 2s3.5-.5 5-2" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="14" r="1.5" fill="#7C3AED"/><circle cx="20" cy="14" r="1.5" fill="#7C3AED"/><line x1="16" y1="5" x2="16" y2="27" stroke="#8B5CF6" stroke-width="0.8" stroke-dasharray="2 2"/></svg>`, color: '#8B5CF6', bg: '#EDE9FE' },
+          'Kering':    { icon: `<svg viewBox="0 0 32 32" width="40" height="40" fill="none"><circle cx="16" cy="16" r="13" fill="#FEF3C7" stroke="#D97706" stroke-width="1.5"/><circle cx="16" cy="16" r="8" fill="#FDE68A" opacity="0.4"/><path d="M12 19c1 1 2.5 1.5 4 1.5s3-.5 4-1.5" stroke="#B45309" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="14" r="1.5" fill="#B45309"/><circle cx="20" cy="14" r="1.5" fill="#B45309"/><path d="M10 22l2-1M22 22l-2-1" stroke="#D97706" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/></svg>`, color: '#D97706', bg: '#FEF3C7' },
+        };
+        const skinTypeResult = skinTypeIconsResult[res.jenis_kulit] || skinTypeIconsResult['Normal'];
+
+        // Problem icons + colors
+        const problemIconsResult = {
+          'Jerawat':         { color: '#EF4444', bg: '#FEE2E2', icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none"><circle cx="12" cy="12" r="10" fill="#FEE2E2" stroke="#EF4444" stroke-width="1.5"/><circle cx="9" cy="10" r="2" fill="#FCA5A5" stroke="#EF4444" stroke-width="1"/><circle cx="15" cy="9" r="1.5" fill="#FCA5A5" stroke="#EF4444" stroke-width="1"/><circle cx="13" cy="15" r="2.5" fill="#FCA5A5" stroke="#EF4444" stroke-width="1"/><circle cx="9" cy="10" r="0.8" fill="#EF4444"/><circle cx="13" cy="15" r="1" fill="#EF4444"/></svg>` },
+          'PIE':             { color: '#EC4899', bg: '#FCE7F3', icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none"><circle cx="12" cy="12" r="10" fill="#FCE7F3" stroke="#EC4899" stroke-width="1.5"/><circle cx="9" cy="10" r="2.5" fill="none" stroke="#EC4899" stroke-width="1.2" stroke-dasharray="1.5 1.5"/><circle cx="15" cy="14" r="2" fill="none" stroke="#EC4899" stroke-width="1.2" stroke-dasharray="1.5 1.5"/><circle cx="12" cy="8" r="1.5" fill="#F9A8D4" opacity="0.6"/></svg>` },
+          'PIH':             { color: '#F97316', bg: '#FFF7ED', icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none"><circle cx="12" cy="12" r="10" fill="#FFF7ED" stroke="#F97316" stroke-width="1.5"/><ellipse cx="9" cy="10" rx="2.5" ry="2" fill="#FDBA74" stroke="#F97316" stroke-width="1"/><ellipse cx="15" cy="14" rx="2" ry="1.5" fill="#FDBA74" stroke="#F97316" stroke-width="1"/></svg>` },
+          'Kemerahan':       { color: '#22C55E', bg: '#DCFCE7', icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none"><circle cx="12" cy="12" r="10" fill="#DCFCE7" stroke="#22C55E" stroke-width="1.5"/><circle cx="8" cy="13" r="2.5" fill="#FCA5A5" opacity="0.5"/><circle cx="16" cy="13" r="2.5" fill="#FCA5A5" opacity="0.5"/></svg>` },
+          'Hiperpigmentasi': { color: '#EAB308', bg: '#FEF9C3', icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none"><circle cx="12" cy="12" r="10" fill="#FEF9C3" stroke="#EAB308" stroke-width="1.5"/><rect x="7" y="13" width="4" height="3" rx="1" fill="#CA8A04" opacity="0.4"/><rect x="13" y="11" width="3" height="4" rx="1" fill="#CA8A04" opacity="0.3"/></svg>` },
+          'Aging':           { color: '#8B5CF6', bg: '#F3E8FF', icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none"><circle cx="12" cy="12" r="10" fill="#F3E8FF" stroke="#8B5CF6" stroke-width="1.5"/><path d="M8 9c0-1 1-2 2-2M14 9c0-1 1-2 2-2" stroke="#8B5CF6" stroke-width="1" stroke-linecap="round"/><path d="M9 14c.8 1.2 1.8 1.8 3 1.8s2.2-.6 3-1.8" stroke="#8B5CF6" stroke-width="1" stroke-linecap="round"/></svg>` },
+        };
+
+        const problemsChipsHTML = (!res.permasalahan || res.permasalahan.length === 0) ? `
+          <div style="display:flex; align-items:center; gap:10px; padding: 14px 16px; background: #F0FDF4; border-radius: 12px; border: 1.5px solid #86EFAC;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <div>
+              <div style="color: #16A34A; font-weight: 700; font-size:13px;">Kondisi kulit sangat sehat!</div>
+              <div style="color: #4ADE80; font-size: 11px; margin-top:2px;">Tidak ada anomali atau noda parah terdeteksi.</div>
+            </div>
+          </div>
+        ` : `<div style="display:flex; flex-wrap:wrap; gap:8px;">${res.permasalahan.map(p => {
+          const pdata = problemIconsResult[p.label] || { color: '#888', bg: '#F5F5F5', icon: '' };
+          return `<div style="display:flex; align-items:center; gap:6px; padding:8px 14px; border-radius:100px; background:${pdata.bg}; border:1.5px solid ${pdata.color}30;">
+            ${pdata.icon}
+            <span style="font-size:12px; font-weight:700; color:${pdata.color};">${p.label}</span>
+          </div>`;
+        }).join('')}</div>`;
+
         html = `
           <div class="ob-title-wrap" style="text-align: center; margin-bottom: 14px;">
             <h1 class="ob-quiz-title" style="font-size: var(--font-2xl); font-weight: 800; margin-bottom: 6px;">Hasil Analisis Kulit AI</h1>
@@ -459,39 +494,28 @@ export function renderOnboarding() {
             <div>
               <div style="font-weight: 700; font-size: 11px; color: #B45309; margin-bottom: 2px;">⚠️ Catatan Penting</div>
               <div style="font-size: 10.5px; color: #B45309; line-height: 1.4;">
-                Hasil analisis AI B-Glow bersifat referensi pendukung dan tidak 100% akurat. Harap jangan dijadikan acuan medis mutlak. Konsultasikan dengan dokter spesialis kulit untuk diagnosis resmi.
+                Hasil analisis AI B-Glow bersifat referensi pendukung dan tidak 100% akurat. Harap jangan dijadikan acuan medis mutlak.
               </div>
             </div>
           </div>
 
+          <!-- Foto + Jenis Kulit -->
           <div style="text-align: center; margin-bottom: 20px;">
-            <img src="${capturedImage || '/dummy-face.png'}" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary-light); box-shadow: var(--shadow-md); margin: 0 auto 12px; display: block;" />
-            <h2 style="font-size: var(--font-xl); font-weight: 700; color: var(--text-primary); margin: 0 0 6px 0;">${res.jenis_kulit}</h2>
-            <p style="font-size: var(--font-xs); color: var(--text-secondary); line-height: 1.4; max-width: 320px; margin: 0 auto; padding: 0 var(--space-sm);">${res.jenis_kulit_desc}</p>
+            <img src="${capturedImage || '/dummy-face.png'}" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid ${skinTypeResult.color}40; box-shadow: 0 4px 16px ${skinTypeResult.color}30; margin: 0 auto 14px; display: block;" />
+            <div style="display:inline-flex; align-items:center; gap:10px; background:${skinTypeResult.bg}; border:1.5px solid ${skinTypeResult.color}40; border-radius:16px; padding:10px 20px; margin-bottom:10px;">
+              ${skinTypeResult.icon}
+              <div style="text-align:left;">
+                <div style="font-size:18px; font-weight:800; color:var(--text-primary);">${res.jenis_kulit}</div>
+                <div style="font-size:11px; color:${skinTypeResult.color}; font-weight:600;">Jenis Kulit</div>
+              </div>
+            </div>
+            <p style="font-size: var(--font-xs); color: var(--text-secondary); line-height: 1.4; max-width: 300px; margin: 0 auto; padding: 0 var(--space-sm);">${res.jenis_kulit_desc}</p>
           </div>
 
-          <div class="ob-result-stats-grid" style="margin-bottom: 20px;">
-            <div class="ob-result-stat-item" style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 10px;">
-              <div class="ob-result-stat-label" style="font-size: 10px; color: var(--text-tertiary); margin-bottom: 4px; font-weight: 600;">Skor Kulit</div>
-              <div class="ob-result-stat-val" style="font-size: var(--font-sm); font-weight: 700; color: ${res.skin_score >= 80 ? '#22c55e' : '#f59e0b'};">${res.skin_score}/100</div>
-            </div>
-            <div class="ob-result-stat-item" style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 10px;">
-              <div class="ob-result-stat-label" style="font-size: 10px; color: var(--text-tertiary); margin-bottom: 4px; font-weight: 600;">Jerawat</div>
-              <div class="ob-result-stat-val" style="font-size: var(--font-sm); font-weight: 700; color: ${cleanAcneLevel.toLowerCase().includes('bersih') ? '#22c55e' : '#ef4444'};">${cleanAcneLevel}</div>
-            </div>
-            <div class="ob-result-stat-item" style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 10px;">
-              <div class="ob-result-stat-label" style="font-size: 10px; color: var(--text-tertiary); margin-bottom: 4px; font-weight: 600;">Minyak Wajah</div>
-              <div class="ob-result-stat-val" style="font-size: var(--font-sm); font-weight: 700; color: var(--text-primary);">${res.oil_level}</div>
-            </div>
-            <div class="ob-result-stat-item" style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 10px;">
-              <div class="ob-result-stat-label" style="font-size: 10px; color: var(--text-tertiary); margin-bottom: 4px; font-weight: 600;">Pori-Pori</div>
-              <div class="ob-result-stat-val" style="font-size: var(--font-sm); font-weight: 700; color: var(--text-primary);">${res.pore_condition}</div>
-            </div>
-          </div>
-
-          <div class="ob-problems-title" style="font-size: var(--font-sm); font-weight: 700; margin-bottom: 8px;">Permasalahan Kulit</div>
-          <div class="ob-problem-cards-list">
-            ${problemsHTML}
+          <!-- Masalah Kulit -->
+          <div style="margin-bottom: 8px;">
+            <div style="font-size: var(--font-sm); font-weight: 700; color: var(--text-primary); margin-bottom: 10px;">Masalah Kulit Terdeteksi</div>
+            ${problemsChipsHTML}
           </div>
         `;
         break;
