@@ -1,7 +1,7 @@
 import { icons } from '../components/BottomNav.js';
 import { getUserId, syncUserData } from '../utils/store.js';
 
-// Reuse exact same display config as Recommendations
+// Identik dengan CATEGORY_DISPLAY di Recommendations.js
 const CATEGORY_DISPLAY = {
   'Facial Wash':  { emoji: '🧴', bgColor: '#E3F2FD' },
   'Moisturizer':  { emoji: '💧', bgColor: '#E8F5E9' },
@@ -31,27 +31,32 @@ export function renderFavorites() {
     syncUserData({ favorites: JSON.stringify(list) });
   }
 
-  // Render satu card — identik dengan Recommendations + tombol hapus
+  // ── Card identik dengan Recommendations ────────────────────────────────────
   function renderCard(p, i) {
     const display = CATEGORY_DISPLAY[p.kategori] || { emoji: '🧴', bgColor: '#F5F5F5' };
-    const imgTag  = p.image_url && p.image_url !== 'nan' && p.image_url.startsWith('http')
-      ? `<img src="${p.image_url}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;border-radius:14px;"
+    const imgTag  = p.image_url && p.image_url !== 'nan'
+      ? `<img src="${p.image_url}" alt="${p.name}"
+             style="width:100%;height:100%;object-fit:cover;border-radius:14px;"
              onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
          <div class="img-placeholder" style="display:none;">${display.emoji}</div>`
       : `<div class="img-placeholder">${display.emoji}</div>`;
 
-    const scorePercent = p.match || (p.score ? Math.round(p.score * 100) : 0);
-    const barColor = scorePercent >= 75 ? '#22c55e' : scorePercent >= 50 ? '#eab308' : '#ef4444';
-    const price    = typeof p.price === 'number' ? p.price : parseInt(p.price) || 0;
+    const scorePercent = p.match
+      ? p.match
+      : (p.score ? Math.round(p.score * 100) : 0);
+    const barColor = scorePercent >= 75 ? '#22c55e'
+      : scorePercent >= 50 ? '#eab308' : '#ef4444';
+    const price = typeof p.price === 'number'
+      ? p.price : parseInt(String(p.price).replace(/\D/g, '')) || 0;
 
     return `
       <div class="product-card" data-idx="${i}" style="position:relative;">
-        <!-- Remove button -->
+        <!-- Tombol hapus dari favorit -->
         <button class="fav-remove-btn" data-idx="${i}"
           style="position:absolute;top:8px;right:8px;z-index:10;
                  background:white;border:none;border-radius:50%;
                  width:28px;height:28px;display:flex;align-items:center;justify-content:center;
-                 box-shadow:0 2px 8px rgba(0,0,0,0.15);cursor:pointer;color:#f43f5e;padding:0;">
+                 box-shadow:0 2px 8px rgba(0,0,0,0.18);cursor:pointer;color:#f43f5e;padding:0;">
           <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
           </svg>
@@ -67,12 +72,13 @@ export function renderFavorites() {
           </div>
 
           ${scorePercent > 0 ? `
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;margin-top:2px;">
-            <span style="font-size:10.5px;font-weight:700;color:${barColor};">Kecocokan ${scorePercent}%</span>
-          </div>
-          <div class="wsm-score-bar-wrap">
-            <div class="wsm-score-bar" style="width:${scorePercent}%;background:${barColor};"></div>
-          </div>` : ''}
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;margin-top:2px;">
+              <span style="font-size:10.5px;font-weight:700;color:${barColor};">Kecocokan ${scorePercent}%</span>
+            </div>
+            <div class="wsm-score-bar-wrap">
+              <div class="wsm-score-bar" style="width:${scorePercent}%;background:${barColor};"></div>
+            </div>
+          ` : ''}
 
           <div class="product-price">Rp${price.toLocaleString('id-ID')}</div>
           <button class="product-cta btn-detail" data-idx="${i}">Lihat Detail</button>
@@ -86,12 +92,12 @@ export function renderFavorites() {
 
     if (favorites.length === 0) {
       page.innerHTML = `
-        <div class="page-header">
+        <div class="page-header" style="margin-bottom:8px;">
           <button class="back-btn" id="fav-back-btn">${icons.chevronLeft}</button>
           <h1 style="width:100%;text-align:center;margin-right:40px;">Produk Favorit</h1>
         </div>
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
-                    min-height:70vh;padding:32px 24px;text-align:center;" class="anim-fade-in">
+                    min-height:60vh;padding:32px 24px;text-align:center;" class="anim-fade-in">
           <div style="width:80px;height:80px;background:#fff1f2;border-radius:50%;
                       display:flex;align-items:center;justify-content:center;margin-bottom:20px;
                       border:2px solid #fecdd3;">
@@ -101,7 +107,7 @@ export function renderFavorites() {
           </div>
           <h2 style="font-size:1.2rem;font-weight:800;color:#0f172a;margin:0 0 8px;">Belum Ada Favorit</h2>
           <p style="font-size:0.85rem;color:#94a3b8;line-height:1.6;margin:0 0 28px;">
-            Simpan produk yang kamu suka dari halaman rekomendasi. Ketuk ikon ❤️ pada kartu produk.
+            Simpan produk yang kamu suka dari halaman rekomendasi. Ketuk ikon ❤️ pada detail produk.
           </p>
           <button id="explore-btn" class="btn btn-primary"
             style="padding:14px 32px;border-radius:14px;font-weight:700;font-size:0.9rem;">
@@ -116,27 +122,28 @@ export function renderFavorites() {
       return;
     }
 
+    // ── Layout identik Recommendations — product-grid langsung tanpa wrapper ──
     page.innerHTML = `
-      <div class="page-header">
+      <div class="page-header" style="margin-bottom:8px;">
         <button class="back-btn" id="fav-back-btn">${icons.chevronLeft}</button>
         <h1 style="width:100%;text-align:center;margin-right:40px;">
           Produk Favorit
-          <span style="font-size:0.75rem;font-weight:600;color:#f43f5e;
-                       background:#fff1f2;border-radius:12px;padding:2px 10px;
-                       margin-left:8px;vertical-align:middle;">${favorites.length}</span>
+          <span style="font-size:0.72rem;font-weight:700;background:#fff1f2;
+                       color:#f43f5e;border-radius:12px;padding:2px 9px;
+                       margin-left:6px;vertical-align:middle;">${favorites.length}</span>
         </h1>
       </div>
-      <div style="padding:8px 16px 100px;overflow-y:auto;height:calc(100vh - 60px);">
-        <div class="product-grid" id="fav-grid">
-          ${favorites.map((p, i) => renderCard(p, i)).join('')}
-        </div>
+
+      <!-- Product Grid — class & structure identik Recommendations -->
+      <div class="product-grid" id="fav-grid" style="padding-bottom: 24px;">
+        ${favorites.map((p, i) => renderCard(p, i)).join('')}
       </div>
     `;
 
     setTimeout(() => {
       page.querySelector('#fav-back-btn')?.addEventListener('click', () => window.location.hash = '#/profile');
 
-      // Tap seluruh card → detail
+      // Klik card → product detail
       page.querySelectorAll('.product-card').forEach(card => {
         card.addEventListener('click', () => {
           const idx = parseInt(card.dataset.idx);
@@ -145,7 +152,7 @@ export function renderFavorites() {
         });
       });
 
-      // Lihat Detail button
+      // Tombol Lihat Detail
       page.querySelectorAll('.btn-detail').forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -155,7 +162,7 @@ export function renderFavorites() {
         });
       });
 
-      // Remove button — animasi slide-out dulu
+      // Tombol hapus — slide-out animation
       page.querySelectorAll('.fav-remove-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -165,10 +172,7 @@ export function renderFavorites() {
             card.style.transition = 'all 0.22s ease';
             card.style.opacity = '0';
             card.style.transform = 'scale(0.85)';
-            setTimeout(() => {
-              removeFromFavorites(idx);
-              render();
-            }, 220);
+            setTimeout(() => { removeFromFavorites(idx); render(); }, 220);
           }
         });
       });
